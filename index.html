@@ -9,6 +9,379 @@
 :root{--navy:#1a3a5c;--navy2:#0f2a45;--blue:#1976d2;--green:#2e7d32;--orange:#e65100;--red:#c62828;--purple:#6a1b9a;--teal:#00695c;--bg:#f0f2f5;--border:#e0e0e0;--text:#222;--sub:#888}
 body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:var(--bg);color:var(--text)}
 
+/* ===== PUBLIC LANDING PAGE ===== */
+.landing-page {
+  position: fixed;
+  inset: 0;
+  background: #f8fafc;
+  z-index: 9998;
+  overflow-y: auto;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #334155;
+  scroll-behavior: smooth;
+}
+.landing-page.hide {
+  display: none !important;
+}
+.lp-navbar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 40px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  z-index: 1000;
+}
+.lp-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--navy);
+}
+.lp-brand-logo {
+  font-size: 22px;
+}
+.lp-nav-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.lp-nav-links a {
+  text-decoration: none;
+  color: #475569;
+  font-weight: 600;
+  font-size: 12.5px;
+  transition: color 0.2s;
+}
+.lp-nav-links a:hover {
+  color: var(--blue);
+}
+.btn-masuk {
+  padding: 7px 16px;
+  background: var(--navy);
+  color: #fff !important;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+  box-shadow: 0 4px 10px rgba(26, 58, 92, 0.2);
+  transition: all 0.2s;
+}
+.btn-masuk:hover {
+  background: var(--blue);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(26, 58, 92, 0.3);
+}
+.lp-hero {
+  padding: 50px 40px 30px;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+.lp-hero h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.3;
+  margin-bottom: 10px;
+}
+.lp-hero p {
+  font-size: 13.5px;
+  color: #64748b;
+  max-width: 650px;
+  margin: 0 auto 28px;
+  line-height: 1.5;
+}
+.lp-hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 30px;
+}
+.lp-metric-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-align: center;
+}
+.lp-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px -3px rgba(0,0,0,0.08);
+}
+.lp-metric-lbl {
+  font-size: 10.5px;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+.lp-metric-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.lp-metric-val.capaian {
+  color: var(--green);
+}
+.lp-progress-container {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+}
+.lp-progress-title {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: var(--navy);
+}
+.lp-progress-bar-bg {
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.lp-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #4caf50);
+  border-radius: 6px;
+  width: 0%;
+  transition: width 1s ease-out;
+}
+.lp-section {
+  padding: 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.lp-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 20px;
+  border-left: 4px solid var(--blue);
+  padding-left: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.lp-section-title span {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: normal;
+}
+.lp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.lp-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+}
+.lp-program-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.lp-program-item:last-child {
+  border-bottom: none;
+}
+.lp-program-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 12.5px;
+  margin-bottom: 4px;
+}
+.lp-program-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+.lp-news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.lp-news-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.lp-news-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08);
+}
+.lp-news-img-box {
+  height: 160px;
+  background: #e2e8f0;
+  overflow: hidden;
+  position: relative;
+}
+.lp-news-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+.lp-news-card:hover .lp-news-img {
+  transform: scale(1.03);
+}
+.lp-news-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.lp-news-date {
+  font-size: 9.5px;
+  color: var(--blue);
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.lp-news-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.lp-news-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.btn-readmore {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+.btn-readmore:hover {
+  color: var(--blue);
+}
+.lp-footer {
+  background: var(--navy);
+  color: rgba(255,255,255,0.7);
+  padding: 24px 40px;
+  text-align: center;
+  font-size: 11px;
+  border-top: 3px solid var(--blue);
+  margin-top: 30px;
+}
+.lp-footer strong {
+  color: #fff;
+}
+.btn-back-lp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.1);
+  padding: 5px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  margin-bottom: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.2s;
+}
+.btn-back-lp:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.18);
+}
+.news-modal-hdr {
+  margin-bottom: 12px;
+}
+.news-modal-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-top: 4px;
+}
+.news-modal-img {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.news-modal-content {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #334155;
+}
+.news-modal-content p {
+  margin-bottom: 10px;
+}
+
+@media(max-width:768px) {
+  .lp-navbar {
+    padding: 10px 20px;
+  }
+  .lp-nav-links {
+    display: none;
+  }
+  .lp-hero {
+    padding: 30px 20px 20px;
+  }
+  .lp-hero h1 {
+    font-size: 20px;
+  }
+  .lp-hero-metrics {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .lp-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .lp-news-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .lp-section {
+    padding: 24px 20px;
+  }
+}
+
 /* ===== LOGIN ===== */
 .login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,#1565c0 100%);display:flex;align-items:center;justify-content:center;z-index:99999}
 .login-screen.hide{display:none}
@@ -413,22 +786,153 @@ tr:hover td{background:#fafbfc}
 <!-- PRINT -->
 <div id="print-area"></div>
 
+<!-- ============================================================ LANDING PAGE ============================================================ -->
+<div class="landing-page hide" id="landing-page">
+  <!-- Navbar -->
+  <div class="lp-navbar">
+    <div class="lp-brand">
+      <span class="lp-brand-logo">🏛️</span>
+      <span id="lp-title-brand">Portal SKPD</span>
+    </div>
+    <div class="lp-nav-links">
+      <a href="#landing-page">Beranda</a>
+      <a href="#lp-section-capaian">Capaian Kinerja</a>
+      <a href="#lp-section-profil">Profil SKPD</a>
+      <a href="#lp-section-berita">Kegiatan & Berita</a>
+      <a href="javascript:void(0)" class="btn-masuk" onclick="openLogin()">Masuk Penatausahaan →</a>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <div class="lp-hero">
+    <h1 id="lp-hero-title">Portal Kinerja & Informasi SKPD</h1>
+    <p id="lp-hero-subtitle">Transparansi Realisasi Anggaran dan Publikasi Kinerja Kegiatan pada Organisasi Perangkat Daerah secara Real-Time.</p>
+    
+    <!-- Overall Realization Stats -->
+    <div class="lp-hero-metrics">
+      <div class="lp-metric-card">
+        <div class="lp-metric-lbl">Total Anggaran (Pagu)</div>
+        <div class="lp-metric-val" id="lp-val-pagu">Rp 0</div>
+      </div>
+      <div class="lp-metric-card">
+        <div class="lp-metric-lbl">Total Realisasi Belanja</div>
+        <div class="lp-metric-val" id="lp-val-real" style="color:var(--green)">Rp 0</div>
+      </div>
+      <div class="lp-metric-card">
+        <div class="lp-metric-lbl">Persentase Capaian</div>
+        <div class="lp-metric-val capaian" id="lp-val-pct">0%</div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="lp-progress-container">
+      <div class="lp-progress-title">
+        <span>Progress Capaian Kinerja Keuangan SKPD</span>
+        <span id="lp-progress-pct-text">0%</span>
+      </div>
+      <div class="lp-progress-bar-bg">
+        <div class="lp-progress-bar-fill" id="lp-progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Capaian Kinerja Section -->
+  <div class="lp-section" id="lp-section-capaian" style="background:#f1f5f9;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
+    <div class="lp-section-title">
+      Capaian Realisasi per Program Belanja
+      <span>Terupdate langsung dari Buku Kas Daerah</span>
+    </div>
+    <div class="lp-card">
+      <div id="lp-program-list">
+        <!-- Rendered dynamically via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Profil SKPD Section -->
+  <div class="lp-section" id="lp-section-profil">
+    <div class="lp-section-title">
+      Profil Organisasi & Kepegawaian
+      <span>Mengenal SKPD kami lebih dekat</span>
+    </div>
+    <div class="lp-grid">
+      <!-- Visi Misi Card -->
+      <div class="lp-card" style="display:flex;flex-direction:column;gap:12px">
+        <h3 style="color:var(--navy);font-size:13.5px;font-weight:700;border-bottom:2px solid #e2e8f0;padding-bottom:6px">Visi & Misi</h3>
+        <div>
+          <strong style="color:var(--blue);font-size:11px;display:block;margin-bottom:2px">VISI</strong>
+          <span style="font-style:italic;font-size:12px" id="lp-skpd-visi">Terwujudnya pelayanan publik yang prima, akuntabel, dan berintegritas tinggi untuk kesejahteraan masyarakat.</span>
+        </div>
+        <div style="margin-top:4px">
+          <strong style="color:var(--blue);font-size:11px;display:block;margin-bottom:2px">MISI</strong>
+          <ol style="margin-left:14px;font-size:11.5px;line-height:1.5" id="lp-skpd-misi">
+            <li>Menyelenggarakan tata kelola pemerintahan yang transparan dan efisien.</li>
+            <li>Mengoptimalkan pengelolaan sumber daya anggaran daerah secara tepat guna.</li>
+            <li>Meningkatkan kualitas dan jangkauan pelayanan publik bagi seluruh warga.</li>
+          </ol>
+        </div>
+      </div>
+      <!-- PPTK Pejabat Card -->
+      <div class="lp-card" style="display:flex;flex-direction:column">
+        <h3 style="color:var(--navy);font-size:13.5px;font-weight:700;border-bottom:2px solid #e2e8f0;padding-bottom:6px;margin-bottom:10px">Daftar PPTK Pelaksana Kegiatan</h3>
+        <div style="flex:1;overflow-y:auto;max-height:160px;font-size:12px" id="lp-pptk-list">
+          <!-- Rendered dynamically via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kegiatan & Berita Section -->
+  <div class="lp-section" id="lp-section-berita" style="background:#f1f5f9;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
+    <div class="lp-section-title">
+      Kegiatan & Berita Terupdate SKPD
+      <span>Publikasi Kinerja Publik SKPD</span>
+    </div>
+    <div class="lp-news-grid" id="lp-news-container">
+      <!-- Rendered dynamically via JS -->
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="lp-footer">
+    <strong id="lp-footer-skpd">Organisasi Perangkat Daerah</strong><br>
+    <span id="lp-footer-pemda">Pemerintah Daerah</span> &bull; Tahun Anggaran <span id="lp-footer-ta">2026</span><br>
+    <span style="opacity:0.6;margin-top:6px;display:block">Layanan Informasi Publik SIPKeu Pro &bull; Portal Informasi Kinerja SKPD Terbuka</span>
+  </div>
+</div>
+
+<!-- Modal Detail Berita -->
+<div class="modal-bg" id="modal-berita" style="z-index:100000;">
+  <div class="modal-box" style="width:600px;max-width:95%">
+    <div class="modal-hdr" style="padding-bottom:8px">
+      <div style="font-size:14px;font-weight:700;color:var(--navy)">Detail Berita Kegiatan</div>
+      <button class="btn-close" onclick="closeNewsDetail()" style="margin-left:auto">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-berita-body" style="max-height:70vh;overflow-y:auto;padding-top:8px">
+      <!-- Rendered dynamically -->
+    </div>
+  </div>
+</div>
+
 <!-- ============================================================ LOGIN ============================================================ -->
 <div class="login-screen" id="login-screen">
-  <div class="login-box">
-    <div class="login-top">
-      <div class="lt-icon">💼</div>
-      <h1>SIPKeu Pro</h1>
-      <p>Sistem Penatausahaan Keuangan SKPD Digital</p>
+  <div style="display:flex;flex-direction:column;align-items:center">
+    <div class="btn-back-lp" onclick="closeLogin()">← Kembali ke Portal Utama</div>
+    <div class="login-box">
+      <div class="login-top">
+        <div class="lt-icon">💼</div>
+        <h1>SIPKeu Pro</h1>
+        <p>Sistem Penatausahaan Keuangan SKPD Digital</p>
+      </div>
+      <div class="login-body">
+        <div class="login-err" id="login-err">Username atau password salah.</div>
+        <div class="fg"><label>Username</label><input id="l-user" placeholder="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="fg"><label>Password</label><input id="l-pass" type="password" placeholder="password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div style="height:10px"></div>
+        <button class="btn-login" onclick="doLogin()">Masuk →</button>
+      </div>
+      <div class="login-footer">SIPKeu Pro · Versi 2.0 · Data tersimpan di browser</div>
     </div>
-    <div class="login-body">
-      <div class="login-err" id="login-err">Username atau password salah.</div>
-      <div class="fg"><label>Username</label><input id="l-user" placeholder="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <div class="fg"><label>Password</label><input id="l-pass" type="password" placeholder="password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <div style="height:10px"></div>
-      <button class="btn-login" onclick="doLogin()">Masuk →</button>
-    </div>
-    <div class="login-footer">SIPKeu Pro · Versi 2.0 · Data tersimpan di browser</div>
   </div>
 </div>
 
@@ -1405,6 +1909,7 @@ function doLogin(){
   USER=acc;
   sessionStorage.setItem('sipkeu_logged_user', JSON.stringify(acc)); // Simpan session login
   document.getElementById('login-screen').classList.add('hide');
+  document.getElementById('landing-page').classList.add('hide'); // HIDE landing page
   // Check wizard
   if(!CFG.skpd){
     document.getElementById('wizard').classList.remove('done');
@@ -1417,12 +1922,15 @@ function doLogin(){
 function doLogout(){
   USER=null;
   sessionStorage.removeItem('sipkeu_logged_user'); // Hapus session login
-  document.getElementById('login-screen').classList.remove('hide');
+  document.getElementById('login-screen').classList.add('hide'); // HIDE login screen
+  document.getElementById('landing-page').classList.remove('hide'); // SHOW landing page
+  renderPublicLanding();
   document.getElementById('l-user').value='';
   document.getElementById('l-pass').value='';
 }
 
 function initApp(){
+  document.getElementById('landing-page').classList.add('hide'); // HIDE landing page
   updateSidebar();
   applyRoleUI();
   updateDashboard();
@@ -2974,6 +3482,216 @@ function cetakKendali(){
 }
 
 // ================================================================
+// PUBLIC LANDING PAGE & NEWS
+// ================================================================
+const MOCK_NEWS = [
+  {
+    id: 1,
+    title: 'Rapat Koordinasi Evaluasi Realisasi Fisik dan Keuangan SKPD',
+    date: '30 Mei 2026',
+    desc: 'Untuk mengoptimalkan capaian penyerapan anggaran program, pimpinan dinas memimpin langsung rapat koordinasi evaluasi bulanan di ruang pertemuan SKPD...',
+    content: `
+      <p><strong>GORONTALO</strong> &mdash; Kepala SKPD memimpin secara langsung Rapat Evaluasi Realisasi Fisik dan Keuangan di Ruang Pertemuan Utama Kantor SKPD. Rapat koordinasi ini dihadiri oleh seluruh Pejabat Penatausahaan Keuangan (PPK), Bendahara Pengeluaran, serta seluruh Pejabat Pelaksana Teknis Kegiatan (PPTK) di lingkungan dinas.</p>
+      <p>Dalam arahannya, pimpinan menekankan pentingnya melakukan percepatan penyelesaian tagihan belanja terutama untuk program-program fisik dan bantuan sosial yang langsung menyentuh kepentingan masyarakat. Hingga akhir triwulan ini, dinas berkomitmen penuh untuk mendorong efisiensi penyerapan dengan tetap mematuhi prinsip kehati-hatian, transparansi, dan tata kelola administrasi keuangan yang tertib.</p>
+      <p>Rapat ini juga menjadi wadah koordinasi pemecahan kendala teknis penatausahaan dari HP operator lapangan menuju server terpusat.</p>
+    `,
+    image: 'kegiatan_rapat.png'
+  },
+  {
+    id: 2,
+    title: 'Bimbingan Teknis Implementasi Aplikasi SIPKeu Pro bagi Operator',
+    date: '25 Mei 2026',
+    desc: 'Dinas menyelenggarakan bimbingan teknis intensif bagi para operator penatausahaan keuangan untuk meningkatkan keandalan pelaporan realisasi...',
+    content: `
+      <p><strong>GORONTALO</strong> &mdash; Guna meningkatkan kapasitas sumber daya manusia di bidang pengelolaan keuangan daerah, dinas menyelenggarakan Bimbingan Teknis (Bimtek) Implementasi SIPKeu Pro secara mandiri bagi para bendahara pengeluaran pembantu dan operator administrasi.</p>
+      <p>Kegiatan bimtek ini memfokuskan materi pada tata cara entry pengajuan kuitansi secara digital dari perangkat mobile (smartphone) secara real-time, proses verifikasi dokumen tagihan oleh pejabat verifikator, hingga proses penerbitan SP2D. Dengan implementasi sistem ini, diharapkan tidak ada lagi penundaan administrasi kas serta kendala tumpang tindih data kuitansi belanja dinas.</p>
+      <p>Bimtek ini dibimbing langsung oleh tim teknis pengembang sistem keuangan daerah digital.</p>
+    `,
+    image: 'kegiatan_bimtek.png'
+  },
+  {
+    id: 3,
+    title: 'Peninjauan Lapangan Kegiatan Pembangunan Fasilitas Layanan Publik',
+    date: '18 Mei 2026',
+    desc: 'Tim teknis dinas melakukan kunjungan kerja lapangan untuk memeriksa kemajuan fisik proyek infrastruktur penunjang layanan kesehatan...',
+    content: `
+      <p><strong>GORONTALO</strong> &mdash; Tim Pengendali Kegiatan melakukan peninjauan langsung (on-the-spot) ke sejumlah lokasi pelaksanaan pembangunan fisik yang dibiayai oleh APBD tahun anggaran berjalan.</p>
+      <p>Kunjungan lapangan ini bertujuan untuk mencocokkan laporan progres belanja modal yang telah diajukan kuitansinya dengan progres fisik di lapangan. Hal ini dilakukan guna mencegah terjadinya keterlambatan penyelesaian pekerjaan serta memastikan bahwa setiap rupiah anggaran yang direalisasikan benar-benar terwujud menjadi aset daerah yang berkualitas dan siap melayani kepentingan masyarakat luas secara langsung.</p>
+      <p>Tim meminta kontraktor dan pengawas lapangan untuk terus menjaga mutu pekerjaan sesuai spesifikasi teknis.</p>
+    `,
+    image: 'kegiatan_lapangan.png'
+  }
+];
+
+function openLogin() {
+  document.getElementById('login-screen').classList.remove('hide');
+  document.getElementById('l-user').focus();
+}
+
+function closeLogin() {
+  document.getElementById('login-screen').classList.add('hide');
+}
+
+function renderPublicLanding() {
+  const skpdName = CFG.skpd || 'Organisasi Perangkat Daerah';
+  const pemdaName = CFG.pemda || 'Pemerintah Daerah';
+  const taName = CFG.ta || new Date().getFullYear();
+  
+  document.getElementById('lp-title-brand').textContent = skpdName;
+  document.getElementById('lp-hero-title').innerHTML = `Portal Kinerja &amp; Realisasi Keuangan <br><span style="background:linear-gradient(135deg, var(--blue), var(--navy)); -webkit-background-clip:text; -webkit-text-fill-color:transparent">${skpdName}</span>`;
+  document.getElementById('lp-hero-subtitle').textContent = `Transparansi realisasi anggaran pendapatan dan belanja daerah pada ${skpdName} - ${pemdaName} Tahun Anggaran ${taName}.`;
+  
+  document.getElementById('lp-footer-skpd').textContent = skpdName;
+  document.getElementById('lp-footer-pemda').textContent = pemdaName;
+  document.getElementById('lp-footer-ta').textContent = taName;
+  
+  // Visi Misi
+  const visiEl = document.getElementById('lp-skpd-visi');
+  const misiEl = document.getElementById('lp-skpd-misi');
+  if (visiEl) {
+    visiEl.textContent = `Terwujudnya tata kelola keuangan yang transparan, akuntabel, dan berkinerja tinggi pada ${skpdName} demi mewujudkan pembangunan daerah yang berkelanjutan.`;
+  }
+  if (misiEl) {
+    misiEl.innerHTML = `
+      <li>Menyelenggarakan administrasi penatausahaan keuangan daerah yang tertib, efektif, dan efisien pada ${skpdName}.</li>
+      <li>Mengoptimalkan penyerapan anggaran belanja program secara tepat sasaran, akurat, dan berdaya guna.</li>
+      <li>Menyajikan laporan pertanggungjawaban kinerja keuangan yang akuntabel dan transparan sebagai wujud keterbukaan informasi publik.</li>
+    `;
+  }
+
+  // Calculate Capaian
+  const real = getReal();
+  const totalPagu = SK.reduce((sum, sk) => sum + sk.pagu, 0);
+  const totalReal = Object.values(real).reduce((a, b) => a + b, 0);
+  const totalSisa = Math.max(0, totalPagu - totalReal);
+  const pctTotal = totalPagu ? (totalReal / totalPagu * 100) : 0;
+  
+  document.getElementById('lp-val-pagu').textContent = 'Rp ' + fmtRp(totalPagu);
+  document.getElementById('lp-val-real').textContent = 'Rp ' + fmtRp(totalReal);
+  document.getElementById('lp-val-pct').textContent = pctTotal.toFixed(2) + '%';
+  document.getElementById('lp-progress-pct-text').textContent = pctTotal.toFixed(2) + '%';
+  document.getElementById('lp-progress-bar').style.width = pctTotal.toFixed(2) + '%';
+  
+  // Render Programs Capaian
+  const progData = PROG.map(p => {
+    const kegs = KEG.filter(k => k.progId === p.id);
+    const kegIds = kegs.map(k => k.id);
+    const subKegs = SK.filter(s => kegIds.includes(s.kegId));
+    const pagu = subKegs.reduce((sum, sk) => sum + sk.pagu, 0);
+    
+    let realVal = 0;
+    subKegs.forEach(s => {
+      realVal += (real[s.id] || 0);
+    });
+    
+    const pct = pagu ? (realVal / pagu * 100) : 0;
+    return {
+      kode: p.kode,
+      nama: p.nama,
+      pagu: pagu,
+      real: realVal,
+      pct: pct
+    };
+  }).filter(p => p.pagu > 0)
+  .sort((a,b) => b.pagu - a.pagu);
+  
+  const progListEl = document.getElementById('lp-program-list');
+  if (progListEl) {
+    if (progData.length === 0) {
+      progListEl.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px">Belum ada data anggaran SKPD.</div>';
+    } else {
+      progListEl.innerHTML = progData.map(p => {
+        const col = p.pct >= 80 ? 'var(--red)' : p.pct >= 50 ? 'var(--orange)' : 'var(--green)';
+        return `
+          <div class="lp-program-item">
+            <div class="lp-program-header">
+              <span>${p.kode} &ndash; ${p.nama}</span>
+              <span style="color:${col}">${p.pct.toFixed(1)}%</span>
+            </div>
+            <div class="lp-program-meta" style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span>Pagu: Rp ${fmtRp(p.pagu)}</span>
+              <span style="color:var(--green)">Realisasi: Rp ${fmtRp(p.real)}</span>
+            </div>
+            <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${p.pct.toFixed(2)}%;background:${col};border-radius:3px"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+  
+  // Render PPTK Pejabat
+  const pptkListEl = document.getElementById('lp-pptk-list');
+  if (pptkListEl) {
+    const pptkUsers = ACCOUNTS.filter(a => a.jab === 'PPTK');
+    const pptkPegs = PEG.filter(p => pptkUsers.some(u => u.username === p.user));
+    
+    if (pptkPegs.length === 0) {
+      pptkListEl.innerHTML = '<div style="color:#aaa;font-size:12px;text-align:center;padding:12px">Belum ada data PPTK terdaftar.</div>';
+    } else {
+      pptkListEl.innerHTML = pptkPegs.map(p => `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9">
+          <div>
+            <strong style="color:var(--navy);display:block">${p.nama}</strong>
+            <span style="color:#64748b;font-size:11px">NIP. ${p.nip || '–'}</span>
+          </div>
+          <div style="text-align:right;display:flex;align-items:center">
+            <span class="badge" style="background:var(--purple);color:#fff;border-radius:10px;padding:2px 8px;font-size:9.5px;font-weight:600">PPTK Pelaksana</span>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+  
+  // Render news public
+  renderPublicNews();
+}
+
+function renderPublicNews() {
+  const container = document.getElementById('lp-news-container');
+  if(!container) return;
+  
+  container.innerHTML = MOCK_NEWS.map(n => `
+    <div class="lp-news-card">
+      <div class="lp-news-img-box">
+        <img src="${n.image}" alt="${n.title}" class="lp-news-img" onerror="this.src='https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=500&q=80'">
+      </div>
+      <div class="lp-news-body">
+        <div class="lp-news-date">${n.date}</div>
+        <div class="lp-news-title">${n.title}</div>
+        <div class="lp-news-desc">${n.desc}</div>
+        <div class="btn-readmore" onclick="showNewsDetail(${n.id})">Baca Selengkapnya &rarr;</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showNewsDetail(id) {
+  const news = MOCK_NEWS.find(n => n.id === id);
+  if(!news) return;
+  
+  const body = document.getElementById('modal-berita-body');
+  if(body) {
+    body.innerHTML = `
+      <div class="news-modal-hdr">
+        <div class="lp-news-date" style="margin-bottom:4px">${news.date}</div>
+        <div class="news-modal-title">${news.title}</div>
+      </div>
+      <img src="${news.image}" alt="${news.title}" class="news-modal-img" onerror="this.src='https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=500&q=80'">
+      <div class="news-modal-content">
+        ${news.content}
+      </div>
+    `;
+  }
+  document.getElementById('modal-berita').style.display = 'flex';
+}
+
+function closeNewsDetail() {
+  document.getElementById('modal-berita').style.display = 'none';
+}
+
+// ================================================================
 // REALISASI REKENING BELANJA
 // ================================================================
 function popRealBelFilters(){
@@ -3097,7 +3815,7 @@ function renderRealBel(){
   document.getElementById('rb-sum-sisa').textContent='Rp '+fmtRp(sumSisa);
   
   if(currentRbTab==='ringkas'){
-    const aggList=Object.values(agg).sort((a,b)=>a.kode.localeCompare(b.kode));
+    const aggList=Object.values(agg).sort((a,b)=>(b.pagu-a.pagu) || a.kode.localeCompare(b.kode));
     const tbody=document.getElementById('tbody-rb-ringkas');
     if(!aggList.length){
       tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
@@ -3126,7 +3844,7 @@ function renderRealBel(){
   } else {
     // Render Detailed Listing
     const tbody=document.getElementById('tbody-rb-rinci');
-    const sortedBelList=calculatedBelList.sort((a,b)=>a.kode.localeCompare(b.kode));
+    const sortedBelList=calculatedBelList.sort((a,b)=>(b.pagu-a.pagu) || a.kode.localeCompare(b.kode));
     if(!sortedBelList.length){
       tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
       return;
@@ -4839,6 +5557,11 @@ function pullFromSupabase(isStartup = false, isBackground = false){
 
   if(!url || !key) {
     if(!isStartup) toast('Konfigurasi Supabase belum lengkap', 'warn');
+    if(isStartup && !USER) {
+      document.getElementById('login-screen').classList.add('hide');
+      document.getElementById('landing-page').classList.remove('hide');
+      renderPublicLanding();
+    }
     return;
   }
 
@@ -4886,6 +5609,11 @@ function pullFromSupabase(isStartup = false, isBackground = false){
     if(!rows || !rows.length) {
       if(!isStartup) toast('Belum ada data di cloud database', 'info');
       updateSyncStatusUI(true, 'Terhubung (Cloud Kosong)');
+      if(isStartup && !USER) {
+        document.getElementById('login-screen').classList.add('hide');
+        document.getElementById('landing-page').classList.remove('hide');
+        renderPublicLanding();
+      }
       return;
     }
 
@@ -4914,7 +5642,12 @@ function pullFromSupabase(isStartup = false, isBackground = false){
           sessionStorage.setItem('sipkeu_logged_user', JSON.stringify(USER));
         }
         document.getElementById('login-screen').classList.add('hide');
+        document.getElementById('landing-page').classList.add('hide');
         initApp();
+      } else {
+        document.getElementById('login-screen').classList.add('hide');
+        document.getElementById('landing-page').classList.remove('hide');
+        renderPublicLanding();
       }
       if(!isStartup) toast('Data berhasil disinkronkan dari cloud!', 'ok');
     }
@@ -4939,7 +5672,12 @@ function pullFromSupabase(isStartup = false, isBackground = false){
     // Jika gagal tapi user sudah punya session login sebelumnya, tetap bypass login agar bisa jalan offline
     if (isStartup && !isBackground && USER) {
       document.getElementById('login-screen').classList.add('hide');
+      document.getElementById('landing-page').classList.add('hide');
       initApp();
+    } else if (isStartup && !isBackground && !USER) {
+      document.getElementById('login-screen').classList.add('hide');
+      document.getElementById('landing-page').classList.remove('hide');
+      renderPublicLanding();
     }
 
     updateSyncStatusUI(false, 'Gagal Sinkronisasi: ' + err.message);
