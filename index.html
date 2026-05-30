@@ -866,11 +866,11 @@ tr:hover td{background:#fafbfc}
   <!-- Capaian Kinerja Section -->
   <div class="lp-section" id="lp-section-capaian" style="background:#f1f5f9;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
     <div class="lp-section-title">
-      Capaian Realisasi per Program Belanja
+      Capaian Realisasi per Sub Kegiatan
       <span>Terupdate langsung dari Buku Kas Daerah</span>
     </div>
-    <div class="lp-card">
-      <div id="lp-program-list">
+    <div class="lp-card" style="padding: 15px 20px;">
+      <div id="lp-program-list" style="max-height: 420px; overflow-y: auto; padding-right: 6px;">
         <!-- Rendered dynamically via JS -->
       </div>
     </div>
@@ -3905,48 +3905,39 @@ function renderPublicLanding() {
   document.getElementById('lp-progress-pct-text').textContent = pctTotal.toFixed(2) + '%';
   document.getElementById('lp-progress-bar').style.width = pctTotal.toFixed(2) + '%';
   
-  // Render Programs Capaian
-  const progData = PROG.map(p => {
-    const kegs = KEG.filter(k => k.progId === p.id);
-    const kegIds = kegs.map(k => k.id);
-    const subKegs = SK.filter(s => kegIds.includes(s.kegId));
-    const pagu = subKegs.reduce((sum, sk) => sum + sk.pagu, 0);
-    
-    let realVal = 0;
-    subKegs.forEach(s => {
-      realVal += (real[s.id] || 0);
-    });
-    
-    const pct = pagu ? (realVal / pagu * 100) : 0;
+  // Render Sub Kegiatan Capaian
+  const skData = SK.map(s => {
+    const realVal = real[s.id] || 0;
+    const pct = s.pagu ? (realVal / s.pagu * 100) : 0;
     return {
-      kode: p.kode,
-      nama: p.nama,
-      pagu: pagu,
+      kode: s.kode,
+      nama: s.nama,
+      pagu: s.pagu,
       real: realVal,
       pct: pct
     };
-  }).filter(p => p.pagu > 0)
+  }).filter(s => s.pagu > 0)
   .sort((a,b) => b.pagu - a.pagu);
   
   const progListEl = document.getElementById('lp-program-list');
   if (progListEl) {
-    if (progData.length === 0) {
-      progListEl.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px">Belum ada data anggaran SKPD.</div>';
+    if (skData.length === 0) {
+      progListEl.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px">Belum ada data anggaran Sub Kegiatan SKPD.</div>';
     } else {
-      progListEl.innerHTML = progData.map(p => {
-        const col = p.pct >= 80 ? 'var(--red)' : p.pct >= 50 ? 'var(--orange)' : 'var(--green)';
+      progListEl.innerHTML = skData.map(s => {
+        const col = s.pct >= 80 ? 'var(--red)' : s.pct >= 50 ? 'var(--orange)' : 'var(--green)';
         return `
           <div class="lp-program-item">
             <div class="lp-program-header">
-              <span>${p.kode} &ndash; ${p.nama}</span>
-              <span style="color:${col}">${p.pct.toFixed(1)}%</span>
+              <span>${s.kode} &ndash; ${s.nama}</span>
+              <span style="color:${col}">${s.pct.toFixed(1)}%</span>
             </div>
             <div class="lp-program-meta" style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span>Pagu: Rp ${fmtRp(p.pagu)}</span>
-              <span style="color:var(--green)">Realisasi: Rp ${fmtRp(p.real)}</span>
+              <span>Pagu: Rp ${fmtRp(s.pagu)}</span>
+              <span style="color:var(--green)">Realisasi: Rp ${fmtRp(s.real)}</span>
             </div>
             <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
-              <div style="height:100%;width:${p.pct.toFixed(2)}%;background:${col};border-radius:3px"></div>
+              <div style="height:100%;width:${s.pct.toFixed(2)}%;background:${col};border-radius:3px"></div>
             </div>
           </div>
         `;
