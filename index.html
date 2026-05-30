@@ -3160,24 +3160,19 @@ function cetakRealBel(){
   const selP=document.getElementById('rb-prog');
   const selK=document.getElementById('rb-keg');
   const selS=document.getElementById('rb-sk');
-  const cari=document.getElementById('rb-cari').value.trim();
+  const cari=document.getElementById('rb-cari')?.value||'';
   
-  const progText=selP ? selP.options[selP.selectedIndex]?.text || '' : '';
-  const kegText=selK ? selK.options[selK.selectedIndex]?.text || '' : '';
-  const skText=selS ? selS.options[selS.selectedIndex]?.text || '' : '';
+  const progText=selP&&selP.value?selP.options[selP.selectedIndex]?.text:'';
+  const kegText=selK&&selK.value?selK.options[selK.selectedIndex]?.text:'';
+  const skText=selS&&selS.value?selS.options[selS.selectedIndex]?.text:'';
   
-  const p=document.getElementById('rb-sum-pagu').textContent;
-  const r=document.getElementById('rb-sum-real').textContent;
-  const s=document.getElementById('rb-sum-sisa').textContent;
+  const p=document.getElementById('rb-sum-pagu')?.textContent||'Rp 0';
+  const r=document.getElementById('rb-sum-real')?.textContent||'Rp 0';
+  const s=document.getElementById('rb-sum-sisa')?.textContent||'Rp 0';
   
   const tabName=currentRbTab==='ringkas'?'Ringkasan per Kode Rekening':'Rincian per Sub Kegiatan';
   const tbodyId=currentRbTab==='ringkas'?'tbody-rb-ringkas':'tbody-rb-rinci';
-  const rows=document.getElementById(tbodyId).innerHTML;
-  
-  if(rows.includes('Tidak ada data') || rows.includes('Gunakan filter')){
-    toast('Tidak ada data untuk dicetak','warn');
-    return;
-  }
+  const rows=document.getElementById(tbodyId)?.innerHTML||'';
   
   const w=window.open('','_blank','width=960,height=720');
   w.document.write(`<!DOCTYPE html><html>
@@ -3206,32 +3201,32 @@ function cetakRealBel(){
 </head>
 <body>
   <h2>LAPORAN REALISASI REKENING BELANJA</h2>
-  <h3>\${CFG.pemda||'PEMERINTAH DAERAH'} &bull; \${CFG.skpd||'SKPD'} &bull; TA \${CFG.ta||''}</h3>
+  <h3>${CFG.pemda||'PEMERINTAH DAERAH'} &bull; ${CFG.skpd||'SKPD'} &bull; TA ${CFG.ta||''}</h3>
   
   <table class="meta-table">
     <tr>
       <td style="width:120px"><b>Kategori Laporan:</b></td>
-      <td>\${tabName}</td>
-      <td style="text-align:right"><b>Tanggal Cetak:</b> \${new Date().toLocaleString('id-ID')}</td>
+      <td>${tabName}</td>
+      <td style="text-align:right"><b>Tanggal Cetak:</b> ${new Date().toLocaleString('id-ID')}</td>
     </tr>
-    \${progText && selP.value ? \`<tr><td><b>Program:</b></td><td colspan="2">\${progText}</td></tr>\` : ''}
-    \${kegText && selK.value ? \`<tr><td><b>Kegiatan:</b></td><td colspan="2">\${kegText}</td></tr>\` : ''}
-    \${skText && selS.value ? \`<tr><td><b>Sub Kegiatan:</b></td><td colspan="2">\${skText}</td></tr>\` : ''}
-    \${cari ? \`<tr><td><b>Kata Kunci Cari:</b></td><td colspan="2">"\${cari}"</td></tr>\` : ''}
+    ${progText ? '<tr><td><b>Program:</b></td><td colspan="2">' + progText + '</td></tr>' : ''}
+    ${kegText ? '<tr><td><b>Kegiatan:</b></td><td colspan="2">' + kegText + '</td></tr>' : ''}
+    ${skText ? '<tr><td><b>Sub Kegiatan:</b></td><td colspan="2">' + skText + '</td></tr>' : ''}
+    ${cari ? '<tr><td><b>Kata Kunci Cari:</b></td><td colspan="2">"' + cari + '"</td></tr>' : ''}
   </table>
   
   <div class="summary-box">
     <div class="summary-item">
       <div class="summary-lbl">Total Pagu Pencarian</div>
-      <div class="summary-val">\${p}</div>
+      <div class="summary-val">${p}</div>
     </div>
     <div class="summary-item">
       <div class="summary-lbl">Total Realisasi Pencarian</div>
-      <div class="summary-val">\${r}</div>
+      <div class="summary-val">${r}</div>
     </div>
     <div class="summary-item">
       <div class="summary-lbl">Total Sisa Pencarian</div>
-      <div class="summary-val">\${s}</div>
+      <div class="summary-val">${s}</div>
     </div>
   </div>
   
@@ -3240,7 +3235,7 @@ function cetakRealBel(){
       <tr>
         <th style="width:140px">Kode Rekening</th>
         <th>Nama Rekening Belanja</th>
-        \${currentRbTab==='rinci' ? '<th>Sub Kegiatan</th>' : ''}
+        ${currentRbTab==='rinci' ? '<th>Sub Kegiatan</th>' : ''}
         <th style="text-align:right;width:110px">Pagu</th>
         <th style="text-align:right;width:110px">Realisasi</th>
         <th style="text-align:right;width:110px">Sisa Anggaran</th>
@@ -3248,11 +3243,11 @@ function cetakRealBel(){
       </tr>
     </thead>
     <tbody>
-      \${rows}
+      ${rows}
     </tbody>
   </table>
 </body>
-</html>\`);
+</html>`);
   w.document.close();
   setTimeout(()=>w.print(),500);
 }
@@ -4858,19 +4853,20 @@ function pullFromSupabase(isStartup = false, isBackground = false){
   const ind = document.getElementById('save-ind');
   if(ind) ind.innerHTML = '<span style="color:var(--purple)">📥 Loading...</span>';
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-  fetch(`${url}/rest/v1/sipkeu_state?id=eq.1`, {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
+  const fetchOpts = {
     method: 'GET',
     headers: {
       'apikey': key,
       'Authorization': `Bearer ${key}`
-    },
-    signal: controller.signal
-  })
+    }
+  };
+  if (controller) fetchOpts.signal = controller.signal;
+
+  fetch(`${url}/rest/v1/sipkeu_state?id=eq.1`, fetchOpts)
   .then(res => {
-    clearTimeout(timeoutId);
+    if (timeoutId) clearTimeout(timeoutId);
     if(!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
   })
@@ -4926,7 +4922,7 @@ function pullFromSupabase(isStartup = false, isBackground = false){
     updateSyncStatusUI(true, 'Terhubung & Tersinkronisasi');
   })
   .catch(err => {
-    clearTimeout(timeoutId);
+    if (timeoutId) clearTimeout(timeoutId);
     console.warn('Sync pull gagal:', err);
     if(ind) {
       ind.innerHTML = '<span style="color:#bbb;font-size:10px">💾 Auto-save aktif</span>';
