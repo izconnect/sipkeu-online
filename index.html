@@ -1176,6 +1176,11 @@ const ROLE_COLOR={Admin:'#1976d2',PA:'#c62828',KPA:'#e65100',PPK:'#1565c0',BP:'#
 const ROLE_EMOJI={Admin:'⚙️',PA:'👨‍💼',KPA:'👩‍💼',PPK:'📋',BP:'💰',BPP:'💵',PPTK:'⚙️',Verifikator:'🔍'};
 
 function doLogin(){
+  const loginBtn = document.querySelector('.btn-login');
+  if (loginBtn && loginBtn.disabled) {
+    toast('Sedang menghubungkan ke database cloud, mohon tunggu sebentar...', 'warn');
+    return;
+  }
   const u=document.getElementById('l-user').value.trim().toLowerCase();
   const p=document.getElementById('l-pass').value;
   const acc=ACCOUNTS.find(a=>a.username.toLowerCase()===u&&a.password===p);
@@ -4291,9 +4296,20 @@ function pushToSupabase(){
 function pullFromSupabase(isStartup = false){
   const url = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') ? SUPABASE_URL : localStorage.getItem('sipkeu_sync_url');
   const key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '') ? SUPABASE_KEY : localStorage.getItem('sipkeu_sync_key');
+  
+  const loginBtn = document.querySelector('.btn-login');
+
   if(!url || !key) {
     if(!isStartup) toast('Konfigurasi Supabase belum lengkap', 'warn');
     return;
+  }
+
+  // Jika startup, disable tombol login dan ubah textnya
+  if (isStartup && loginBtn) {
+    loginBtn.disabled = true;
+    loginBtn.style.opacity = '0.6';
+    loginBtn.style.cursor = 'not-allowed';
+    loginBtn.textContent = '🔌 Menghubungkan ke Database...';
   }
 
   const ind = document.getElementById('save-ind');
@@ -4314,6 +4330,15 @@ function pullFromSupabase(isStartup = false){
     if(ind) {
       ind.innerHTML = '<span style="color:#bbb;font-size:10px">💾 Auto-save aktif</span>';
     }
+
+    // Enable kembali tombol login setelah data diambil
+    if (loginBtn) {
+      loginBtn.disabled = false;
+      loginBtn.style.opacity = '1';
+      loginBtn.style.cursor = 'pointer';
+      loginBtn.textContent = 'Masuk →';
+    }
+
     if(!rows || !rows.length) {
       if(!isStartup) toast('Belum ada data di cloud database', 'info');
       updateSyncStatusUI(true, 'Terhubung (Cloud Kosong)');
@@ -4337,6 +4362,15 @@ function pullFromSupabase(isStartup = false){
     if(ind) {
       ind.innerHTML = '<span style="color:#bbb;font-size:10px">💾 Auto-save aktif</span>';
     }
+
+    // Enable kembali tombol login meskipun gagal (agar tetap bisa login offline jika database error)
+    if (loginBtn) {
+      loginBtn.disabled = false;
+      loginBtn.style.opacity = '1';
+      loginBtn.style.cursor = 'pointer';
+      loginBtn.textContent = 'Masuk →';
+    }
+
     updateSyncStatusUI(false, 'Gagal Sinkronisasi: ' + err.message);
   });
 }
