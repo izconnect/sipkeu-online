@@ -1136,6 +1136,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'Gorontalo',prov:'',logo:''};
 let PROG=[],KEG=[],SK=[],BEL=[],PEG=[],TAGIHAN=[],TAGIHAN_GU=[],SPJGU=[],SP2D=[];
 let noUrut=1,noUrutGU=1,noUrutSPJ=1;
+let lastPulledAt='';
 let editIds={prog:null,keg:null,sk:null,bel:null,peg:null};
 let activeTab='single',curSkId='',curSkIdGU='',wizStep=0;
 let importData=null,activeRankTab='high';
@@ -3629,7 +3630,7 @@ function impReset(){importData=null;document.getElementById('imp-status').style.
 // ================================================================
 const STORAGE_KEY = 'sipkeu_pro_data_v2';
 
-function saveData(){
+function saveData(localOnly = false){
   try{
     const payload={
       CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
@@ -3637,8 +3638,14 @@ function saveData(){
       noUrut,noUrutGU,noUrutSPJ,
       savedAt: new Date().toISOString()
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    pushToSupabase();
+    const isHardcoded = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') && (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '');
+    const syncUrl = isHardcoded ? SUPABASE_URL : (localStorage.getItem('sipkeu_sync_url') || '');
+    const syncKey = isHardcoded ? SUPABASE_KEY : (localStorage.getItem('sipkeu_sync_key') || '');
+    if(syncUrl && syncKey && !localOnly) {
+      pushToSupabase();
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    }
     return true;
   }catch(e){
     console.warn('Save gagal:',e);
@@ -3646,11 +3653,14 @@ function saveData(){
   }
 }
 
-function loadData(){
+function loadData(cloudState = null){
   try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(!raw) return false;
-    const d=JSON.parse(raw);
+    let d = cloudState;
+    if(!d) {
+      const raw=localStorage.getItem(STORAGE_KEY);
+      if(!raw) return false;
+      d=JSON.parse(raw);
+    }
     if(d.CFG) CFG=d.CFG;
     if(d.PROG) PROG=d.PROG;
     if(d.KEG)  KEG=d.KEG;
@@ -4036,31 +4046,54 @@ function injectStoragePanel(){
   const info=getStorageInfo();
   const savedStr=info?.savedAt?new Date(info.savedAt).toLocaleString('id-ID'):'Belum pernah disimpan';
   const sizeStr=info?info.sizeKB+' KB':'–';
+  
+  const isHardcoded = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') && (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '');
+
   if(!existing){
     const panel=document.createElement('div');
     panel.id='storage-panel';
     panel.className='card';
     panel.style.borderTop='3px solid var(--green)';
-    panel.innerHTML=`
-      <div class="card-hdr"><div class="card-title">💾 Manajemen Data & Backup</div></div>
-      <div style="background:#e8f5e9;border-radius:6px;padding:10px 13px;margin-bottom:13px;font-size:12px;color:#1b5e20">
-        <strong>Status Penyimpanan:</strong> Data otomatis tersimpan di browser (localStorage) setiap ada perubahan.<br>
-        <span id="sp-info" style="margin-top:4px;display:block">📦 Ukuran: <strong>${sizeStr}</strong> &nbsp;|&nbsp; 💾 Terakhir: <strong>${savedStr}</strong></span>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        <button class="btn btn-success" onclick="saveData();injectStoragePanel();toast('Data tersimpan manual','ok')">💾 Simpan Sekarang</button>
-        <button class="btn btn-primary" onclick="exportData()">📤 Ekspor Backup (.json)</button>
-        <label class="btn btn-info" style="cursor:pointer">📥 Import dari Backup<input type="file" accept=".json" style="display:none" onchange="importDataJSON(this.files[0])"></label>
-      </div>
-      <div style="padding:10px 13px;background:#fff8e1;border-radius:6px;font-size:11.5px;color:#e65100;margin-bottom:10px">
-        ⚠️ <strong>Penting:</strong> localStorage terikat pada browser & perangkat yang sama.
-        Gunakan <strong>Ekspor Backup</strong> rutin untuk backup ke file sebelum hapus cache browser.
-      </div>
-      <button class="btn btn-danger btn-sm" onclick="clearData()">🗑 Reset Semua Data</button>
-    `;
+    
+    if (isHardcoded) {
+      panel.innerHTML=`
+        <div class="card-hdr"><div class="card-title">💾 Manajemen Data & Backup</div></div>
+        <div style="background:#e0f7fa;border-radius:6px;padding:10px 13px;margin-bottom:13px;font-size:12px;color:#006064">
+          <strong>Penyimpanan Utama:</strong> Database Online (Supabase). Semua data disimpan terpusat di cloud.<br>
+          <span style="margin-top:4px;display:block">💾 Terakhir Diunggah: <strong id="sp-info-online">${lastPulledAt?new Date(lastPulledAt).toLocaleString('id-ID'):'–'}</strong></span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-success" onclick="saveData();toast('Mendorong data ke cloud...','info')">💾 Simpan Sekarang</button>
+          <button class="btn btn-primary" onclick="exportData()">📤 Ekspor Backup (.json)</button>
+          <label class="btn btn-info" style="cursor:pointer">📥 Import dari Backup<input type="file" accept=".json" style="display:none" onchange="importDataJSON(this.files[0])"></label>
+        </div>
+        <div style="padding:10px 13px;background:#fff8e1;border-radius:6px;font-size:11.5px;color:#e65100;margin-bottom:10px">
+          ⚠️ <strong>Penting:</strong> Aplikasi ini berjalan secara online.
+          Gunakan <strong>Ekspor Backup</strong> rutin untuk mengamankan data Anda ke komputer lokal dalam bentuk file `.json`.
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="clearData()">🗑 Reset Semua Data</button>
+      `;
+    } else {
+      panel.innerHTML=`
+        <div class="card-hdr"><div class="card-title">💾 Manajemen Data & Backup</div></div>
+        <div style="background:#e8f5e9;border-radius:6px;padding:10px 13px;margin-bottom:13px;font-size:12px;color:#1b5e20">
+          <strong>Status Penyimpanan:</strong> Data otomatis tersimpan di browser (localStorage) setiap ada perubahan.<br>
+          <span id="sp-info" style="margin-top:4px;display:block">📦 Ukuran: <strong>${sizeStr}</strong> &nbsp;|&nbsp; 💾 Terakhir: <strong>${savedStr}</strong></span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-success" onclick="saveData();injectStoragePanel();toast('Data tersimpan manual','ok')">💾 Simpan Sekarang</button>
+          <button class="btn btn-primary" onclick="exportData()">📤 Ekspor Backup (.json)</button>
+          <label class="btn btn-info" style="cursor:pointer">📥 Import dari Backup<input type="file" accept=".json" style="display:none" onchange="importDataJSON(this.files[0])"></label>
+        </div>
+        <div style="padding:10px 13px;background:#fff8e1;border-radius:6px;font-size:11.5px;color:#e65100;margin-bottom:10px">
+          ⚠️ <strong>Penting:</strong> localStorage terikat pada browser & perangkat yang sama.
+          Gunakan <strong>Ekspor Backup</strong> rutin untuk backup ke file sebelum hapus cache browser.
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="clearData()">🗑 Reset Semua Data</button>
+      `;
+    }
     document.getElementById('page-setup-skpd').appendChild(panel);
 
-    const isHardcoded = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') && (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '');
     const syncUrl = isHardcoded ? SUPABASE_URL : (localStorage.getItem('sipkeu_sync_url') || '');
     const syncKey = isHardcoded ? SUPABASE_KEY : (localStorage.getItem('sipkeu_sync_key') || '');
     const hasConfig = syncUrl && syncKey;
@@ -4097,7 +4130,7 @@ function injectStoragePanel(){
           🌐 <strong>Ingin Mengonlinekan Aplikasi dengan Satu Database Terpusat?</strong><br>
           Agar aplikasi bisa dipakai online bersama oleh banyak operator (seperti toko online):
           <ol style="margin:5px 0 0 15px;padding:0">
-            <li>Buka file HTML ini menggunakan text editor (seperti Notepad atau VS Code).</li>
+            <li>Buka file HTML ini menggunakan text actor (seperti Notepad atau VS Code).</li>
             <li>Cari baris <code>const SUPABASE_URL = ''</code> dan <code>const SUPABASE_KEY = ''</code> (sekitar baris 1130).</li>
             <li>Isikan URL & Kunci API Supabase Anda di sana, lalu simpan file.</li>
             <li>Unggah file HTML ini ke web hosting gratis (seperti Netlify, GitHub Pages, dll) agar bisa diakses oleh siapa saja secara online.</li>
@@ -4116,8 +4149,13 @@ function injectStoragePanel(){
     }
     document.getElementById('page-setup-skpd').appendChild(syncPanel);
   } else {
-    const el=document.getElementById('sp-info');
-    if(el) el.innerHTML=`📦 Ukuran: <strong>${sizeStr}</strong> &nbsp;|&nbsp; 💾 Terakhir: <strong>${savedStr}</strong>`;
+    if (isHardcoded) {
+      const el = document.getElementById('sp-info-online');
+      if (el) el.textContent = lastPulledAt ? new Date(lastPulledAt).toLocaleString('id-ID') : '–';
+    } else {
+      const el=document.getElementById('sp-info');
+      if(el) el.innerHTML=`📦 Ukuran: <strong>${sizeStr}</strong> &nbsp;|&nbsp; 💾 Terakhir: <strong>${savedStr}</strong>`;
+    }
   }
 }
 
@@ -4167,42 +4205,86 @@ function pushToSupabase(){
   const key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '') ? SUPABASE_KEY : localStorage.getItem('sipkeu_sync_key');
   if(!url || !key) return;
 
-  const payload={
-    CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
-    TAGIHAN,TAGIHAN_GU,SPJGU,SP2D,
-    noUrut,noUrutGU,noUrutSPJ,
-    savedAt: new Date().toISOString()
-  };
-
   const ind = document.getElementById('save-ind');
-  if(ind) ind.innerHTML = '<span style="color:var(--purple)">🔄 Syncing...</span>';
+  if(ind) ind.innerHTML = '<span style="color:var(--purple)">🔄 Memeriksa cloud...</span>';
 
-  fetch(`${url}/rest/v1/sipkeu_state`, {
-    method: 'POST',
+  // Cek konflik timestamp sebelum melakukan push data
+  fetch(`${url}/rest/v1/sipkeu_state?id=eq.1`, {
+    method: 'GET',
     headers: {
       'apikey': key,
-      'Authorization': `Bearer ${key}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'resolution=merge-duplicates,return=representation'
-    },
-    body: JSON.stringify({
-      id: 1,
-      data: payload,
-      updated_at: new Date().toISOString()
-    })
+      'Authorization': `Bearer ${key}`
+    }
   })
   .then(res => {
     if(!res.ok) throw new Error('HTTP ' + res.status);
-    if(ind) {
-      ind.innerHTML = '<span style="color:var(--green)">✅ Synced</span>';
-      setTimeout(()=>{if(ind)ind.innerHTML='<span style="color:#bbb;font-size:10px">💾 Auto-save aktif</span>';},2500);
+    return res.json();
+  })
+  .then(rows => {
+    let hasConflict = false;
+    if(rows && rows.length) {
+      const cloudSavedAt = rows[0].data.savedAt || '';
+      if(lastPulledAt && cloudSavedAt && cloudSavedAt !== lastPulledAt) {
+        hasConflict = true;
+      }
     }
-    updateSyncStatusUI(true, 'Terhubung & Tersinkronisasi');
+
+    if(hasConflict) {
+      if(ind) ind.innerHTML = '<span style="color:var(--red)">⚠ Tabrakan Data</span>';
+      alert('⚠️ Tabrakan Data Terdeteksi!\n\nOperator lain baru saja menyimpan data baru ke cloud database. Untuk mencegah data terhapus, aplikasi akan memuat data terbaru dari cloud terlebih dahulu.\n\nSilakan input ulang transaksi terakhir Anda setelah data diperbarui.');
+      pullFromSupabase(false);
+      return;
+    }
+
+    const newSavedAt = new Date().toISOString();
+    const payload={
+      CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
+      TAGIHAN,TAGIHAN_GU,SPJGU,SP2D,
+      noUrut,noUrutGU,noUrutSPJ,
+      savedAt: newSavedAt
+    };
+
+    if(ind) ind.innerHTML = '<span style="color:var(--purple)">🔄 Syncing...</span>';
+
+    fetch(`${url}/rest/v1/sipkeu_state`, {
+      method: 'POST',
+      headers: {
+        'apikey': key,
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=representation'
+      },
+      body: JSON.stringify({
+        id: 1,
+        data: payload,
+        updated_at: newSavedAt
+      })
+    })
+    .then(res => {
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      lastPulledAt = newSavedAt;
+      
+      const isHardcoded = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') && (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '');
+      if(!isHardcoded) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      }
+
+      if(ind) {
+        ind.innerHTML = '<span style="color:var(--green)">✅ Synced</span>';
+        setTimeout(()=>{if(ind)ind.innerHTML='<span style="color:#bbb;font-size:10px">💾 Auto-save aktif</span>';},2500);
+      }
+      updateSyncStatusUI(true, 'Terhubung & Tersinkronisasi');
+    })
+    .catch(err => {
+      console.warn('Sync push gagal:', err);
+      if(ind) ind.innerHTML = '<span style="color:var(--red)">⚠ Sync Failed</span>';
+      updateSyncStatusUI(false, 'Gagal Sinkronisasi: ' + err.message);
+    });
   })
   .catch(err => {
-    console.warn('Sync push gagal:', err);
-    if(ind) ind.innerHTML = '<span style="color:var(--red)">⚠ Sync Failed</span>';
-    updateSyncStatusUI(false, 'Gagal Sinkronisasi: ' + err.message);
+    console.warn('Conflict check gagal:', err);
+    if(ind) ind.innerHTML = '<span style="color:var(--red)">⚠ Check Failed</span>';
+    updateSyncStatusUI(false, 'Gagal Memeriksa Konflik: ' + err.message);
   });
 }
 
@@ -4239,18 +4321,15 @@ function pullFromSupabase(isStartup = false){
     }
 
     const cloudState = rows[0].data;
-    const localRaw = localStorage.getItem(STORAGE_KEY);
-    const localState = localRaw ? JSON.parse(localRaw) : null;
-
     const cloudSavedAt = cloudState.savedAt || '';
-    const localSavedAt = localState ? (localState.savedAt || '') : '';
 
-    if(!isStartup || (cloudSavedAt && cloudSavedAt !== localSavedAt)) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudState));
-      loadData();
-      if(typeof initApp === 'function') initApp();
-      toast('Data berhasil disinkronkan dari cloud!', 'ok');
-    }
+    // Load cloudState langsung ke memory variables (tanpa menyimpannya ke local storage)
+    loadData(cloudState);
+    lastPulledAt = cloudSavedAt;
+    
+    if(typeof initApp === 'function') initApp();
+    if(!isStartup) toast('Data berhasil disinkronkan dari cloud!', 'ok');
+    
     updateSyncStatusUI(true, 'Terhubung & Tersinkronisasi');
   })
   .catch(err => {
