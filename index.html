@@ -865,9 +865,15 @@ tr:hover td{background:#fafbfc}
 
   <!-- Capaian Kinerja Section -->
   <div class="lp-section" id="lp-section-capaian" style="background:#f1f5f9;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">
-    <div class="lp-section-title">
-      Capaian Realisasi per Sub Kegiatan
-      <span>Terupdate langsung dari Buku Kas Daerah</span>
+    <div class="lp-section-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div>
+        Capaian Realisasi per Sub Kegiatan
+        <span style="display:block; margin-top:2px;">Terupdate langsung dari Buku Kas Daerah</span>
+      </div>
+      <div class="segment-control" style="display:inline-flex; background:#e2e8f0; border-radius:8px; padding:3px; font-size:11px; font-weight:600;">
+        <button id="btn-model-sp2d" class="btn-segment" onclick="setRealModel('sp2d')" style="border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-family:inherit; transition:background 0.2s; background:#fff; color:var(--navy); box-shadow:0 1px 3px rgba(0,0,0,0.1);">Versi SP2D</button>
+        <button id="btn-model-estimasi" class="btn-segment" onclick="setRealModel('estimasi')" style="border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-family:inherit; transition:background 0.2s; background:none; color:#64748b;">Versi Estimasi</button>
+      </div>
     </div>
     <div class="lp-card" style="padding: 15px 20px;">
       <div id="lp-program-list" style="max-height: 420px; overflow-y: auto; padding-right: 6px;">
@@ -1351,7 +1357,13 @@ tr:hover td{background:#fafbfc}
       <div class="tsub" id="pg-sub">–</div>
     </div>
   </div>
-  <div style="display:flex;gap:7px" id="topbar-actions"></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="segment-control" style="display:inline-flex; background:#e2e8f0; border-radius:8px; padding:3px; font-size:11px; font-weight:600; margin-right:8px;">
+      <button id="adm-model-sp2d" class="btn-segment" onclick="setRealModel('sp2d')" style="border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-family:inherit; transition:background 0.2s; background:#fff; color:var(--navy); box-shadow:0 1px 3px rgba(0,0,0,0.1);">Versi SP2D</button>
+      <button id="adm-model-estimasi" class="btn-segment" onclick="setRealModel('estimasi')" style="border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-family:inherit; transition:background 0.2s; background:none; color:#64748b;">Versi Estimasi</button>
+    </div>
+    <div style="display:flex;gap:7px" id="topbar-actions"></div>
+  </div>
 </div>
 <div class="content">
 
@@ -1950,6 +1962,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'Gorontalo',prov:'',logo:''};
 let PROG=[],KEG=[],SK=[],BEL=[],PEG=[],TAGIHAN=[],TAGIHAN_GU=[],SPJGU=[],SP2D=[],NEWS=[];
 let noUrut=1,noUrutGU=1,noUrutSPJ=1;
+let REAL_MODEL = 'sp2d';
 let lastPulledAt='';
 let hasUnsavedChanges=false;
 let editIds={prog:null,keg:null,sk:null,bel:null,peg:null};
@@ -2157,6 +2170,28 @@ function closeSidebar(){
 }
 function pg(id){
   closeSidebar();
+  
+  // Sync admin segment buttons
+  const btnSp2dAdm = document.getElementById('adm-model-sp2d');
+  const btnEstAdm = document.getElementById('adm-model-estimasi');
+  if (btnSp2dAdm && btnEstAdm) {
+    if (REAL_MODEL === 'sp2d') {
+      btnSp2dAdm.style.background = '#fff';
+      btnSp2dAdm.style.color = 'var(--navy)';
+      btnSp2dAdm.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      btnEstAdm.style.background = 'none';
+      btnEstAdm.style.color = '#64748b';
+      btnEstAdm.style.boxShadow = 'none';
+    } else {
+      btnEstAdm.style.background = '#fff';
+      btnEstAdm.style.color = 'var(--navy)';
+      btnEstAdm.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      btnSp2dAdm.style.background = 'none';
+      btnSp2dAdm.style.color = '#64748b';
+      btnSp2dAdm.style.boxShadow = 'none';
+    }
+  }
+
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id)?.classList.add('active');
@@ -3303,20 +3338,94 @@ const stEmoji = new Proxy(stEmojiRaw, {
 const stOleh={Draft:'PPTK','Menunggu Verifikator':'Verifikator','Menunggu PPK':'PPK','Menunggu BPP':'BPP','Di SIPD':'Bendahara','SP2D Terbit':'KPPD'};
 
 
-// Helper: hitung realisasi per skId
-// Aturan: LS SP2D Terbit = masuk realisasi
-//         SPJ-GU SP2D Terbit = masuk realisasi (sudah dipertanggungjawabkan)
-//         GU belum SPJ / SPJ belum SP2D = TIDAK masuk realisasi
-function getReal(tagList){
-  const real={};
-  (tagList||TAGIHAN).forEach(t=>{
-    if(!t.skId) return;
-    if(t.status==='Ditolak') return;
-    if(t.jenis==='GU') return; // GU individual tidak masuk, yang masuk hanya via SPJ
-    if(t.jenis==='SPJ-GU' && t.status!=='SP2D Terbit') return; // SPJ GU hanya masuk jika SP2D Terbit
-    real[t.skId]=(real[t.skId]||0)+t.jumlah;
+// Helper: hitung realisasi per skId berdasarkan model realisasi terpilih
+function getReal(tagList) {
+  if (REAL_MODEL === 'estimasi') {
+    return getRealEstimasi(tagList);
+  } else {
+    return getRealSP2D(tagList);
+  }
+}
+
+// Model 1: Realisasi Anggaran versi SP2D (Anggaran dikurangi hanya yang statusnya SP2D Terbit)
+function getRealSP2D(tagList) {
+  const real = {};
+  (tagList || TAGIHAN).forEach(t => {
+    if (!t.skId) return;
+    if (t.status !== 'SP2D Terbit') return;
+    if (t.jenis === 'GU') return;
+    real[t.skId] = (real[t.skId] || 0) + t.jumlah;
   });
   return real;
+}
+
+// Model 2: Realisasi Anggaran versi Estimasi (Tagihan dalam proses + Tagihan SP2D)
+function getRealEstimasi(tagList) {
+  const real = {};
+  (tagList || TAGIHAN).forEach(t => {
+    if (!t.skId) return;
+    if (t.status === 'Ditolak' || t.status === 'Draft') return;
+    if (t.jenis === 'GU') return;
+    if (t.jenis === 'SPJ-GU' && !['SP2D Terbit', 'SPJ GU Dibuat'].includes(t.status)) return;
+    real[t.skId] = (real[t.skId] || 0) + t.jumlah;
+  });
+  return real;
+}
+
+function setRealModel(model) {
+  REAL_MODEL = model;
+  
+  // Update segment control buttons on landing page
+  const btnSp2d = document.getElementById('btn-model-sp2d');
+  const btnEst = document.getElementById('btn-model-estimasi');
+  if (btnSp2d && btnEst) {
+    if (model === 'sp2d') {
+      btnSp2d.style.background = '#fff';
+      btnSp2d.style.color = 'var(--navy)';
+      btnSp2d.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      btnEst.style.background = 'none';
+      btnEst.style.color = '#64748b';
+      btnEst.style.boxShadow = 'none';
+    } else {
+      btnEst.style.background = '#fff';
+      btnEst.style.color = 'var(--navy)';
+      btnEst.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      btnSp2d.style.background = 'none';
+      btnSp2d.style.color = '#64748b';
+      btnSp2d.style.boxShadow = 'none';
+    }
+  }
+
+  // Update segment control buttons in admin topbar
+  const btnSp2dAdm = document.getElementById('adm-model-sp2d');
+  const btnEstAdm = document.getElementById('adm-model-estimasi');
+  if (btnSp2dAdm && btnEstAdm) {
+    if (model === 'sp2d') {
+      btnSp2dAdm.style.background = '#fff';
+      btnSp2dAdm.style.color = 'var(--navy)';
+      btnSp2dAdm.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      btnEstAdm.style.background = 'none';
+      btnEstAdm.style.color = '#64748b';
+      btnEstAdm.style.boxShadow = 'none';
+    } else {
+      btnEstAdm.style.background = '#fff';
+      btnEstAdm.style.color = 'var(--navy)';
+      btnEstAdm.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      btnSp2dAdm.style.background = 'none';
+      btnSp2dAdm.style.color = '#64748b';
+      btnSp2dAdm.style.boxShadow = 'none';
+    }
+  }
+  
+  // Re-render current visible screens
+  renderPublicLanding();
+  if (USER) {
+    updateDashboard();
+    if (document.getElementById('page-infografis')?.classList.contains('active')) renderInfografis();
+    if (document.getElementById('page-evaluasi')?.classList.contains('active')) renderEvaluasi();
+    if (document.getElementById('page-real-bel')?.classList.contains('active')) renderRealBel();
+    if (document.getElementById('page-kendali')?.classList.contains('active')) renderKendali();
+  }
 }
 
 // Helper: hitung semua tagihan in-progress (belum selesai, tidak ditolak)
@@ -3866,6 +3975,27 @@ function closeLogin() {
 }
 
 function renderPublicLanding() {
+  // Sync segment buttons on landing page
+  const btnSp2d = document.getElementById('btn-model-sp2d');
+  const btnEst = document.getElementById('btn-model-estimasi');
+  if (btnSp2d && btnEst) {
+    if (REAL_MODEL === 'sp2d') {
+      btnSp2d.style.background = '#fff';
+      btnSp2d.style.color = 'var(--navy)';
+      btnSp2d.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      btnEst.style.background = 'none';
+      btnEst.style.color = '#64748b';
+      btnEst.style.boxShadow = 'none';
+    } else {
+      btnEst.style.background = '#fff';
+      btnEst.style.color = 'var(--navy)';
+      btnEst.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      btnSp2d.style.background = 'none';
+      btnSp2d.style.color = '#64748b';
+      btnSp2d.style.boxShadow = 'none';
+    }
+  }
+
   const skpdName = CFG.skpd || 'Organisasi Perangkat Daerah';
   const pemdaName = CFG.pemda || 'Pemerintah Daerah';
   const taName = CFG.ta || new Date().getFullYear();
