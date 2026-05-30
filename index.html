@@ -4858,14 +4858,19 @@ function pullFromSupabase(isStartup = false, isBackground = false){
   const ind = document.getElementById('save-ind');
   if(ind) ind.innerHTML = '<span style="color:var(--purple)">📥 Loading...</span>';
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 4000);
+
   fetch(`${url}/rest/v1/sipkeu_state?id=eq.1`, {
     method: 'GET',
     headers: {
       'apikey': key,
       'Authorization': `Bearer ${key}`
-    }
+    },
+    signal: controller.signal
   })
   .then(res => {
+    clearTimeout(timeoutId);
     if(!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
   })
@@ -4921,6 +4926,7 @@ function pullFromSupabase(isStartup = false, isBackground = false){
     updateSyncStatusUI(true, 'Terhubung & Tersinkronisasi');
   })
   .catch(err => {
+    clearTimeout(timeoutId);
     console.warn('Sync pull gagal:', err);
     if(ind) {
       ind.innerHTML = '<span style="color:#bbb;font-size:10px">💾 Auto-save aktif</span>';
