@@ -739,6 +739,7 @@ tr:hover td{background:#fafbfc}
     <div class="nav-lbl">Laporan</div>
     <div class="nav-item" onclick="pg('buku')"><span class="ni">📒</span> Buku Besar</div>
     <div class="nav-item" onclick="pg('evaluasi')"><span class="ni">🎯</span> Evaluasi</div>
+    <div class="nav-item" onclick="pg('real-bel')"><span class="ni">🧾</span> Realisasi Rekening</div>
   </div>
   <div class="nav-divider"></div>
   <div class="nav-sec nav-admin" id="nav-setup" style="display:none">
@@ -1138,6 +1139,74 @@ tr:hover td{background:#fafbfc}
   </div>
 </div>
 
+<!-- ==================== REALISASI REKENING BELANJA ==================== -->
+<div class="page" id="page-real-bel">
+  <div class="filter-bar">
+    <select id="rb-prog" onchange="rbLoadKeg()" style="max-width:200px"><option value="">-- Semua Program --</option></select>
+    <select id="rb-keg" onchange="rbLoadSK()" style="max-width:200px"><option value="">-- Semua Kegiatan --</option></select>
+    <select id="rb-sk" onchange="renderRealBel()" style="max-width:200px"><option value="">-- Semua Sub Kegiatan --</option></select>
+    <input type="text" id="rb-cari" placeholder="Cari kode/nama rekening..." oninput="renderRealBel()" style="max-width:220px">
+    <button class="btn btn-sm" onclick="rbReset()">Reset</button>
+  </div>
+
+  <div class="stat-grid" style="margin-bottom:12px">
+    <div class="stat-card c-blue">
+      <div class="stat-lbl">Total Pagu Pencarian</div>
+      <div class="stat-val" id="rb-sum-pagu" style="font-size:15px">Rp 0</div>
+    </div>
+    <div class="stat-card c-green">
+      <div class="stat-lbl">Total Realisasi Pencarian</div>
+      <div class="stat-val" id="rb-sum-real" style="font-size:15px">Rp 0</div>
+    </div>
+    <div class="stat-card c-orange">
+      <div class="stat-lbl">Total Sisa Pencarian</div>
+      <div class="stat-val" id="rb-sum-sisa" style="font-size:15px">Rp 0</div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="btn-rb-ringkas" onclick="rbSetTab('ringkas')">Ringkasan per Kode Rekening</button>
+    <button class="tab-btn" id="btn-rb-rinci" onclick="rbSetTab('rinci')">Rincian per Sub Kegiatan</button>
+  </div>
+
+  <div class="tbl-wrap" id="rb-panel-ringkas">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:180px">Kode Rekening</th>
+          <th>Nama Rekening Belanja</th>
+          <th style="text-align:right;width:140px">Total Pagu</th>
+          <th style="text-align:right;width:140px">Total Realisasi</th>
+          <th style="text-align:right;width:140px">Sisa Anggaran</th>
+          <th style="width:130px">Persentase</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-rb-ringkas">
+        <tr><td colspan="6" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-wrap" id="rb-panel-rinci" style="display:none">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:160px">Kode Rekening</th>
+          <th>Nama Rekening Belanja</th>
+          <th>Sub Kegiatan</th>
+          <th style="text-align:right;width:120px">Pagu</th>
+          <th style="text-align:right;width:120px">Realisasi</th>
+          <th style="text-align:right;width:120px">Sisa Anggaran</th>
+          <th style="width:120px">Persentase</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-rb-rinci">
+        <tr><td colspan="7" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- ==================== EVALUASI ==================== -->
 <div class="page" id="page-evaluasi">
   <div class="stat-grid">
@@ -1463,6 +1532,7 @@ const pgMeta={
   'setup-skpd':['Profil SKPD','Identitas instansi'],
   'setup-anggaran':['Setup Data Anggaran','Program › Kegiatan › Sub Kegiatan › Belanja'],
   'setup-pegawai':['Setup Data Pegawai & Akun','PA, KPA, PPK, BP, BPP, PPTK, Verifikator'],
+  'real-bel':['Realisasi Rekening Belanja','Anggaran, Realisasi, dan Sisa per Rekening'],
 };
 
 function toggleSidebar(){
@@ -1501,6 +1571,7 @@ function pg(id){
   if(id==='setup-skpd')loadSKPDForm();
   if(id==='setup-anggaran'){popAllFilters();renderProg();renderKeg();renderSK();renderBel();}
   if(id==='setup-pegawai')renderPegawai();
+  if(id==='real-bel')popRealBelFilters();
   // Storage panel – inject ke setup-skpd
   if(id==='setup-skpd') setTimeout(injectStoragePanel, 50);
 }
@@ -2896,6 +2967,189 @@ function cetakKendali(){
   <div style="text-align:center;font-size:9.5pt;margin-bottom:12px;color:#555">Filter: <strong>${filterLabel}</strong> &nbsp;|&nbsp; Dicetak: ${new Date().toLocaleString('id-ID')}</div>
   ${cards}</body></html>`);
   w.document.close();setTimeout(()=>w.print(),500);
+}
+
+// ================================================================
+// REALISASI REKENING BELANJA
+// ================================================================
+function popRealBelFilters(){
+  const selP=document.getElementById('rb-prog');
+  if(!selP)return;
+  selP.innerHTML='<option value="">-- Semua Program --</option>';
+  PROG.sort((a,b)=>a.kode.localeCompare(b.kode))
+    .forEach(p=>selP.innerHTML+=`<option value="${p.id}">${p.kode} – ${p.nama}</option>`);
+  rbLoadKeg();
+}
+
+function rbLoadKeg(){
+  const pId=document.getElementById('rb-prog').value;
+  const selK=document.getElementById('rb-keg');
+  if(!selK)return;
+  selK.innerHTML='<option value="">-- Semua Kegiatan --</option>';
+  let list=KEG;
+  if(pId)list=list.filter(k=>k.progId===pId);
+  list.sort((a,b)=>a.kode.localeCompare(b.kode))
+    .forEach(k=>selK.innerHTML+=`<option value="${k.id}">${k.kode} – ${k.nama}</option>`);
+  rbLoadSK();
+}
+
+function rbLoadSK(){
+  const kId=document.getElementById('rb-keg').value;
+  const selS=document.getElementById('rb-sk');
+  if(!selS)return;
+  selS.innerHTML='<option value="">-- Semua Sub Kegiatan --</option>';
+  let list=SK;
+  if(kId)list=list.filter(s=>s.kegId===kId);
+  list.sort((a,b)=>a.kode.localeCompare(b.kode))
+    .forEach(s=>selS.innerHTML+=`<option value="${s.id}">${s.kode} – ${s.nama}</option>`);
+  renderRealBel();
+}
+
+function rbReset(){
+  document.getElementById('rb-prog').value='';
+  document.getElementById('rb-cari').value='';
+  rbLoadKeg();
+}
+
+let currentRbTab='ringkas';
+function rbSetTab(tab){
+  currentRbTab=tab;
+  document.getElementById('btn-rb-ringkas').classList.toggle('active',tab==='ringkas');
+  document.getElementById('btn-rb-rinci').classList.toggle('active',tab==='rinci');
+  document.getElementById('rb-panel-ringkas').style.display=tab==='ringkas'?'block':'none';
+  document.getElementById('rb-panel-rinci').style.display=tab==='rinci'?'block':'none';
+  renderRealBel();
+}
+
+function renderRealBel(){
+  const fP=document.getElementById('rb-prog')?.value||'';
+  const fK=document.getElementById('rb-keg')?.value||'';
+  const fS=document.getElementById('rb-sk')?.value||'';
+  const cari=(document.getElementById('rb-cari')?.value||'').toLowerCase().trim();
+  
+  let list=BEL;
+  
+  // Filter by Program/Kegiatan/Sub Kegiatan
+  if(fS) {
+    list=list.filter(b=>b.skId===fS);
+  } else if(fK) {
+    list=list.filter(b=>SK.find(s=>s.id===b.skId)?.kegId===fK);
+  } else if(fP) {
+    const kIds=KEG.filter(k=>k.progId===fP).map(k=>k.id);
+    list=list.filter(b=>{
+      const sk=SK.find(s=>s.id===b.skId);
+      return sk&&kIds.includes(sk.kegId);
+    });
+  }
+  
+  // Filter by PPTK role limits
+  if(USER?.jab==='PPTK'){
+    const myPeg=PEG.find(x=>x.user===USER.username);
+    if(myPeg) {
+      list=list.filter(b=>SK.find(s=>s.id===b.skId)?.pptkId===myPeg.id);
+    }
+  }
+  
+  // Filter by Search Query
+  if(cari){
+    list=list.filter(b=>b.kode.toLowerCase().includes(cari)||b.nama.toLowerCase().includes(cari));
+  }
+  
+  // Compute Realizations & Aggregates
+  let sumPagu=0;
+  let sumReal=0;
+  
+  // We compute realBel lookup for each BEL
+  const calculatedBelList=list.map(b=>{
+    const rBel=TAGIHAN.filter(t=>t.skId===b.skId&&t.status==='SP2D Terbit')
+      .reduce((sum,t)=>{const item=(t.data?.items||[]).find(it=>it.kode===b.kode);return sum+(item?.jumlah||0);},0);
+    return {
+      id: b.id,
+      skId: b.skId,
+      kode: b.kode,
+      nama: b.nama,
+      pagu: b.pagu,
+      real: rBel
+    };
+  });
+  
+  // Render Aggregated/Summary per Kode Rekening
+  const agg={};
+  calculatedBelList.forEach(b=>{
+    if(!agg[b.kode]){
+      agg[b.kode]={kode:b.kode,nama:b.nama,pagu:0,real:0};
+    }
+    agg[b.kode].pagu+=b.pagu;
+    agg[b.kode].real+=b.real;
+    
+    // Sum for live summary cards
+    sumPagu+=b.pagu;
+    sumReal+=b.real;
+  });
+  
+  const sumSisa=Math.max(0,sumPagu-sumReal);
+  document.getElementById('rb-sum-pagu').textContent='Rp '+fmtRp(sumPagu);
+  document.getElementById('rb-sum-real').textContent='Rp '+fmtRp(sumReal);
+  document.getElementById('rb-sum-sisa').textContent='Rp '+fmtRp(sumSisa);
+  
+  if(currentRbTab==='ringkas'){
+    const aggList=Object.values(agg).sort((a,b)=>a.kode.localeCompare(b.kode));
+    const tbody=document.getElementById('tbody-rb-ringkas');
+    if(!aggList.length){
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
+      return;
+    }
+    tbody.innerHTML=aggList.map(a=>{
+      const sisa=Math.max(0,a.pagu-a.real);
+      const pct=a.pagu?Math.min(100,Math.round(a.real/a.pagu*100)):0;
+      const col=pct>=80?'var(--red)':pct>=50?'var(--orange)':'var(--green)';
+      return `<tr>
+        <td style="font-family:monospace;font-size:9.5px;white-space:nowrap">${a.kode}</td>
+        <td style="font-size:11.5px;font-weight:600">${a.nama}</td>
+        <td style="text-align:right;white-space:nowrap">Rp ${fmtRp(a.pagu)}</td>
+        <td style="text-align:right;white-space:nowrap;color:var(--green)">${a.real?'Rp '+fmtRp(a.real):'–'}</td>
+        <td style="text-align:right;white-space:nowrap;color:${sisa===0?'#ccc':col}">Rp ${fmtRp(sisa)}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${col};border-radius:3px"></div>
+            </div>
+            <span style="font-size:10px;font-weight:600;width:32px;text-align:right">${pct}%</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  } else {
+    // Render Detailed Listing
+    const tbody=document.getElementById('tbody-rb-rinci');
+    const sortedBelList=calculatedBelList.sort((a,b)=>a.kode.localeCompare(b.kode));
+    if(!sortedBelList.length){
+      tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
+      return;
+    }
+    tbody.innerHTML=sortedBelList.map(b=>{
+      const sk=SK.find(s=>s.id===b.skId);
+      const sisa=Math.max(0,b.pagu-b.real);
+      const pct=b.pagu?Math.min(100,Math.round(b.real/b.pagu*100)):0;
+      const col=pct>=80?'var(--red)':pct>=50?'var(--orange)':'var(--green)';
+      return `<tr>
+        <td style="font-family:monospace;font-size:9.5px;white-space:nowrap">${b.kode}</td>
+        <td>${b.nama}</td>
+        <td style="font-size:11px;color:#666">${sk?.nama||'–'} <span style="font-size:9px;color:#aaa;font-family:monospace"><br>${sk?.kode||''}</span></td>
+        <td style="text-align:right;white-space:nowrap">Rp ${fmtRp(b.pagu)}</td>
+        <td style="text-align:right;white-space:nowrap;color:var(--green)">${b.real?'Rp '+fmtRp(b.real):'–'}</td>
+        <td style="text-align:right;white-space:nowrap;color:${sisa===0?'#ccc':col}">Rp ${fmtRp(sisa)}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${col};border-radius:3px"></div>
+            </div>
+            <span style="font-size:10px;font-weight:600;width:32px;text-align:right">${pct}%</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
 }
 
 // ================================================================
