@@ -2710,16 +2710,25 @@ function showSPJGUStatus(spjId){
   document.getElementById('mst-info').innerHTML=`Status saat ini: <span class="badge bg-ppk">${spjSt}</span><br><small style="color:#888">${s.items.length} kuitansi GU · Rp ${fmtRp(s.total)}</small>`;
   document.getElementById('mst-catatan').value='';
   const opts=[];
-  if(nextSt)opts.push({s:nextSt,cls:'btn-success'});
+  if(nextSt && nextSt!=='SP2D Terbit')opts.push({s:nextSt,cls:'btn-success'});
   if(spjSt!=='Ditolak'&&spjSt!=='SP2D Terbit')opts.push({s:'Ditolak',cls:'btn-danger'});
   if(spjSt==='Ditolak')opts.push({s:'Menunggu PPK',cls:'btn-warning'});
   const stEmojiMap={'Menunggu PPK':'📋','Menunggu BPP':'💰','Di SIPD':'🖥','SP2D Terbit':'✅','Ditolak':'❌'};
-  document.getElementById('mst-opts').innerHTML=opts.map(o=>`<button class="btn ${o.cls}" style="width:100%;margin-bottom:6px;justify-content:flex-start" onclick="doSPJGUStatus('${spjId}','${o.s}')">${stEmojiMap[o.s]||''} ${o.s}</button>`).join('');
+  
+  let optsHtml=opts.map(o=>`<button class="btn ${o.cls}" style="width:100%;margin-bottom:6px;justify-content:flex-start" onclick="doSPJGUStatus('${spjId}','${o.s}')">${stEmojiMap[o.s]||''} ${o.s}</button>`).join('');
+  if(nextSt==='SP2D Terbit'){
+    optsHtml+=`<div style="margin-top:10px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:6px;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:6px">
+      <span>⏳</span>
+      <span>Proses ke SP2D Terbit harus melalui menu <strong>Rekonsiliasi SP2D</strong> (Input No. SP2D).</span>
+    </div>`;
+  }
+  document.getElementById('mst-opts').innerHTML=optsHtml;
   bukaModal('modal-status');
 }
 
 function doSPJGUStatus(spjId,newStatus){
   const s=SPJGU.find(x=>x.id===spjId);if(!s)return;
+  if(newStatus==='SP2D Terbit'){toast('Proses ke SP2D Terbit harus melalui menu Rekonsiliasi SP2D','err');return;}
   const catatan=document.getElementById('mst-catatan').value||'';
   const oleh=USER?.nama||USER?.username||'–';
   const now=new Date().toISOString();
@@ -2734,7 +2743,7 @@ function doSPJGUStatus(spjId,newStatus){
   s.status=newStatus;
   tutupModal('modal-status');
   renderSPJGU();updateDashboard();renderTagihan();scheduleSave();
-  const msg=newStatus==='SP2D Terbit'?'✅ SPJ GU SP2D Terbit – Nilai masuk realisasi anggaran!':'Status SPJ GU → '+newStatus;
+  const msg='Status SPJ GU → '+newStatus;
   toast(msg,'ok',4000);
 }
 
@@ -3347,12 +3356,12 @@ function getReal(tagList) {
   }
 }
 
-// Model 1: Realisasi Anggaran versi SP2D (Anggaran dikurangi hanya yang statusnya SP2D Terbit)
+// Model 1: Realisasi Anggaran versi SP2D (Anggaran dikurangi hanya yang statusnya SP2D Terbit dan sudah diinput No. SP2D nya)
 function getRealSP2D(tagList) {
   const real = {};
   (tagList || TAGIHAN).forEach(t => {
     if (!t.skId) return;
-    if (t.status !== 'SP2D Terbit') return;
+    if (t.status !== 'SP2D Terbit' || !t.nosp2d) return;
     if (t.jenis === 'GU') return;
     real[t.skId] = (real[t.skId] || 0) + t.jumlah;
   });
@@ -3483,14 +3492,23 @@ function showStatusModal(id){
   document.getElementById('mst-catatan').value='';
   const nextNormal=ALUR[ALUR.indexOf(t.status)+1];
   const opts=[];
-  if(nextNormal)opts.push({s:nextNormal,cls:'btn-success'});
+  if(nextNormal && nextNormal!=='SP2D Terbit')opts.push({s:nextNormal,cls:'btn-success'});
   if(t.status!=='Ditolak'&&t.status!=='Draft'&&t.status!=='SP2D Terbit')opts.push({s:'Ditolak',cls:'btn-danger'});
   if(t.status==='Ditolak')opts.push({s:'Draft',cls:'btn-warning'});
-  document.getElementById('mst-opts').innerHTML=opts.map(o=>`<button class="btn ${o.cls}" style="width:100%;margin-bottom:6px;justify-content:flex-start" onclick="doUbahStatus('${id}','${o.s}')">${stEmoji[o.s]||''} ${o.s}</button>`).join('');
+  
+  let optsHtml=opts.map(o=>`<button class="btn ${o.cls}" style="width:100%;margin-bottom:6px;justify-content:flex-start" onclick="doUbahStatus('${id}','${o.s}')">${stEmoji[o.s]||''} ${o.s}</button>`).join('');
+  if(nextNormal==='SP2D Terbit'){
+    optsHtml+=`<div style="margin-top:10px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:6px;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:6px">
+      <span>⏳</span>
+      <span>Proses ke SP2D Terbit harus melalui menu <strong>Rekonsiliasi SP2D</strong> (Input No. SP2D).</span>
+    </div>`;
+  }
+  document.getElementById('mst-opts').innerHTML=optsHtml;
   bukaModal('modal-status');
 }
 function doUbahStatus(id,newStatus){
   const t=TAGIHAN.find(x=>x.id===id);if(!t)return;
+  if(newStatus==='SP2D Terbit'&&!t.nosp2d){toast('Ubah status ke SP2D Terbit harus melalui menu Rekonsiliasi SP2D','err');return;}
   const catatan=document.getElementById('mst-catatan').value||'';const oleh=USER?.nama||USER?.username||'–';
   if(!t.history)t.history=[];
   t.history.push({status:newStatus,ts:new Date().toISOString(),oleh,catatan});t.status=newStatus;
@@ -3521,7 +3539,7 @@ function buildTLCard(t){
   }).join('');
   const logHtml=hist.map((h,i)=>{const dur=i<hist.length-1?durasi(h.ts,hist[i+1].ts):(h.ts?durasi(h.ts,null):'');const dc=h.status==='Ditolak'?'var(--red)':h.status==='SP2D Terbit'?'var(--green)':'var(--navy)';return`<div class="tl-log-item"><div class="tl-log-dot" style="background:${dc}"></div><div class="tl-log-text"><strong>${stEmoji[h.status]||''} ${h.status}</strong> — <em>${h.oleh}</em>${h.catatan?' · "'+h.catatan+'"':''}</div><div class="tl-log-time">${h.ts?fmtTS(h.ts):'–'}${dur?' ('+dur+')':''}</div></div>`;}).join('')||'<div style="font-size:11px;color:#aaa">Belum ada riwayat</div>';
   const canAdv=canAdvance(t);const nextSt=ALUR[ALUR.indexOf(t.status)+1];
-  const actBtn=t.status==='SP2D Terbit'?'<span style="font-size:11px;color:var(--green)">✅ Selesai</span>':isDitolak?`<button class="btn btn-sm btn-warning" onclick="showStatusModal('${t.id}')">🔄 Kembalikan</button>`:nextSt&&canAdv?`<button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')">${stEmoji[nextSt]||''} Proses ke: ${nextSt}</button>`:nextSt?`<span style="font-size:11px;color:#aaa">Menunggu ${stOleh[nextSt]||'pejabat terkait'}</span>`:'';
+  const actBtn=t.status==='SP2D Terbit'?'<span style="font-size:11px;color:var(--green)">✅ Selesai</span>':isDitolak?`<button class="btn btn-sm btn-warning" onclick="showStatusModal('${t.id}')">🔄 Kembalikan</button>`:nextSt==='SP2D Terbit'?`<span style="font-size:11px;color:#0d9488;font-weight:600">⏳ Menunggu Input SP2D (Rekonsiliasi)</span>`:nextSt&&canAdv?`<button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')">${stEmoji[nextSt]||''} Proses ke: ${nextSt}</button>`:nextSt?`<span style="font-size:11px;color:#aaa">Menunggu ${stOleh[nextSt]||'pejabat terkait'}</span>`:'';
   const pptk=PEG.find(p=>p.id===t.pptkId);const verif=PEG.find(p=>p.jab==='Verifikator');
   const durTotal=hist[0]?.ts?durasi(hist[0].ts,t.status==='SP2D Terbit'?hist[hist.length-1]?.ts:null):'–';
   return`<div class="tl-card">
@@ -3616,7 +3634,17 @@ function renderKendali(){
     const belList=BEL.filter(b=>b.skId===s.id).sort((a,b)=>a.kode.localeCompare(b.kode));
     const tagSK=TAGIHAN.filter(t=>t.skId===s.id&&t.jenis!=='GU').sort((a,b)=>(b.tgl||'').localeCompare(a.tgl||''));
     const belRows=belList.length?belList.map(b=>{
-      const rBel=TAGIHAN.filter(t=>t.skId===s.id&&t.status==='SP2D Terbit').reduce((sum,t)=>{const item=(t.data?.items||[]).find(it=>it.kode===b.kode);return sum+(item?.jumlah||0);},0);
+      const rBel=TAGIHAN.filter(t=>{
+        if(t.skId!==s.id) return false;
+        if(t.jenis==='GU') return false;
+        if(REAL_MODEL==='estimasi'){
+          if(t.status==='Draft'||t.status==='Ditolak') return false;
+          if(t.jenis==='SPJ-GU'&&!['SP2D Terbit','SPJ GU Dibuat'].includes(t.status)) return false;
+          return true;
+        }else{
+          return t.status==='SP2D Terbit'&&t.nosp2d;
+        }
+      }).reduce((sum,t)=>{const item=(t.data?.items||[]).find(it=>it.kode===b.kode);return sum+(item?.jumlah||0);},0);
       const pctBel=b.pagu?Math.min(100,Math.round(rBel/b.pagu*100)):0;
       return`<tr><td style="font-family:monospace;font-size:9px;white-space:nowrap;border:1px solid #e8e8e8;padding:3px 6px">${b.kode}</td><td style="font-size:11px;border:1px solid #e8e8e8;padding:3px 6px">${b.nama}</td><td style="text-align:right;white-space:nowrap;border:1px solid #e8e8e8;padding:3px 6px">Rp ${fmtShort(b.pagu)}</td><td style="text-align:right;white-space:nowrap;border:1px solid #e8e8e8;padding:3px 6px;color:var(--green)">${rBel?'Rp '+fmtShort(rBel):'–'}</td><td style="border:1px solid #e8e8e8;padding:3px 6px"><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden"><div style="height:100%;width:${pctBel}%;background:${pctBel>=80?'var(--red)':pctBel>=50?'var(--orange)':'var(--green)'};border-radius:3px"></div></div><span style="font-size:10px;font-weight:600;width:32px;text-align:right">${pctBel}%</span></div></td></tr>`;
     }).join(''):`<tr><td colspan="5" style="text-align:center;color:#aaa;font-size:11px;padding:8px;border:1px solid #e8e8e8">Belum ada rekening belanja</td></tr>`;
@@ -4247,8 +4275,17 @@ function renderRealBel(){
   
   // We compute realBel lookup for each BEL
   const calculatedBelList=list.map(b=>{
-    const rBel=TAGIHAN.filter(t=>t.skId===b.skId&&t.status==='SP2D Terbit')
-      .reduce((sum,t)=>{const item=(t.data?.items||[]).find(it=>it.kode===b.kode);return sum+(item?.jumlah||0);},0);
+    const rBel=TAGIHAN.filter(t=>{
+      if(t.skId!==b.skId) return false;
+      if(t.jenis==='GU') return false;
+      if(REAL_MODEL==='estimasi'){
+        if(t.status==='Draft'||t.status==='Ditolak') return false;
+        if(t.jenis==='SPJ-GU'&&!['SP2D Terbit','SPJ GU Dibuat'].includes(t.status)) return false;
+        return true;
+      }else{
+        return t.status==='SP2D Terbit'&&t.nosp2d;
+      }
+    }).reduce((sum,t)=>{const item=(t.data?.items||[]).find(it=>it.kode===b.kode);return sum+(item?.jumlah||0);},0);
     return {
       id: b.id,
       skId: b.skId,
@@ -4710,12 +4747,66 @@ function initRekonDrop(){const sel=document.getElementById('r-sk');if(!sel)retur
 function tambahSP2D(){
   const nosp2d=document.getElementById('r-nosp2d').value.trim();const tgl=document.getElementById('r-tgl').value;const spm=document.getElementById('r-spm').value.trim();const skId=document.getElementById('r-sk').value;const nilai=Number(document.getElementById('r-nilai').value)||0;
   if(!nosp2d||!tgl||!skId||!nilai){toast('Lengkapi semua field','err');return;}
-  const terkait=TAGIHAN.filter(t=>t.skId===skId&&t.status==='SP2D Terbit');const nilaiApp=terkait.reduce((s,t)=>s+t.jumlah,0);const selisih=nilai-nilaiApp;const sk=SK.find(s=>s.id===skId)||{};
+  
+  // Find related tagihans in Di SIPD status, or SP2D Terbit status that don't have nosp2d yet (for backward compatibility)
+  const terkait=TAGIHAN.filter(t=>t.skId===skId && (t.status==='Di SIPD' || (t.status==='SP2D Terbit' && !t.nosp2d)));
+  const nilaiApp=terkait.reduce((s,t)=>s+t.jumlah,0);
+  const selisih=nilai-nilaiApp;const sk=SK.find(s=>s.id===skId)||{};
   SP2D.unshift({id:uid(),nosp2d,tgl,spm,skId,skNama:sk.nama||'',nilai,nilaiApp,selisih,cocok:Math.abs(selisih)<1});
-  terkait.forEach(t=>{if(!t.nosp2d){t.nosp2d=nosp2d;t.tglsp2d=tgl;}});
+  
+  const now=new Date().toISOString();
+  terkait.forEach(t=>{
+    t.status='SP2D Terbit';
+    t.nosp2d=nosp2d;
+    t.tglsp2d=tgl;
+    if(!t.history)t.history=[];
+    t.history.push({
+      status:'SP2D Terbit',
+      ts:now,
+      oleh:USER?.nama||USER?.username||'Sistem (Rekonsiliasi)',
+      catatan:`Realisasi SP2D ${nosp2d} diinput via Rekonsiliasi`
+    });
+  });
+  
+  // Update parent SPJGU status if needed
+  SPJGU.forEach(s => {
+    s.status = getSPJStatus(s);
+  });
+  
   ['r-nosp2d','r-spm','r-nilai'].forEach(id=>document.getElementById(id).value='');document.getElementById('r-sk').value='';
   renderRekon();renderBuku();updateDashboard();scheduleSave();toast('SP2D ditambahkan','ok');
 }
+
+function hapusSP2D(i){
+  const r=SP2D[i];
+  if(!r)return;
+  if(confirm(`Hapus SP2D Nomor ${r.nosp2d}? Tagihan terkait akan dikembalikan ke status Di SIPD.`)){
+    const now=new Date().toISOString();
+    // Revert matched tagihans
+    TAGIHAN.forEach(t=>{
+      if(t.nosp2d===r.nosp2d){
+        t.status='Di SIPD';
+        t.nosp2d='';
+        t.tglsp2d='';
+        if(!t.history)t.history=[];
+        t.history.push({
+          status:'Di SIPD',
+          ts:now,
+          oleh:USER?.nama||USER?.username||'Sistem',
+          catatan:`SP2D ${r.nosp2d} dihapus`
+        });
+      }
+    });
+    // Update parent SPJGU status if needed
+    SPJGU.forEach(s => {
+      s.status = getSPJStatus(s);
+    });
+    SP2D.splice(i,1);
+    renderRekon();renderBuku();updateDashboard();scheduleSave();
+    toast('SP2D dihapus dan tagihan dikembalikan ke Di SIPD','ok');
+  }
+}
+
 function renderRekon(){
   const tbody=document.getElementById('tbody-rekon');
   if(!SP2D.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:22px;color:#aaa">Belum ada data SP2D</td></tr>';updRekonSum();return;}
@@ -4724,7 +4815,7 @@ function renderRekon(){
     <td style="font-size:11px;max-width:150px">${r.skNama}</td><td style="text-align:right">Rp ${fmtRp(r.nilai)}</td><td style="text-align:right">${r.nilaiApp?'Rp '+fmtRp(r.nilaiApp):'–'}</td>
     <td style="text-align:right;color:${r.selisih===0?'var(--green)':'var(--red)'}">${r.selisih===0?'0':fmtRp(r.selisih)}</td>
     <td><span class="badge ${r.cocok?'bg-sp2d':'bg-tolak'}">${r.cocok?'✓ Cocok':'⚠ Selisih'}</span></td>
-    <td><button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="SP2D.splice(${i},1);renderRekon();renderBuku()">✕</button></td>
+    <td><button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="hapusSP2D(${i})">✕</button></td>
   </tr>`).join('');updRekonSum();
 }
 function updRekonSum(){document.getElementById('rs-total').textContent=SP2D.length;document.getElementById('rs-cocok').textContent=SP2D.filter(r=>r.cocok).length;document.getElementById('rs-selisih').textContent=SP2D.filter(r=>!r.cocok).length;document.getElementById('rs-nilai').textContent='Rp '+fmtShort(SP2D.reduce((s,r)=>s+r.nilai,0));}
@@ -4792,8 +4883,8 @@ function renderBuku(){
     return;
   }
 
-  // 1. Get all SP2D Terbit tagihans for the selected sub-activity (skId)
-  let rawEntries = TAGIHAN.filter(t => t.status === 'SP2D Terbit' && t.jenis !== 'GU' && t.skId === skId);
+  // 1. Get all SP2D Terbit tagihans for the selected sub-activity (skId) that have been reconciled (have nosp2d)
+  let rawEntries = TAGIHAN.filter(t => t.status === 'SP2D Terbit' && t.nosp2d && t.jenis !== 'GU' && t.skId === skId);
 
   // 2. Filter by month if selected
   if (fB) {
@@ -4986,7 +5077,7 @@ function renderEvaluasi(){
     const pctSP2D=pagu?Math.min(100,sp2d/pagu*100):0;
     const pctProses=pagu?Math.min(100,(sp2d+proses)/pagu*100):0;
     const countTag=TAGIHAN.filter(t=>t.pptkId===p.id&&t.jenis!=='GU').length;
-    const countSP2D=TAGIHAN.filter(t=>t.pptkId===p.id&&t.status==='SP2D Terbit').length;
+    const countSP2D=TAGIHAN.filter(t=>t.pptkId===p.id&&t.status==='SP2D Terbit'&&t.nosp2d).length;
     return{peg:p,skList,pagu,sp2d,proses,pctSP2D,pctProses,countTag,countSP2D};
   }).filter(d=>d.pagu>0);
 
@@ -5530,8 +5621,20 @@ function renderTrenChart(){
     const [y,m]=t.tgl.split('-');
     if(y!==year) return;
     const mi=parseInt(m)-1;
-    if(t.status==='SP2D Terbit') sp2dPerBulan[mi]+=t.jumlah;
-    else if(t.status!=='Ditolak') tagihanPerBulan[mi]+=t.jumlah;
+    if(t.jenis==='GU') return;
+    if (REAL_MODEL === 'estimasi') {
+      if (t.status !== 'Ditolak' && t.status !== 'Draft') {
+        if (t.jenis !== 'SPJ-GU' || ['SP2D Terbit', 'SPJ GU Dibuat'].includes(t.status)) {
+          sp2dPerBulan[mi] += t.jumlah;
+        }
+      }
+    } else {
+      if (t.status === 'SP2D Terbit' && t.nosp2d) {
+        sp2dPerBulan[mi] += t.jumlah;
+      } else if (t.status !== 'Ditolak' && t.status !== 'Draft') {
+        tagihanPerBulan[mi] += t.jumlah;
+      }
+    }
   });
 
   // Kumulatif
@@ -5706,7 +5809,26 @@ function doExportExcel(){
       ['Bulan','SP2D Terbit (Rp)','Tagihan Diajukan (Rp)','Kumulatif SP2D (Rp)','% Kumulatif dari Pagu']];
     const totalPagu=SK.reduce((s,sk)=>s+sk.pagu,0);
     const sp2dPerBulan=Array(12).fill(0);const tagPerBulan=Array(12).fill(0);
-    TAGIHAN.forEach(t=>{if(!t.tgl)return;const[y,m]=t.tgl.split('-');if(y!==CFG.ta)return;const mi=parseInt(m)-1;if(t.status==='SP2D Terbit')sp2dPerBulan[mi]+=t.jumlah;else if(t.status!=='Ditolak')tagPerBulan[mi]+=t.jumlah;});
+    TAGIHAN.forEach(t=>{
+      if(!t.tgl) return;
+      const [y,m]=t.tgl.split('-');
+      if(y!==CFG.ta) return;
+      const mi=parseInt(m)-1;
+      if(t.jenis==='GU') return;
+      if (REAL_MODEL === 'estimasi') {
+        if (t.status !== 'Ditolak' && t.status !== 'Draft') {
+          if (t.jenis !== 'SPJ-GU' || ['SP2D Terbit', 'SPJ GU Dibuat'].includes(t.status)) {
+            sp2dPerBulan[mi] += t.jumlah;
+          }
+        }
+      } else {
+        if (t.status === 'SP2D Terbit' && t.nosp2d) {
+          sp2dPerBulan[mi] += t.jumlah;
+        } else if (t.status !== 'Ditolak' && t.status !== 'Draft') {
+          tagPerBulan[mi] += t.jumlah;
+        }
+      }
+    });
     let cum=0;
     for(let i=0;i<12;i++){cum+=sp2dPerBulan[i];const pct=totalPagu?Math.round(cum/totalPagu*100):0;trenHeader.push([BULAN[i],sp2dPerBulan[i],tagPerBulan[i],cum,pct+'%']);}
     const ws3=XLSX.utils.aoa_to_sheet(trenHeader);
