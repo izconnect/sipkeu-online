@@ -1290,6 +1290,35 @@ tr:hover td{background:#fafbfc}
   </div>
 </div>
 
+<!-- Modal: Input SP2D Rekon Direct -->
+<div class="modal-bg" id="modal-input-sp2d-rekon">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-hdr"><span>🔑 Input Nomor & Tanggal SP2D</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="r-direct-id">
+      <div style="background:#f1f5f9; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:11.5px; border-left:4px solid var(--navy)">
+        <div style="margin-bottom:3px"><strong>No. Tagihan:</strong> <span id="r-direct-no"></span></div>
+        <div style="margin-bottom:3px"><strong>Sub Kegiatan:</strong> <span id="r-direct-sk"></span></div>
+        <div><strong>Nilai Tagihan:</strong> <strong style="color:var(--navy)" id="r-direct-nilai"></strong></div>
+      </div>
+      <div class="form-grid g2" style="margin-bottom:9px">
+        <div class="fg">
+          <label>No. SP2D <span class="req">*</span></label>
+          <input id="r-direct-nosp2d" placeholder="SP2D/2026/001">
+        </div>
+        <div class="fg">
+          <label>Tanggal SP2D <span class="req">*</span></label>
+          <input type="date" id="r-direct-tgl">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="tutupModal('modal-input-sp2d-rekon')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanSP2DDirect()">✅ Simpan SP2D</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============================================================ APP ============================================================ -->
 <div class="app">
 <div class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -1695,13 +1724,13 @@ tr:hover td{background:#fafbfc}
   <!-- Card Tagihan Siap Rekon -->
   <div class="card" style="margin-bottom:15px; border-left:4px solid var(--orange)">
     <div class="card-title" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-      <span style="display:flex;align-items:center;gap:6px">📋 Berkas Tagihan Siap Rekonsiliasi <span style="font-size:11px;font-weight:normal;color:#666">(Status: Di SIPD)</span></span>
+      <span style="display:flex;align-items:center;gap:6px">📋 Daftar Tagihan Menunggu Input SP2D <span style="font-size:11px;font-weight:normal;color:#666">(Status: Di SIPD)</span></span>
       <span class="badge bg-sipd" id="rekon-ready-count" style="font-size:10px;padding:3px 8px;border-radius:10px">0 Berkas</span>
     </div>
     <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:6px; padding:8px 12px; margin-bottom:12px; font-size:11.5px; color:#b45309; line-height:1.4">
-      Berikut adalah berkas belanja yang telah diinput di SIPD dan sedang menunggu pencocokan SP2D. Klik <strong>⚡ Rekon Berkas</strong> pada baris kuitansi untuk menyalin data otomatis ke form pencocokan di bawah.
+      Berikut adalah berkas belanja yang statusnya saat ini <strong>Menunggu Input SP2D (Di SIPD)</strong>. Silakan klik tombol <strong>🔑 Input SP2D</strong> pada ujung rincian tagihan untuk memasukkan nomor dan tanggal SP2D agar proses tagihan selesai, sehingga dapat menambah realisasi anggaran dan mengurangi pagu sisa.
     </div>
-    <div class="tbl-wrap" style="max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:6px;">
+    <div class="tbl-wrap" style="max-height:280px; overflow-y:auto; border:1px solid var(--border); border-radius:6px;">
       <table style="font-size:11.5px">
         <thead>
           <tr style="background:#fafafa">
@@ -1710,7 +1739,7 @@ tr:hover td{background:#fafbfc}
             <th style="padding:6px 10px;font-size:10.5px">Sub Kegiatan</th>
             <th style="padding:6px 10px;font-size:10.5px">Uraian</th>
             <th style="text-align:right;padding:6px 10px;font-size:10.5px">Nilai</th>
-            <th style="text-align:center;padding:6px 10px;font-size:10.5px;width:110px">Aksi</th>
+            <th style="text-align:center;padding:6px 10px;font-size:10.5px;width:120px">Aksi</th>
           </tr>
         </thead>
         <tbody id="tbody-rekon-ready">
@@ -1721,17 +1750,9 @@ tr:hover td{background:#fafbfc}
   </div>
 
   <div class="card">
-    <div class="card-title" style="margin-bottom:11px">🔄 Rekonsiliasi Data Aplikasi vs SIPD</div>
+    <div class="card-title" style="margin-bottom:11px">🔄 Riwayat Penerbitan SP2D (Direkonsiliasi)</div>
     <div style="background:#e3f2fd;border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:11.5px;color:#1565c0">
-      Input No. SP2D dan nilai dari SIPD. Sistem akan mencocokkan dengan tagihan yang berstatus SP2D Terbit.
-    </div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end">
-      <div class="fg" style="min-width:130px"><label>No. SP2D</label><input id="r-nosp2d" placeholder="SP2D/2026/001"></div>
-      <div class="fg" style="min-width:120px"><label>Tanggal SP2D</label><input type="date" id="r-tgl"></div>
-      <div class="fg" style="min-width:110px"><label>No. SPM</label><input id="r-spm"></div>
-      <div class="fg" style="flex:1;min-width:170px"><label>Sub Kegiatan</label><select id="r-sk" style="font-size:11px"></select></div>
-      <div class="fg" style="min-width:130px"><label>Nilai SP2D (Rp)</label><input type="number" id="r-nilai"></div>
-      <div><label style="display:block;font-size:11px;margin-bottom:3px">&nbsp;</label><button class="btn btn-primary btn-sm" onclick="tambahSP2D()">+ Tambah</button></div>
+      Daftar SP2D yang telah direkam. Menghapus SP2D di bawah akan mengembalikan status tagihan terkait ke status <strong>Di SIPD (Menunggu Input SP2D)</strong>.
     </div>
     <div class="stat-grid" style="margin-bottom:11px">
       <div class="stat-card c-blue"><div class="stat-lbl">Total SP2D</div><div class="stat-val" id="rs-total">0</div></div>
@@ -1741,7 +1762,7 @@ tr:hover td{background:#fafbfc}
     </div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>No. SP2D</th><th>Tanggal</th><th>No. SPM</th><th>Sub Kegiatan</th><th style="text-align:right">Nilai SP2D</th><th style="text-align:right">Nilai App</th><th style="text-align:right">Selisih</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>No. SP2D</th><th>Tanggal</th><th>No. SPM</th><th>Sub Kegiatan</th><th style="text-align:right">Nilai SP2D</th><th style="text-align:right">Nilai App</th><th style="text-align:right">Selisih</th><th>Status</th><th>Aksi</th></tr></thead>
         <tbody id="tbody-rekon"><tr><td colspan="9" style="text-align:center;padding:22px;color:#aaa">Belum ada data SP2D</td></tr></tbody>
       </table>
     </div>
@@ -4823,66 +4844,85 @@ function renderRekonReady(){
       <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.urai}">${t.urai}</td>
       <td style="text-align:right;font-weight:600;white-space:nowrap">Rp ${fmtRp(t.jumlah)}</td>
       <td style="text-align:center;white-space:nowrap">
-        <button class="btn btn-primary btn-sm" style="padding:2px 8px;font-size:10.5px;border-radius:4px" onclick="pilihRekonReady('${t.id}')">⚡ Rekon Berkas</button>
+        <button class="btn btn-primary btn-sm" style="padding:4px 8px;font-size:11px;border-radius:6px;display:inline-flex;align-items:center;gap:4px" onclick="bukaModalSP2DDirect('${t.id}')">🔑 Input SP2D</button>
       </td>
     </tr>
   `).join('');
 }
 
-function pilihRekonReady(id){
+function bukaModalSP2DDirect(id) {
   const t = TAGIHAN.find(x => x.id === id);
-  if(!t) return;
-  document.getElementById('r-sk').value = t.skId || '';
-  document.getElementById('r-nilai').value = t.jumlah || 0;
-  document.getElementById('r-spm').value = t.no || '';
-  const noSp2dEl = document.getElementById('r-nosp2d');
-  if(noSp2dEl) {
-    noSp2dEl.focus();
-    noSp2dEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-  toast('Data tagihan ' + t.no + ' disalin ke form', 'ok');
+  if (!t) return;
+  document.getElementById('r-direct-id').value = t.id;
+  document.getElementById('r-direct-no').textContent = t.no;
+  document.getElementById('r-direct-sk').textContent = t.skNama;
+  document.getElementById('r-direct-nilai').textContent = 'Rp ' + fmtRp(t.jumlah);
+  
+  document.getElementById('r-direct-nosp2d').value = '';
+  document.getElementById('r-direct-tgl').value = new Date().toISOString().split('T')[0];
+  
+  bukaModal('modal-input-sp2d-rekon');
+  setTimeout(() => {
+    const el = document.getElementById('r-direct-nosp2d');
+    if (el) el.focus();
+  }, 150);
 }
 
-function initRekonDrop(){const sel=document.getElementById('r-sk');if(!sel)return;sel.innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';SK.sort((a,b)=>a.kode.localeCompare(b.kode)).forEach(s=>sel.innerHTML+=`<option value="${s.id}">${s.kode} – ${s.nama.substring(0,45)}</option>`);}
-function tambahSP2D(){
-  const nosp2d=document.getElementById('r-nosp2d').value.trim();const tgl=document.getElementById('r-tgl').value;const spm=document.getElementById('r-spm').value.trim();const skId=document.getElementById('r-sk').value;const nilai=Number(document.getElementById('r-nilai').value)||0;
-  if(!nosp2d||!tgl||!skId||!nilai){toast('Lengkapi semua field','err');return;}
+function simpanSP2DDirect() {
+  const id = document.getElementById('r-direct-id').value;
+  const nosp2d = document.getElementById('r-direct-nosp2d').value.trim();
+  const tgl = document.getElementById('r-direct-tgl').value;
   
-  // Find related tagihans in Di SIPD status, or SP2D Terbit status that don't have nosp2d yet (for backward compatibility)
-  let terkait = [];
-  if (spm) {
-    terkait = TAGIHAN.filter(t => t.skId === skId && t.no.trim().toLowerCase() === spm.toLowerCase() && (t.status === 'Di SIPD' || (t.status === 'SP2D Terbit' && !t.nosp2d)));
-  }
-  if (terkait.length === 0) {
-    terkait = TAGIHAN.filter(t => t.skId === skId && (t.status === 'Di SIPD' || (t.status === 'SP2D Terbit' && !t.nosp2d)));
+  if (!nosp2d || !tgl) {
+    toast('Lengkapi Nomor dan Tanggal SP2D!', 'err');
+    return;
   }
   
-  const nilaiApp=terkait.reduce((s,t)=>s+t.jumlah,0);
-  const selisih=nilai-nilaiApp;const sk=SK.find(s=>s.id===skId)||{};
-  SP2D.unshift({id:uid(),nosp2d,tgl,spm,skId,skNama:sk.nama||'',nilai,nilaiApp,selisih,cocok:Math.abs(selisih)<1});
+  const t = TAGIHAN.find(x => x.id === id);
+  if (!t) {
+    toast('Data tagihan tidak ditemukan', 'err');
+    return;
+  }
   
-  const now=new Date().toISOString();
-  terkait.forEach(t=>{
-    t.status='SP2D Terbit';
-    t.nosp2d=nosp2d;
-    t.tglsp2d=tgl;
-    if(!t.history)t.history=[];
-    t.history.push({
-      status:'SP2D Terbit',
-      ts:now,
-      oleh:USER?.nama||USER?.username||'Sistem (Rekonsiliasi)',
-      catatan:`Realisasi SP2D ${nosp2d} diinput via Rekonsiliasi`
-    });
+  const now = new Date().toISOString();
+  t.status = 'SP2D Terbit';
+  t.nosp2d = nosp2d;
+  t.tglsp2d = tgl;
+  if (!t.history) t.history = [];
+  t.history.push({
+    status: 'SP2D Terbit',
+    ts: now,
+    oleh: USER?.nama || USER?.username || 'Operator (Rekonsiliasi)',
+    catatan: `Nomor SP2D: ${nosp2d}, Tanggal: ${tgl}`
   });
   
-  // Update parent SPJGU status if needed
+  const sk = SK.find(s => s.id === t.skId) || {};
+  SP2D.unshift({
+    id: uid(),
+    nosp2d: nosp2d,
+    tgl: tgl,
+    spm: t.no,
+    skId: t.skId,
+    skNama: t.skNama || sk.nama || '',
+    nilai: t.jumlah,
+    nilaiApp: t.jumlah,
+    selisih: 0,
+    cocok: true
+  });
+  
   SPJGU.forEach(s => {
     s.status = getSPJStatus(s);
   });
   
-  ['r-nosp2d','r-spm','r-nilai'].forEach(id=>document.getElementById(id).value='');document.getElementById('r-sk').value='';
-  renderRekon();renderBuku();updateDashboard();scheduleSave();toast('SP2D ditambahkan','ok');
+  tutupModal('modal-input-sp2d-rekon');
+  renderRekon();
+  renderBuku();
+  updateDashboard();
+  scheduleSave();
+  toast('SP2D berhasil direkam untuk tagihan ' + t.no, 'ok');
 }
+
+function initRekonDrop(){const sel=document.getElementById('r-sk');if(!sel)return;sel.innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';SK.sort((a,b)=>a.kode.localeCompare(b.kode)).forEach(s=>sel.innerHTML+=`<option value="${s.id}">${s.kode} – ${s.nama.substring(0,45)}</option>`);}
 
 function hapusSP2D(i){
   const r=SP2D[i];
