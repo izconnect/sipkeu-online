@@ -3665,6 +3665,7 @@ function renderKendali(){
 
       const totalBel=isEstimasi ? (rBel + akBel) : rBel;
       const pctBel=b.pagu?Math.min(100,Math.round(totalBel/b.pagu*100)):0;
+      const sisaBel=Math.max(0, b.pagu - totalBel);
       
       return`<tr>
         <td style="font-family:monospace;font-size:9px;white-space:nowrap;border:1px solid #e8e8e8;padding:3px 6px">${b.kode}</td>
@@ -3672,9 +3673,10 @@ function renderKendali(){
         <td style="text-align:right;white-space:nowrap;border:1px solid #e8e8e8;padding:3px 6px">Rp ${fmtShort(b.pagu)}</td>
         <td style="text-align:right;white-space:nowrap;border:1px solid #e8e8e8;padding:3px 6px;color:var(--green)">${rBel?'Rp '+fmtShort(rBel):'–'}</td>
         <td style="text-align:right;white-space:nowrap;border:1px solid #e8e8e8;padding:3px 6px;color:var(--orange)">${akBel?'Rp '+fmtShort(akBel):'–'}</td>
+        <td style="text-align:right;white-space:nowrap;border:1px solid #e8e8e8;padding:3px 6px;color:${sisaBel===0?'#94a3b8':'var(--navy)'}">${sisaBel?'Rp '+fmtShort(sisaBel):'–'}</td>
         <td style="border:1px solid #e8e8e8;padding:3px 6px"><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden"><div style="height:100%;width:${pctBel}%;background:${pctBel>=80?'var(--red)':pctBel>=50?'var(--orange)':'var(--green)'};border-radius:3px"></div></div><span style="font-size:10px;font-weight:600;width:32px;text-align:right">${pctBel}%</span></div></td>
       </tr>`;
-    }).join(''):`<tr><td colspan="6" style="text-align:center;color:#aaa;font-size:11px;padding:8px;border:1px solid #e8e8e8">Belum ada rekening belanja</td></tr>`;
+    }).join(''):`<tr><td colspan="7" style="text-align:center;color:#aaa;font-size:11px;padding:8px;border:1px solid #e8e8e8">Belum ada rekening belanja</td></tr>`;
     
     const tagRows=tagSK.length?tagSK.slice(0,5).map(t=>`<tr style="font-size:11px"><td style="font-family:monospace;font-size:10px;padding:3px 6px;border:1px solid #f0f0f0">${t.no}</td><td style="padding:3px 6px;border:1px solid #f0f0f0;white-space:nowrap">${t.tgl?fmtTgl(t.tgl):'–'}</td><td style="padding:3px 6px;border:1px solid #f0f0f0">${t.urai.substring(0,40)}</td><td style="text-align:right;padding:3px 6px;border:1px solid #f0f0f0;white-space:nowrap">Rp ${fmtRp(t.jumlah)}</td><td style="padding:3px 6px;border:1px solid #f0f0f0"><span class="badge ${stCls[t.status]||'bg-gray'}" style="font-size:9px">${stEmoji[t.status]||''} ${t.status}</span></td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:#aaa;font-size:11px;padding:8px;border:1px solid #f0f0f0">Belum ada tagihan</td></tr>`;
     
@@ -3705,8 +3707,8 @@ function renderKendali(){
       <div style="margin-bottom:10px">
         <div style="font-size:10.5px;font-weight:700;color:#555;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em">💵 Rincian Rekening Belanja</div>
         <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr style="background:#f5f7fa"><th style="border:1px solid #e8e8e8;padding:4px 6px;font-size:10px;width:155px">Kode Rekening</th><th style="border:1px solid #e8e8e8;padding:4px 6px;font-size:10px">Uraian Belanja</th><th style="border:1px solid #e8e8e8;padding:4px 6px;text-align:right;font-size:10px;width:90px">Pagu</th><th style="border:1px solid #e8e8e8;padding:4px 6px;text-align:right;font-size:10px;width:90px">✅ SP2D</th><th style="border:1px solid #e8e8e8;padding:4px 6px;text-align:right;font-size:10px;width:90px">⏳ Proses</th><th style="border:1px solid #e8e8e8;padding:4px 6px;font-size:10px;width:120px">Capaian</th></tr></thead>
-          <tbody>${belRows}<tr style="background:#f5f7fa;font-weight:700"><td colspan="2" style="text-align:right;border:1px solid #e8e8e8;padding:4px 6px;font-size:10px">Total</td><td style="text-align:right;border:1px solid #e8e8e8;padding:4px 6px;white-space:nowrap">Rp ${fmtShort(s.pagu)}</td><td style="text-align:right;border:1px solid #e8e8e8;padding:4px 6px;color:var(--green);white-space:nowrap">${r?'Rp '+fmtShort(r):'–'}</td><td style="text-align:right;border:1px solid #e8e8e8;padding:4px 6px;color:var(--orange);white-space:nowrap">${ak?'Rp '+fmtShort(ak):'–'}</td><td style="border:1px solid #e8e8e8;padding:4px 6px"><span class="badge ${pct>=50?'bg-sp2d':pct>=25?'bg-draft':'bg-tolak'}">${pct}%</span></td></tr></tbody>
+          <thead><tr style="background:#f5f7fa"><th style="border:1px solid #e8e8e8;padding:4px 6px;font-size:10px;width:155px">Kode Rekening</th><th style="border:1px solid #e8e8e8;padding:4px 6px;font-size:10px">Uraian Belanja</th><th style="border:1px solid #e8e8e8;padding:4px 6px;text-align:right;font-size:10px;width:90px">Pagu</th><th style="border:1px solid #e8e8e8;padding:4px 6px;text-align:right;font-size:10px;width:90px">✅ SP2D</th><th style="border:1px solid #e8e8e8;padding:4px 6px;text-align:right;font-size:10px;width:90px">⏳ Proses</th><th style="border:1px solid #e8e8e8;padding:4px 6px;text-align:right;font-size:10px;width:100px">Sisa Anggaran</th><th style="border:1px solid #e8e8e8;padding:4px 6px;font-size:10px;width:120px">Capaian</th></tr></thead>
+          <tbody>${belRows}<tr style="background:#f5f7fa;font-weight:700"><td colspan="2" style="text-align:right;border:1px solid #e8e8e8;padding:4px 6px;font-size:10px">Total</td><td style="text-align:right;border:1px solid #e8e8e8;padding:4px 6px;white-space:nowrap">Rp ${fmtShort(s.pagu)}</td><td style="text-align:right;border:1px solid #e8e8e8;padding:4px 6px;color:var(--green);white-space:nowrap">${r?'Rp '+fmtShort(r):'–'}</td><td style="text-align:right;border:1px solid #e8e8e8;padding:4px 6px;color:var(--orange);white-space:nowrap">${ak?'Rp '+fmtShort(ak):'–'}</td><td style="text-align:right;border:1px solid #e8e8e8;padding:4px 6px;white-space:nowrap">${sisa?'Rp '+fmtShort(sisa):'–'}</td><td style="border:1px solid #e8e8e8;padding:4px 6px"><span class="badge ${pct>=50?'bg-sp2d':pct>=25?'bg-draft':'bg-tolak'}">${pct}%</span></td></tr></tbody>
         </table>
       </div>
       <div>
