@@ -1692,6 +1692,34 @@ tr:hover td{background:#fafbfc}
 
 <!-- ==================== REKONSILIASI ==================== -->
 <div class="page" id="page-rekon">
+  <!-- Card Tagihan Siap Rekon -->
+  <div class="card" style="margin-bottom:15px; border-left:4px solid var(--orange)">
+    <div class="card-title" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="display:flex;align-items:center;gap:6px">📋 Berkas Tagihan Siap Rekonsiliasi <span style="font-size:11px;font-weight:normal;color:#666">(Status: Di SIPD)</span></span>
+      <span class="badge bg-sipd" id="rekon-ready-count" style="font-size:10px;padding:3px 8px;border-radius:10px">0 Berkas</span>
+    </div>
+    <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:6px; padding:8px 12px; margin-bottom:12px; font-size:11.5px; color:#b45309; line-height:1.4">
+      Berikut adalah berkas belanja yang telah diinput di SIPD dan sedang menunggu pencocokan SP2D. Klik <strong>⚡ Rekon Berkas</strong> pada baris kuitansi untuk menyalin data otomatis ke form pencocokan di bawah.
+    </div>
+    <div class="tbl-wrap" style="max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:6px;">
+      <table style="font-size:11.5px">
+        <thead>
+          <tr style="background:#fafafa">
+            <th style="padding:6px 10px;font-size:10.5px">No. Tagihan</th>
+            <th style="padding:6px 10px;font-size:10.5px">Jenis</th>
+            <th style="padding:6px 10px;font-size:10.5px">Sub Kegiatan</th>
+            <th style="padding:6px 10px;font-size:10.5px">Uraian</th>
+            <th style="text-align:right;padding:6px 10px;font-size:10.5px">Nilai</th>
+            <th style="text-align:center;padding:6px 10px;font-size:10.5px;width:110px">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-rekon-ready">
+          <tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Tidak ada tagihan berstatus Di SIPD</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-title" style="margin-bottom:11px">🔄 Rekonsiliasi Data Aplikasi vs SIPD</div>
     <div style="background:#e3f2fd;border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:11.5px;color:#1565c0">
@@ -4774,13 +4802,61 @@ function drawDonutChart(programsData){
 // ================================================================
 // REKONSILIASI
 // ================================================================
+function renderRekonReady(){
+  const tbody=document.getElementById('tbody-rekon-ready');
+  const countEl=document.getElementById('rekon-ready-count');
+  if(!tbody)return;
+  
+  const readyList = TAGIHAN.filter(t => t.status === 'Di SIPD');
+  if(countEl) countEl.textContent = readyList.length + ' Berkas';
+  
+  if(!readyList.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Tidak ada tagihan berstatus Di SIPD</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = readyList.map(t => `
+    <tr>
+      <td style="font-family:monospace;font-size:10.5px;font-weight:600;color:var(--navy)">${t.no}</td>
+      <td><span class="badge ${t.jenis==='SPJ-GU'?'bg-spj':'bg-sipd'}" style="font-size:9px">${t.jenis||'LS'}</span></td>
+      <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.skNama}">${t.skNama}</td>
+      <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.urai}">${t.urai}</td>
+      <td style="text-align:right;font-weight:600;white-space:nowrap">Rp ${fmtRp(t.jumlah)}</td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn btn-primary btn-sm" style="padding:2px 8px;font-size:10.5px;border-radius:4px" onclick="pilihRekonReady('${t.id}')">⚡ Rekon Berkas</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function pilihRekonReady(id){
+  const t = TAGIHAN.find(x => x.id === id);
+  if(!t) return;
+  document.getElementById('r-sk').value = t.skId || '';
+  document.getElementById('r-nilai').value = t.jumlah || 0;
+  document.getElementById('r-spm').value = t.no || '';
+  const noSp2dEl = document.getElementById('r-nosp2d');
+  if(noSp2dEl) {
+    noSp2dEl.focus();
+    noSp2dEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  toast('Data tagihan ' + t.no + ' disalin ke form', 'ok');
+}
+
 function initRekonDrop(){const sel=document.getElementById('r-sk');if(!sel)return;sel.innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';SK.sort((a,b)=>a.kode.localeCompare(b.kode)).forEach(s=>sel.innerHTML+=`<option value="${s.id}">${s.kode} – ${s.nama.substring(0,45)}</option>`);}
 function tambahSP2D(){
   const nosp2d=document.getElementById('r-nosp2d').value.trim();const tgl=document.getElementById('r-tgl').value;const spm=document.getElementById('r-spm').value.trim();const skId=document.getElementById('r-sk').value;const nilai=Number(document.getElementById('r-nilai').value)||0;
   if(!nosp2d||!tgl||!skId||!nilai){toast('Lengkapi semua field','err');return;}
   
   // Find related tagihans in Di SIPD status, or SP2D Terbit status that don't have nosp2d yet (for backward compatibility)
-  const terkait=TAGIHAN.filter(t=>t.skId===skId && (t.status==='Di SIPD' || (t.status==='SP2D Terbit' && !t.nosp2d)));
+  let terkait = [];
+  if (spm) {
+    terkait = TAGIHAN.filter(t => t.skId === skId && t.no.trim().toLowerCase() === spm.toLowerCase() && (t.status === 'Di SIPD' || (t.status === 'SP2D Terbit' && !t.nosp2d)));
+  }
+  if (terkait.length === 0) {
+    terkait = TAGIHAN.filter(t => t.skId === skId && (t.status === 'Di SIPD' || (t.status === 'SP2D Terbit' && !t.nosp2d)));
+  }
+  
   const nilaiApp=terkait.reduce((s,t)=>s+t.jumlah,0);
   const selisih=nilai-nilaiApp;const sk=SK.find(s=>s.id===skId)||{};
   SP2D.unshift({id:uid(),nosp2d,tgl,spm,skId,skNama:sk.nama||'',nilai,nilaiApp,selisih,cocok:Math.abs(selisih)<1});
@@ -4839,6 +4915,7 @@ function hapusSP2D(i){
 }
 
 function renderRekon(){
+  renderRekonReady();
   const tbody=document.getElementById('tbody-rekon');
   if(!SP2D.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:22px;color:#aaa">Belum ada data SP2D</td></tr>';updRekonSum();return;}
   tbody.innerHTML=SP2D.map((r,i)=>`<tr>
