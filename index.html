@@ -1137,6 +1137,7 @@ let CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'Gorontalo',prov
 let PROG=[],KEG=[],SK=[],BEL=[],PEG=[],TAGIHAN=[],TAGIHAN_GU=[],SPJGU=[],SP2D=[];
 let noUrut=1,noUrutGU=1,noUrutSPJ=1;
 let lastPulledAt='';
+let hasUnsavedChanges=false;
 let editIds={prog:null,keg:null,sk:null,bel:null,peg:null};
 let activeTab='single',curSkId='',curSkIdGU='',wizStep=0;
 let importData=null,activeRankTab='high';
@@ -3635,7 +3636,8 @@ function impReset(){importData=null;document.getElementById('imp-status').style.
 // ================================================================
 const STORAGE_KEY = 'sipkeu_pro_data_v2';
 
-function saveData(localOnly = false){
+function saveData(localOnly = false, force = false){
+  if(!hasUnsavedChanges && !force) return true;
   try{
     const payload={
       CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
@@ -3650,6 +3652,7 @@ function saveData(localOnly = false){
       pushToSupabase();
     } else {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      hasUnsavedChanges = false;
     }
     return true;
   }catch(e){
@@ -3776,6 +3779,7 @@ function getStorageInfo(){
 // Kita pakai MutationObserver ringan + interval backup
 let _saveTimer=null;
 function scheduleSave(){
+  hasUnsavedChanges = true;
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>{
     saveData();
@@ -4268,6 +4272,7 @@ function pushToSupabase(){
     .then(res => {
       if(!res.ok) throw new Error('HTTP ' + res.status);
       lastPulledAt = newSavedAt;
+      hasUnsavedChanges = false;
       
       const isHardcoded = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') && (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '');
       if(!isHardcoded) {
