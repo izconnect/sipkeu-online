@@ -36,6 +36,37 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:var(--bg)
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   z-index: 1000;
 }
+.lp-ticker {
+  background: var(--navy2);
+  color: #fff;
+  padding: 6px 40px;
+  font-size: 11.5px;
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 2px solid var(--blue);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+.lp-ticker-title {
+  background: var(--blue);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.lp-ticker-content {
+  overflow: hidden;
+  width: 100%;
+}
+.lp-ticker-content marquee {
+  display: block;
+}
 .lp-brand {
   display: flex;
   align-items: center;
@@ -355,6 +386,15 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:var(--bg)
 @media(max-width:768px) {
   .lp-navbar {
     padding: 10px 20px;
+  }
+  .lp-ticker {
+    padding: 6px 20px;
+    font-size: 11px;
+    gap: 8px;
+  }
+  .lp-ticker-title {
+    padding: 2px 6px;
+    font-size: 8.5px;
   }
   .lp-nav-links {
     display: none;
@@ -803,6 +843,16 @@ tr:hover td{background:#fafbfc}
     </div>
   </div>
 
+  <!-- Ticker Banner -->
+  <div class="lp-ticker" id="lp-ticker" style="display:none">
+    <span class="lp-ticker-title">⚡ PROSES TAGIHAN AKTIF</span>
+    <div class="lp-ticker-content">
+      <marquee behavior="scroll" direction="left" scrollamount="4" id="lp-ticker-text">
+        Tidak ada tagihan yang sedang diproses saat ini.
+      </marquee>
+    </div>
+  </div>
+
   <!-- Hero Section -->
   <div class="lp-hero">
     <h1 id="lp-hero-title">Portal Kinerja & Informasi SKPD</h1>
@@ -1139,6 +1189,50 @@ tr:hover td{background:#fafbfc}
   </div>
 </div>
 
+<!-- Modal: Berita -->
+<div class="modal-bg" id="modal-setup-berita">
+  <div class="modal-box" style="max-width:550px">
+    <div class="modal-hdr"><span id="mberita-ttl">Tambah Berita</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="mberita-id">
+      <div class="fg" style="margin-bottom:10px">
+        <label>Judul Berita <span class="req">*</span></label>
+        <input id="mberita-title" placeholder="Rapat koordinasi / Sosialisasi...">
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>Tanggal Publikasi <span class="req">*</span></label>
+        <input id="mberita-date" placeholder="Contoh: 30 Mei 2026">
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>Ringkasan Singkat (Muncul di Landing Page) <span class="req">*</span></label>
+        <textarea id="mberita-desc" rows="2" style="width:100%; border:1px solid #ddd; border-radius:6px; padding:8px 10px; font-family:inherit; font-size:12px; resize:vertical;" placeholder="Kutipan singkat berita maksimal 200 karakter..."></textarea>
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>Isi Lengkap Berita (Paragraf Baru otomatis terformat) <span class="req">*</span></label>
+        <textarea id="mberita-content" rows="6" style="width:100%; border:1px solid #ddd; border-radius:6px; padding:8px 10px; font-family:inherit; font-size:12px; resize:vertical;" placeholder="Tuliskan isi berita selengkapnya di sini..."></textarea>
+      </div>
+      <div class="form-grid g2" style="margin-bottom:9px">
+        <div class="fg">
+          <label>File Foto Kegiatan</label>
+          <input type="file" accept="image/*" onchange="loadBeritaFoto(this)" style="font-size:11px">
+        </div>
+        <div class="fg">
+          <label>Atau URL / Nama File Foto</label>
+          <input id="mberita-image" placeholder="kegiatan_rapat.png">
+        </div>
+      </div>
+      <div id="mberita-preview-box" style="display:none; margin-top:8px; text-align:center">
+        <label style="display:block; text-align:left; font-size:11px; color:#555; font-weight:600; margin-bottom:4px">Pratinjau Foto Kegiatan</label>
+        <img id="mberita-preview-img" style="max-width:100%; max-height:120px; border-radius:6px; border:1px solid #ddd; object-fit:cover">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="tutupModal('modal-setup-berita')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanBerita()">Simpan</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Pegawai -->
 <div class="modal-bg" id="modal-peg">
   <div class="modal-box" style="max-width:500px">
@@ -1254,6 +1348,7 @@ tr:hover td{background:#fafbfc}
     <div class="nav-item" onclick="pg('setup-skpd')"><span class="ni">🏛</span> Profil SKPD</div>
     <div class="nav-item" onclick="pg('setup-anggaran')"><span class="ni">💰</span> Data Anggaran</div>
     <div class="nav-item" onclick="pg('setup-pegawai')"><span class="ni">👥</span> Data Pegawai</div>
+    <div class="nav-item" onclick="pg('setup-berita')"><span class="ni">📰</span> Manajemen Berita</div>
   </div>
   <button class="s-logout" onclick="doLogout()">⏏ Keluar</button>
 </div>
@@ -1837,6 +1932,18 @@ tr:hover td{background:#fafbfc}
   <div id="peg-wrap"></div>
 </div>
 
+<!-- ==================== SETUP BERITA ==================== -->
+<div class="page" id="page-setup-berita">
+  <div class="card-hdr" style="margin-bottom:11px; display:flex; justify-content:space-between; align-items:center">
+    <div class="card-title" style="font-size:14px">📰 Manajemen Berita & Kegiatan Publik</div>
+    <button class="btn btn-primary btn-sm" onclick="bukaBerita()">+ Tambah Berita Baru</button>
+  </div>
+  
+  <div id="berita-list-admin" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    <!-- Rendered dynamically -->
+  </div>
+</div>
+
 </div><!-- end content -->
 </div><!-- end main -->
 </div><!-- end app -->
@@ -1853,7 +1960,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // STATE
 // ================================================================
 let CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'Gorontalo',prov:'',logo:''};
-let PROG=[],KEG=[],SK=[],BEL=[],PEG=[],TAGIHAN=[],TAGIHAN_GU=[],SPJGU=[],SP2D=[];
+let PROG=[],KEG=[],SK=[],BEL=[],PEG=[],TAGIHAN=[],TAGIHAN_GU=[],SPJGU=[],SP2D=[],NEWS=[];
 let noUrut=1,noUrutGU=1,noUrutSPJ=1;
 let lastPulledAt='';
 let hasUnsavedChanges=false;
@@ -2044,6 +2151,7 @@ const pgMeta={
   'setup-skpd':['Profil SKPD','Identitas instansi'],
   'setup-anggaran':['Setup Data Anggaran','Program › Kegiatan › Sub Kegiatan › Belanja'],
   'setup-pegawai':['Setup Data Pegawai & Akun','PA, KPA, PPK, BP, BPP, PPTK, Verifikator'],
+  'setup-berita':['Manajemen Berita & Kegiatan','Publikasi Berita Publik Landing Page'],
   'real-bel':['Realisasi Rekening Belanja','Anggaran, Realisasi, dan Sisa per Rekening'],
 };
 
@@ -2083,6 +2191,7 @@ function pg(id){
   if(id==='setup-skpd')loadSKPDForm();
   if(id==='setup-anggaran'){popAllFilters();renderProg();renderKeg();renderSK();renderBel();}
   if(id==='setup-pegawai')renderPegawai();
+  if(id==='setup-berita')renderSetupBerita();
   if(id==='real-bel')popRealBelFilters();
   // Storage panel – inject ke setup-skpd
   if(id==='setup-skpd') setTimeout(injectStoragePanel, 50);
@@ -3482,6 +3591,228 @@ function cetakKendali(){
 }
 
 // ================================================================
+// MANAJEMEN BERITA & KEGIATAN (CRUD)
+// ================================================================
+function renderSetupBerita() {
+  const el = document.getElementById('berita-list-admin');
+  if (!el) return;
+  
+  if (!NEWS || !NEWS.length) {
+    el.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--sub);">
+        <div class="es-icon" style="font-size: 32px; margin-bottom: 8px;">📰</div>
+        <p>Belum ada berita atau kegiatan. Klik "+ Tambah Berita Baru" untuk menambahkan.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  el.innerHTML = NEWS.map(n => {
+    return `
+      <div class="card" style="display:flex; flex-direction:column; padding:0; overflow:hidden; border:1px solid #e2e8f0; border-radius:12px; background:#fff; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="height:140px; overflow:hidden; background:#f1f5f9; position:relative;">
+          <img src="${n.image}" alt="${n.title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=500&q=80'">
+          <span style="position:absolute; bottom:8px; left:8px; background:rgba(15,42,69,0.85); color:#fff; padding:2px 8px; border-radius:4px; font-size:9.5px; font-weight:600;">${n.date}</span>
+        </div>
+        <div style="padding:16px; flex:1; display:flex; flex-direction:column; justify-content:space-between; gap:12px;">
+          <div>
+            <h4 style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.4;">${n.title}</h4>
+            <p style="font-size:11px; color:#64748b; line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${n.desc}</p>
+          </div>
+          <div style="display:flex; gap:8px; border-top:1px solid #f1f5f9; padding-top:10px;">
+            <button class="btn btn-sm" style="flex:1; font-size:11px; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1;" onclick="editBerita(${n.id})">✏ Edit</button>
+            <button class="btn btn-sm btn-ghost" style="color:var(--red); font-size:11px; padding:6px 10px;" onclick="hapusBerita(${n.id})" title="Hapus Berita">✕ Hapus</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function bukaBerita() {
+  document.getElementById('mberita-ttl').textContent = 'Tambah Berita Baru';
+  document.getElementById('mberita-id').value = '';
+  document.getElementById('mberita-title').value = '';
+  document.getElementById('mberita-date').value = new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('mberita-desc').value = '';
+  document.getElementById('mberita-content').value = '';
+  document.getElementById('mberita-image').value = '';
+  
+  // Reset file input
+  const fileInput = document.querySelector('#modal-setup-berita input[type="file"]');
+  if (fileInput) fileInput.value = '';
+  
+  document.getElementById('mberita-preview-box').style.display = 'none';
+  document.getElementById('mberita-preview-img').src = '';
+  
+  bukaModal('modal-setup-berita');
+}
+
+function editBerita(id) {
+  const n = NEWS.find(x => x.id === id);
+  if (!n) return;
+  
+  document.getElementById('mberita-ttl').textContent = 'Edit Berita & Kegiatan';
+  document.getElementById('mberita-id').value = n.id;
+  document.getElementById('mberita-title').value = n.title || '';
+  document.getElementById('mberita-date').value = n.date || '';
+  document.getElementById('mberita-desc').value = n.desc || '';
+  
+  // Format HTML paragraphs back to newline-separated text for editing
+  let rawContent = n.content || '';
+  rawContent = rawContent.replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').trim();
+  document.getElementById('mberita-content').value = rawContent;
+  
+  document.getElementById('mberita-image').value = n.image || '';
+  
+  // Show image preview if available
+  const previewBox = document.getElementById('mberita-preview-box');
+  const previewImg = document.getElementById('mberita-preview-img');
+  if (n.image) {
+    previewImg.src = n.image;
+    previewBox.style.display = 'block';
+  } else {
+    previewBox.style.display = 'none';
+    previewImg.src = '';
+  }
+  
+  // Reset file input
+  const fileInput = document.querySelector('#modal-setup-berita input[type="file"]');
+  if (fileInput) fileInput.value = '';
+  
+  bukaModal('modal-setup-berita');
+}
+
+function loadBeritaFoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    toast('Ukuran file maksimal 2MB', 'err');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result;
+    document.getElementById('mberita-image').value = base64;
+    
+    // Update preview
+    const previewBox = document.getElementById('mberita-preview-box');
+    const previewImg = document.getElementById('mberita-preview-img');
+    previewImg.src = base64;
+    previewBox.style.display = 'block';
+    
+    toast('Foto berhasil dimuat', 'ok');
+  };
+  reader.readAsDataURL(file);
+}
+
+function simpanBerita() {
+  const idVal = document.getElementById('mberita-id').value;
+  const title = document.getElementById('mberita-title').value.trim();
+  const date = document.getElementById('mberita-date').value.trim();
+  const desc = document.getElementById('mberita-desc').value.trim();
+  const rawContent = document.getElementById('mberita-content').value.trim();
+  let image = document.getElementById('mberita-image').value.trim();
+  
+  if (!title || !date || !desc || !rawContent) {
+    toast('Semua field wajib diisi (kecuali Foto)', 'err');
+    return;
+  }
+  
+  // Wrap paragraphs in <p> tags
+  const paragraphs = rawContent.split(/\n\s*\n+/);
+  const formattedContent = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('\n');
+  
+  if (!image) {
+    image = 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=500&q=80';
+  }
+  
+  if (idVal) {
+    const id = parseInt(idVal, 10);
+    const idx = NEWS.findIndex(x => x.id === id);
+    if (idx !== -1) {
+      NEWS[idx].title = title;
+      NEWS[idx].date = date;
+      NEWS[idx].desc = desc;
+      NEWS[idx].content = formattedContent;
+      NEWS[idx].image = image;
+      toast('Berita berhasil diperbarui', 'ok');
+    }
+  } else {
+    const maxId = NEWS.reduce((max, n) => n.id > max ? n.id : max, 0);
+    const newNews = {
+      id: maxId + 1,
+      title: title,
+      date: date,
+      desc: desc,
+      content: formattedContent,
+      image: image
+    };
+    NEWS.push(newNews);
+    toast('Berita baru berhasil ditambahkan', 'ok');
+  }
+  
+  tutupModal('modal-setup-berita');
+  renderSetupBerita();
+  scheduleSave();
+}
+
+function hapusBerita(id) {
+  if (!confirm('Apakah Anda yakin ingin menghapus berita ini?')) return;
+  const idx = NEWS.findIndex(x => x.id === id);
+  if (idx !== -1) {
+    NEWS.splice(idx, 1);
+    toast('Berita berhasil dihapus', 'warn');
+    renderSetupBerita();
+    scheduleSave();
+  }
+}
+
+function populateTicker() {
+  const ticker = document.getElementById('lp-ticker');
+  const tickerText = document.getElementById('lp-ticker-text');
+  if (!ticker || !tickerText) return;
+  
+  const activeList = TAGIHAN.filter(t => ['Menunggu Verifikator', 'Menunggu PPK', 'Menunggu BPP', 'Di SIPD'].includes(t.status));
+  
+  if (activeList.length === 0) {
+    ticker.style.display = 'none';
+    return;
+  }
+  
+  const text = activeList.map(t => {
+    const statusLabel = stOleh[t.status] ? `${t.status} - di ${stOleh[t.status]}` : t.status;
+    const emoji = stEmoji[t.status] || '⚡';
+    return `[${t.no}] ${t.urai} &mdash; <strong style="color:#60a5fa">Rp ${fmtRp(t.jumlah)}</strong> (Status: ${emoji} ${statusLabel})`;
+  }).join(' &nbsp;&nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp;&nbsp; ');
+  
+  tickerText.innerHTML = text;
+  ticker.style.display = 'flex';
+}
+
+// Bind live URL input preview listener
+setTimeout(() => {
+  const imgInput = document.getElementById('mberita-image');
+  if (imgInput) {
+    imgInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      const previewBox = document.getElementById('mberita-preview-box');
+      const previewImg = document.getElementById('mberita-preview-img');
+      if (previewBox && previewImg) {
+        if (val) {
+          previewImg.src = val;
+          previewBox.style.display = 'block';
+        } else {
+          previewBox.style.display = 'none';
+          previewImg.src = '';
+        }
+      }
+    });
+  }
+}, 100);
+
+// ================================================================
 // PUBLIC LANDING PAGE & NEWS
 // ================================================================
 const MOCK_NEWS = [
@@ -3646,13 +3977,15 @@ function renderPublicLanding() {
   
   // Render news public
   renderPublicNews();
+  populateTicker();
 }
 
 function renderPublicNews() {
   const container = document.getElementById('lp-news-container');
   if(!container) return;
   
-  container.innerHTML = MOCK_NEWS.map(n => `
+  const listToRender = (NEWS && NEWS.length) ? NEWS : MOCK_NEWS;
+  container.innerHTML = listToRender.map(n => `
     <div class="lp-news-card">
       <div class="lp-news-img-box">
         <img src="${n.image}" alt="${n.title}" class="lp-news-img" onerror="this.src='https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=500&q=80'">
@@ -3668,7 +4001,8 @@ function renderPublicNews() {
 }
 
 function showNewsDetail(id) {
-  const news = MOCK_NEWS.find(n => n.id === id);
+  const listToFind = (NEWS && NEWS.length) ? NEWS : MOCK_NEWS;
+  const news = listToFind.find(n => n.id === id);
   if(!news) return;
   
   const body = document.getElementById('modal-berita-body');
@@ -4872,6 +5206,7 @@ function saveData(localOnly = false, force = false){
       CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
       TAGIHAN,TAGIHAN_GU,SPJGU,SP2D,
       noUrut,noUrutGU,noUrutSPJ,
+      NEWS,
       savedAt: new Date().toISOString()
     };
     const isHardcoded = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') && (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '');
@@ -4912,6 +5247,11 @@ function loadData(cloudState = null){
     if(d.noUrut)    noUrut=d.noUrut;
     if(d.noUrutGU)  noUrutGU=d.noUrutGU;
     if(d.noUrutSPJ) noUrutSPJ=d.noUrutSPJ;
+    if(d.NEWS) {
+      NEWS=d.NEWS;
+    } else {
+      NEWS=JSON.parse(JSON.stringify(MOCK_NEWS));
+    }
     return d.savedAt||true;
   }catch(e){
     console.warn('Load gagal:',e);
@@ -4923,7 +5263,7 @@ function clearData(){
   if(!confirm('⚠️ Hapus SEMUA data aplikasi?\n\nTindakan ini tidak dapat dibatalkan.\nSemua tagihan, anggaran, dan pegawai akan dihapus.')) return;
   localStorage.removeItem(STORAGE_KEY);
   CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'',prov:'',logo:''};
-  PROG=[];KEG=[];SK=[];BEL=[];PEG=[];
+  PROG=[];KEG=[];SK=[];BEL=[];PEG=[];NEWS=[];
   ACCOUNTS=[{id:'acc-admin',username:'admin',password:'admin123',jab:'Admin',nama:'Administrator',nip:'',skIds:[]}];
   TAGIHAN=[];TAGIHAN_GU=[];SPJGU=[];SP2D=[];
   noUrut=1;noUrutGU=1;noUrutSPJ=1;
@@ -5501,6 +5841,7 @@ function pushToSupabase(){
       CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
       TAGIHAN,TAGIHAN_GU,SPJGU,SP2D,
       noUrut,noUrutGU,noUrutSPJ,
+      NEWS,
       savedAt: newSavedAt
     };
 
@@ -5702,6 +6043,7 @@ function testAndSyncSupabase(){
     CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
     TAGIHAN,TAGIHAN_GU,SPJGU,SP2D,
     noUrut,noUrutGU,noUrutSPJ,
+    NEWS,
     savedAt: new Date().toISOString()
   };
 
