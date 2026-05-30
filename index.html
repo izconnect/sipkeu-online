@@ -1188,6 +1188,7 @@ function doLogin(){
   if(!acc){document.getElementById('login-err').style.display='block';return;}
   document.getElementById('login-err').style.display='none';
   USER=acc;
+  sessionStorage.setItem('sipkeu_logged_user', JSON.stringify(acc)); // Simpan session login
   document.getElementById('login-screen').classList.add('hide');
   // Check wizard
   if(!CFG.skpd){
@@ -1200,6 +1201,7 @@ function doLogin(){
 
 function doLogout(){
   USER=null;
+  sessionStorage.removeItem('sipkeu_logged_user'); // Hapus session login
   document.getElementById('login-screen').classList.remove('hide');
   document.getElementById('l-user').value='';
   document.getElementById('l-pass').value='';
@@ -3802,7 +3804,7 @@ setInterval(() => {
   const isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
   
   if (!isModalOpen && !isWizardOpen && !isTyping && !hasUnsavedChanges) {
-    pullFromSupabase(true);
+    pullFromSupabase(true, true); // Panggil sebagai background pull
   }
 }, 20000);
 
@@ -4037,9 +4039,19 @@ function buildQRCode(text,size=60){
   return`<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}" width="${size}" height="${size}" style="image-rendering:pixelated" alt="QR">`;
 }
 
-// 1. Load data dari localStorage
+// 1. Load session login jika ada
+const storedUser = sessionStorage.getItem('sipkeu_logged_user');
+if (storedUser) {
+  try {
+    USER = JSON.parse(storedUser);
+  } catch (e) {
+    console.warn('Session load gagal:', e);
+  }
+}
+
+// 2. Load data dari localStorage (fallback)
 const loadedAt=loadData();
-pullFromSupabase(true);
+pullFromSupabase(true, false);
 
 // 2. Set default tanggal
 document.getElementById('f-tgl').value=new Date().toISOString().split('T')[0];
@@ -4310,7 +4322,7 @@ function pushToSupabase(){
   });
 }
 
-function pullFromSupabase(isStartup = false){
+function pullFromSupabase(isStartup = false, isBackground = false){
   const url = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') ? SUPABASE_URL : localStorage.getItem('sipkeu_sync_url');
   const key = (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '') ? SUPABASE_KEY : localStorage.getItem('sipkeu_sync_key');
   
@@ -4321,8 +4333,8 @@ function pullFromSupabase(isStartup = false){
     return;
   }
 
-  // Jika startup, disable tombol login dan ubah textnya
-  if (isStartup && loginBtn) {
+  // Jika startup awal (bukan background pull) dan user belum login, disable tombol login dan ubah textnya
+  if (isStartup && !isBackground && loginBtn && !USER) {
     loginBtn.disabled = true;
     loginBtn.style.opacity = '0.6';
     loginBtn.style.cursor = 'not-allowed';
@@ -4369,8 +4381,28 @@ function pullFromSupabase(isStartup = false){
     loadData(cloudState);
     lastPulledAt = cloudSavedAt;
     
-    if(typeof initApp === 'function') initApp();
-    if(!isStartup) toast('Data berhasil disinkronkan dari cloud!', 'ok');
+    if (isBackground) {
+      // Jika background pull, perbarui data di layar yang sedang aktif saat ini tanpa redirect ke dashboard
+      const activePageEl = document.querySelector('.page.active');
+      const activePageId = activePageEl ? activePageEl.id.replace('page-', '') : null;
+      
+      updateSidebar();
+      applyRoleUI();
+      updateDashboard();
+      if (activePageId) pg(activePageId);
+    } else {
+      // Jika startup awal, auto-bypass login screen jika session masih aktif
+      if (USER) {
+        const currentAcc = ACCOUNTS.find(a => a.username.toLowerCase() === USER.username.toLowerCase());
+        if (currentAcc) {
+          USER = currentAcc;
+          sessionStorage.setItem('sipkeu_logged_user', JSON.stringify(USER));
+        }
+        document.getElementById('login-screen').classList.add('hide');
+        initApp();
+      }
+      if(!isStartup) toast('Data berhasil disinkronkan dari cloud!', 'ok');
+    }
     
     updateSyncStatusUI(true, 'Terhubung & Tersinkronisasi');
   })
@@ -4386,6 +4418,12 @@ function pullFromSupabase(isStartup = false){
       loginBtn.style.opacity = '1';
       loginBtn.style.cursor = 'pointer';
       loginBtn.textContent = 'Masuk →';
+    }
+    
+    // Jika gagal tapi user sudah punya session login sebelumnya, tetap bypass login agar bisa jalan offline
+    if (isStartup && !isBackground && USER) {
+      document.getElementById('login-screen').classList.add('hide');
+      initApp();
     }
 
     updateSyncStatusUI(false, 'Gagal Sinkronisasi: ' + err.message);
