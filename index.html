@@ -3794,6 +3794,18 @@ window.addEventListener('beforeunload',()=>saveData());
 // Auto-save setiap 2 menit sebagai safety net
 setInterval(()=>saveData(), 120000);
 
+// Auto-pull secara berkala (setiap 20 detik) ketika pengguna sedang menganggur (idle)
+// agar perubahan dari operator lain muncul otomatis tanpa merusak input aktif.
+setInterval(() => {
+  const isModalOpen = document.querySelector('.modal-bg.open') !== null;
+  const isWizardOpen = document.getElementById('wizard') && !document.getElementById('wizard').classList.contains('done');
+  const isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+  
+  if (!isModalOpen && !isWizardOpen && !isTyping && !hasUnsavedChanges) {
+    pullFromSupabase(true);
+  }
+}, 20000);
+
 
 // ================================================================
 // TREN REALISASI BULANAN (SVG Line Chart)
