@@ -4347,38 +4347,46 @@ function popRealBelFilters(){
   const selP=document.getElementById('rb-prog');
   if(!selP)return;
   selP.innerHTML='<option value="">-- Semua Program --</option>';
-  PROG.sort((a,b)=>a.kode.localeCompare(b.kode))
+  PROG.sort((a,b)=>(a.kode||'').localeCompare(b.kode||''))
     .forEach(p=>selP.innerHTML+=`<option value="${p.id}">${p.kode} – ${p.nama}</option>`);
   rbLoadKeg();
 }
 
 function rbLoadKeg(){
-  const pId=document.getElementById('rb-prog').value;
+  const pId=document.getElementById('rb-prog')?.value||'';
   const selK=document.getElementById('rb-keg');
   if(!selK)return;
   selK.innerHTML='<option value="">-- Semua Kegiatan --</option>';
   let list=KEG;
   if(pId)list=list.filter(k=>k.progId===pId);
-  list.sort((a,b)=>a.kode.localeCompare(b.kode))
+  list.sort((a,b)=>(a.kode||'').localeCompare(b.kode||''))
     .forEach(k=>selK.innerHTML+=`<option value="${k.id}">${k.kode} – ${k.nama}</option>`);
+  selK.value = '';
   rbLoadSK();
 }
 
 function rbLoadSK(){
-  const kId=document.getElementById('rb-keg').value;
+  const kId=document.getElementById('rb-keg')?.value||'';
   const selS=document.getElementById('rb-sk');
   if(!selS)return;
   selS.innerHTML='<option value="">-- Semua Sub Kegiatan --</option>';
   let list=SK;
   if(kId)list=list.filter(s=>s.kegId===kId);
-  list.sort((a,b)=>a.kode.localeCompare(b.kode))
+  list.sort((a,b)=>(a.kode||'').localeCompare(b.kode||''))
     .forEach(s=>selS.innerHTML+=`<option value="${s.id}">${s.kode} – ${s.nama}</option>`);
+  selS.value = '';
   renderRealBel();
 }
 
 function rbReset(){
-  document.getElementById('rb-prog').value='';
-  document.getElementById('rb-cari').value='';
+  const p=document.getElementById('rb-prog');
+  const k=document.getElementById('rb-keg');
+  const s=document.getElementById('rb-sk');
+  const c=document.getElementById('rb-cari');
+  if(p) p.value='';
+  if(k) k.value='';
+  if(s) s.value='';
+  if(c) c.value='';
   rbLoadKeg();
 }
 
