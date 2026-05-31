@@ -1837,16 +1837,14 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
         <tr>
           <th style="width:160px">Kode Rekening</th>
           <th>Nama Rekening Belanja</th>
-          <th style="text-align:right;width:115px">Total Pagu</th>
-          <th style="text-align:right;width:115px">Realisasi SP2D</th>
-          <th style="text-align:right;width:115px">On Proses</th>
-          <th style="text-align:right;width:115px">Sisa SP2D</th>
-          <th style="text-align:right;width:115px">Sisa SP2D+ON PROSES</th>
+          <th style="text-align:right;width:140px">Total Pagu</th>
+          <th id="th-rb-ringkas-real" style="text-align:right;width:200px">Realisasi SP2D</th>
+          <th id="th-rb-ringkas-sisa" style="text-align:right;width:180px">Sisa Anggaran</th>
           <th style="width:110px">Persentase</th>
         </tr>
       </thead>
       <tbody id="tbody-rb-ringkas">
-        <tr><td colspan="8" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
+        <tr><td colspan="6" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
       </tbody>
     </table>
   </div>
@@ -1858,16 +1856,14 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
           <th style="width:150px">Kode Rekening</th>
           <th>Nama Rekening Belanja</th>
           <th>Sub Kegiatan</th>
-          <th style="text-align:right;width:110px">Pagu</th>
-          <th style="text-align:right;width:110px">Realisasi SP2D</th>
-          <th style="text-align:right;width:110px">On Proses</th>
-          <th style="text-align:right;width:110px">Sisa SP2D</th>
-          <th style="text-align:right;width:110px">Sisa SP2D+ON PROSES</th>
+          <th style="text-align:right;width:120px">Pagu</th>
+          <th id="th-rb-rinci-real" style="text-align:right;width:200px">Realisasi SP2D</th>
+          <th id="th-rb-rinci-sisa" style="text-align:right;width:180px">Sisa Anggaran</th>
           <th style="width:110px">Persentase</th>
         </tr>
       </thead>
       <tbody id="tbody-rb-rinci">
-        <tr><td colspan="9" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
+        <tr><td colspan="7" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
       </tbody>
     </table>
   </div>
@@ -4438,6 +4434,21 @@ function renderRealBel(){
     list=list.filter(b=>b.kode.toLowerCase().includes(cari)||b.nama.toLowerCase().includes(cari));
   }
   
+  // Set Dynamic Headers based on REAL_MODEL
+  const isEstimasi = (REAL_MODEL === 'estimasi');
+  const realLabel = isEstimasi ? 'Realisasi SP2D + ON PROSES' : 'Realisasi SP2D';
+  const sisaLabel = isEstimasi ? 'Sisa SP2D + ON PROSES' : 'Sisa SP2D';
+  
+  const thRingkasReal = document.getElementById('th-rb-ringkas-real');
+  const thRingkasSisa = document.getElementById('th-rb-ringkas-sisa');
+  const thRinciReal = document.getElementById('th-rb-rinci-real');
+  const thRinciSisa = document.getElementById('th-rb-rinci-sisa');
+  
+  if (thRingkasReal) thRingkasReal.textContent = realLabel;
+  if (thRingkasSisa) thRingkasSisa.textContent = sisaLabel;
+  if (thRinciReal) thRinciReal.textContent = realLabel;
+  if (thRinciSisa) thRinciSisa.textContent = sisaLabel;
+  
   // Compute Realizations & Aggregates
   let sumPagu=0;
   let sumReal=0;
@@ -4483,7 +4494,7 @@ function renderRealBel(){
     
     // Sum for live summary cards (based on selected REAL_MODEL)
     sumPagu+=b.pagu;
-    const activeReal = REAL_MODEL==='estimasi' ? (b.realSP2D + b.realOnProses) : b.realSP2D;
+    const activeReal = isEstimasi ? (b.realSP2D + b.realOnProses) : b.realSP2D;
     sumReal+=activeReal;
   });
   
@@ -4496,14 +4507,12 @@ function renderRealBel(){
     const aggList=Object.values(agg).sort((a,b)=>a.kode.localeCompare(b.kode));
     const tbody=document.getElementById('tbody-rb-ringkas');
     if(!aggList.length){
-      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
       return;
     }
     tbody.innerHTML=aggList.map(a=>{
-      const sisaSP2D=Math.max(0,a.pagu-a.realSP2D);
-      const sisaEstimasi=Math.max(0,a.pagu-a.realSP2D-a.realOnProses);
-      
-      const activeReal = REAL_MODEL==='estimasi' ? (a.realSP2D + a.realOnProses) : a.realSP2D;
+      const activeReal = isEstimasi ? (a.realSP2D + a.realOnProses) : a.realSP2D;
+      const sisa=Math.max(0,a.pagu-activeReal);
       const pct=a.pagu?Math.min(100,Math.round(activeReal/a.pagu*100)):0;
       const col=pct>=80?'var(--red)':pct>=50?'var(--orange)':'var(--green)';
       
@@ -4511,10 +4520,8 @@ function renderRealBel(){
         <td style="font-family:monospace;font-size:9.5px;white-space:nowrap">${a.kode}</td>
         <td style="font-size:11.5px;font-weight:600">${a.nama}</td>
         <td style="text-align:right;white-space:nowrap">Rp ${fmtRp(a.pagu)}</td>
-        <td style="text-align:right;white-space:nowrap;color:var(--green)">${a.realSP2D?'Rp '+fmtRp(a.realSP2D):'–'}</td>
-        <td style="text-align:right;white-space:nowrap;color:var(--orange)">${a.realOnProses?'Rp '+fmtRp(a.realOnProses):'–'}</td>
-        <td style="text-align:right;white-space:nowrap;color:var(--navy)">Rp ${fmtRp(sisaSP2D)}</td>
-        <td style="text-align:right;white-space:nowrap;color:${sisaEstimasi===0?'#ccc':'var(--navy)'}">Rp ${fmtRp(sisaEstimasi)}</td>
+        <td style="text-align:right;white-space:nowrap;color:${isEstimasi?'var(--orange)':'var(--green)'}">Rp ${fmtRp(activeReal)}</td>
+        <td style="text-align:right;white-space:nowrap;color:${sisa===0?'#ccc':'var(--navy)'}">Rp ${fmtRp(sisa)}</td>
         <td>
           <div style="display:flex;align-items:center;gap:5px">
             <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden">
@@ -4530,15 +4537,13 @@ function renderRealBel(){
     const tbody=document.getElementById('tbody-rb-rinci');
     const sortedBelList=calculatedBelList.sort((a,b)=>a.kode.localeCompare(b.kode));
     if(!sortedBelList.length){
-      tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
+      tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
       return;
     }
     tbody.innerHTML=sortedBelList.map(b=>{
       const sk=SK.find(s=>s.id===b.skId);
-      const sisaSP2D=Math.max(0,b.pagu-b.realSP2D);
-      const sisaEstimasi=Math.max(0,b.pagu-b.realSP2D-b.realOnProses);
-      
-      const activeReal = REAL_MODEL==='estimasi' ? (b.realSP2D + b.realOnProses) : b.realSP2D;
+      const activeReal = isEstimasi ? (b.realSP2D + b.realOnProses) : b.realSP2D;
+      const sisa=Math.max(0,b.pagu-activeReal);
       const pct=b.pagu?Math.min(100,Math.round(activeReal/b.pagu*100)):0;
       const col=pct>=80?'var(--red)':pct>=50?'var(--orange)':'var(--green)';
       
@@ -4547,10 +4552,8 @@ function renderRealBel(){
         <td>${b.nama}</td>
         <td style="font-size:11px;color:#666">${sk?.nama||'–'} <span style="font-size:9px;color:#aaa;font-family:monospace"><br>${sk?.kode||''}</span></td>
         <td style="text-align:right;white-space:nowrap">Rp ${fmtRp(b.pagu)}</td>
-        <td style="text-align:right;white-space:nowrap;color:var(--green)">${b.realSP2D?'Rp '+fmtRp(b.realSP2D):'–'}</td>
-        <td style="text-align:right;white-space:nowrap;color:var(--orange)">${b.realOnProses?'Rp '+fmtRp(b.realOnProses):'–'}</td>
-        <td style="text-align:right;white-space:nowrap;color:var(--navy)">Rp ${fmtRp(sisaSP2D)}</td>
-        <td style="text-align:right;white-space:nowrap;color:${sisaEstimasi===0?'#ccc':'var(--navy)'}">Rp ${fmtRp(sisaEstimasi)}</td>
+        <td style="text-align:right;white-space:nowrap;color:${isEstimasi?'var(--orange)':'var(--green)'}">Rp ${fmtRp(activeReal)}</td>
+        <td style="text-align:right;white-space:nowrap;color:${sisa===0?'#ccc':'var(--navy)'}">Rp ${fmtRp(sisa)}</td>
         <td>
           <div style="display:flex;align-items:center;gap:5px">
             <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden">
@@ -6482,7 +6485,20 @@ function pullFromSupabase(isStartup = false, isBackground = false){
       updateSidebar();
       applyRoleUI();
       updateDashboard();
-      if (activePageId) pg(activePageId);
+      
+      if (activePageId) {
+        if (activePageId === 'spj-gu') renderSPJGU();
+        else if (activePageId === 'tagihan') renderTagihan();
+        else if (activePageId === 'tracking') renderTracking();
+        else if (activePageId === 'kendali') renderKendali();
+        else if (activePageId === 'infografis') renderInfografis();
+        else if (activePageId === 'rekon') renderRekon();
+        else if (activePageId === 'evaluasi') renderEvaluasi();
+        else if (activePageId === 'real-bel') renderRealBel();
+        else if (activePageId === 'setup-anggaran') { renderProg(); renderKeg(); renderSK(); renderBel(); }
+        else if (activePageId === 'setup-pegawai') renderPegawai();
+        else if (activePageId === 'setup-berita') renderSetupBerita();
+      }
     } else {
       // Jika startup awal, auto-bypass login screen jika session masih aktif
       if (USER) {
