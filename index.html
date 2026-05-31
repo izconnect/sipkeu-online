@@ -1835,16 +1835,18 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     <table>
       <thead>
         <tr>
-          <th style="width:180px">Kode Rekening</th>
+          <th style="width:160px">Kode Rekening</th>
           <th>Nama Rekening Belanja</th>
-          <th style="text-align:right;width:140px">Total Pagu</th>
-          <th style="text-align:right;width:140px">Total Realisasi</th>
-          <th style="text-align:right;width:140px">Sisa Anggaran</th>
-          <th style="width:130px">Persentase</th>
+          <th style="text-align:right;width:115px">Total Pagu</th>
+          <th style="text-align:right;width:115px">Realisasi SP2D</th>
+          <th style="text-align:right;width:115px">On Proses</th>
+          <th style="text-align:right;width:115px">Sisa SP2D</th>
+          <th style="text-align:right;width:115px">Sisa SP2D+ON PROSES</th>
+          <th style="width:110px">Persentase</th>
         </tr>
       </thead>
       <tbody id="tbody-rb-ringkas">
-        <tr><td colspan="6" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
+        <tr><td colspan="8" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
       </tbody>
     </table>
   </div>
@@ -1853,17 +1855,19 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     <table>
       <thead>
         <tr>
-          <th style="width:160px">Kode Rekening</th>
+          <th style="width:150px">Kode Rekening</th>
           <th>Nama Rekening Belanja</th>
           <th>Sub Kegiatan</th>
-          <th style="text-align:right;width:120px">Pagu</th>
-          <th style="text-align:right;width:120px">Realisasi</th>
-          <th style="text-align:right;width:120px">Sisa Anggaran</th>
-          <th style="width:120px">Persentase</th>
+          <th style="text-align:right;width:110px">Pagu</th>
+          <th style="text-align:right;width:110px">Realisasi SP2D</th>
+          <th style="text-align:right;width:110px">On Proses</th>
+          <th style="text-align:right;width:110px">Sisa SP2D</th>
+          <th style="text-align:right;width:110px">Sisa SP2D+ON PROSES</th>
+          <th style="width:110px">Persentase</th>
         </tr>
       </thead>
       <tbody id="tbody-rb-rinci">
-        <tr><td colspan="7" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
+        <tr><td colspan="9" style="text-align:center;padding:28px;color:#aaa">Gunakan filter atau ketik pencarian</td></tr>
       </tbody>
     </table>
   </div>
@@ -4440,24 +4444,30 @@ function renderRealBel(){
   
   // We compute realBel lookup for each BEL
   const calculatedBelList=list.map(b=>{
+    // Realisasi SP2D
     const rBel=TAGIHAN.filter(t=>{
       if(t.skId!==b.skId) return false;
       if(t.jenis==='GU') return false;
-      if(REAL_MODEL==='estimasi'){
-        if(t.status==='Draft'||t.status==='Ditolak') return false;
-        if(t.jenis==='SPJ-GU'&&!['SP2D Terbit','SPJ GU Dibuat'].includes(t.status)) return false;
-        return true;
-      }else{
-        return t.status==='SP2D Terbit'&&t.nosp2d;
-      }
+      return t.status==='SP2D Terbit'&&t.nosp2d;
     }).reduce((sum,t)=>{const item=(t.data?.items||[]).find(it=>it.kode===b.kode);return sum+(item?.jumlah||0);},0);
+
+    // Realisasi On Proses
+    const akBel=TAGIHAN.filter(t=>{
+      if(t.skId!==b.skId) return false;
+      if(t.jenis==='GU') return false;
+      if(t.status==='Draft'||t.status==='Ditolak') return false;
+      if(t.jenis==='SPJ-GU'&&!['SP2D Terbit','SPJ GU Dibuat'].includes(t.status)) return false;
+      return t.status!=='SP2D Terbit';
+    }).reduce((sum,t)=>{const item=(t.data?.items||[]).find(it=>it.kode===b.kode);return sum+(item?.jumlah||0);},0);
+
     return {
       id: b.id,
       skId: b.skId,
       kode: b.kode,
       nama: b.nama,
       pagu: b.pagu,
-      real: rBel
+      realSP2D: rBel,
+      realOnProses: akBel
     };
   });
   
@@ -4465,14 +4475,16 @@ function renderRealBel(){
   const agg={};
   calculatedBelList.forEach(b=>{
     if(!agg[b.kode]){
-      agg[b.kode]={kode:b.kode,nama:b.nama,pagu:0,real:0};
+      agg[b.kode]={kode:b.kode,nama:b.nama,pagu:0,realSP2D:0,realOnProses:0};
     }
     agg[b.kode].pagu+=b.pagu;
-    agg[b.kode].real+=b.real;
+    agg[b.kode].realSP2D+=b.realSP2D;
+    agg[b.kode].realOnProses+=b.realOnProses;
     
-    // Sum for live summary cards
+    // Sum for live summary cards (based on selected REAL_MODEL)
     sumPagu+=b.pagu;
-    sumReal+=b.real;
+    const activeReal = REAL_MODEL==='estimasi' ? (b.realSP2D + b.realOnProses) : b.realSP2D;
+    sumReal+=activeReal;
   });
   
   const sumSisa=Math.max(0,sumPagu-sumReal);
@@ -4481,22 +4493,28 @@ function renderRealBel(){
   document.getElementById('rb-sum-sisa').textContent='Rp '+fmtRp(sumSisa);
   
   if(currentRbTab==='ringkas'){
-    const aggList=Object.values(agg).sort((a,b)=>(b.pagu-a.pagu) || a.kode.localeCompare(b.kode));
+    const aggList=Object.values(agg).sort((a,b)=>a.kode.localeCompare(b.kode));
     const tbody=document.getElementById('tbody-rb-ringkas');
     if(!aggList.length){
-      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
       return;
     }
     tbody.innerHTML=aggList.map(a=>{
-      const sisa=Math.max(0,a.pagu-a.real);
-      const pct=a.pagu?Math.min(100,Math.round(a.real/a.pagu*100)):0;
+      const sisaSP2D=Math.max(0,a.pagu-a.realSP2D);
+      const sisaEstimasi=Math.max(0,a.pagu-a.realSP2D-a.realOnProses);
+      
+      const activeReal = REAL_MODEL==='estimasi' ? (a.realSP2D + a.realOnProses) : a.realSP2D;
+      const pct=a.pagu?Math.min(100,Math.round(activeReal/a.pagu*100)):0;
       const col=pct>=80?'var(--red)':pct>=50?'var(--orange)':'var(--green)';
+      
       return `<tr>
         <td style="font-family:monospace;font-size:9.5px;white-space:nowrap">${a.kode}</td>
         <td style="font-size:11.5px;font-weight:600">${a.nama}</td>
         <td style="text-align:right;white-space:nowrap">Rp ${fmtRp(a.pagu)}</td>
-        <td style="text-align:right;white-space:nowrap;color:var(--green)">${a.real?'Rp '+fmtRp(a.real):'–'}</td>
-        <td style="text-align:right;white-space:nowrap;color:${sisa===0?'#ccc':col}">Rp ${fmtRp(sisa)}</td>
+        <td style="text-align:right;white-space:nowrap;color:var(--green)">${a.realSP2D?'Rp '+fmtRp(a.realSP2D):'–'}</td>
+        <td style="text-align:right;white-space:nowrap;color:var(--orange)">${a.realOnProses?'Rp '+fmtRp(a.realOnProses):'–'}</td>
+        <td style="text-align:right;white-space:nowrap;color:var(--navy)">Rp ${fmtRp(sisaSP2D)}</td>
+        <td style="text-align:right;white-space:nowrap;color:${sisaEstimasi===0?'#ccc':'var(--navy)'}">Rp ${fmtRp(sisaEstimasi)}</td>
         <td>
           <div style="display:flex;align-items:center;gap:5px">
             <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden">
@@ -4510,23 +4528,29 @@ function renderRealBel(){
   } else {
     // Render Detailed Listing
     const tbody=document.getElementById('tbody-rb-rinci');
-    const sortedBelList=calculatedBelList.sort((a,b)=>(b.pagu-a.pagu) || a.kode.localeCompare(b.kode));
+    const sortedBelList=calculatedBelList.sort((a,b)=>a.kode.localeCompare(b.kode));
     if(!sortedBelList.length){
-      tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
+      tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:28px;color:#aaa">Tidak ada data</td></tr>';
       return;
     }
     tbody.innerHTML=sortedBelList.map(b=>{
       const sk=SK.find(s=>s.id===b.skId);
-      const sisa=Math.max(0,b.pagu-b.real);
-      const pct=b.pagu?Math.min(100,Math.round(b.real/b.pagu*100)):0;
+      const sisaSP2D=Math.max(0,b.pagu-b.realSP2D);
+      const sisaEstimasi=Math.max(0,b.pagu-b.realSP2D-b.realOnProses);
+      
+      const activeReal = REAL_MODEL==='estimasi' ? (b.realSP2D + b.realOnProses) : b.realSP2D;
+      const pct=b.pagu?Math.min(100,Math.round(activeReal/b.pagu*100)):0;
       const col=pct>=80?'var(--red)':pct>=50?'var(--orange)':'var(--green)';
+      
       return `<tr>
         <td style="font-family:monospace;font-size:9.5px;white-space:nowrap">${b.kode}</td>
         <td>${b.nama}</td>
         <td style="font-size:11px;color:#666">${sk?.nama||'–'} <span style="font-size:9px;color:#aaa;font-family:monospace"><br>${sk?.kode||''}</span></td>
         <td style="text-align:right;white-space:nowrap">Rp ${fmtRp(b.pagu)}</td>
-        <td style="text-align:right;white-space:nowrap;color:var(--green)">${b.real?'Rp '+fmtRp(b.real):'–'}</td>
-        <td style="text-align:right;white-space:nowrap;color:${sisa===0?'#ccc':col}">Rp ${fmtRp(sisa)}</td>
+        <td style="text-align:right;white-space:nowrap;color:var(--green)">${b.realSP2D?'Rp '+fmtRp(b.realSP2D):'–'}</td>
+        <td style="text-align:right;white-space:nowrap;color:var(--orange)">${b.realOnProses?'Rp '+fmtRp(b.realOnProses):'–'}</td>
+        <td style="text-align:right;white-space:nowrap;color:var(--navy)">Rp ${fmtRp(sisaSP2D)}</td>
+        <td style="text-align:right;white-space:nowrap;color:${sisaEstimasi===0?'#ccc':'var(--navy)'}">Rp ${fmtRp(sisaEstimasi)}</td>
         <td>
           <div style="display:flex;align-items:center;gap:5px">
             <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden">
