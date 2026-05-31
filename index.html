@@ -1364,6 +1364,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     <div class="nav-item" onclick="pg('kendali')"><span class="ni">📌</span> Kartu Kendali</div>
     <div class="nav-item" onclick="pg('infografis')"><span class="ni">📈</span> Infografis</div>
     <div class="nav-item" onclick="pg('rekon')"><span class="ni">🔄</span> Rekonsiliasi SP2D</div>
+    <div class="nav-item" onclick="pg('ssh')"><span class="ni">🏷️</span> Standar Harga (SSH)</div>
   </div>
   <div class="nav-sec">
     <div class="nav-lbl">Laporan</div>
@@ -1906,6 +1907,16 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
   </div>
 </div>
 
+<!-- ==================== STANDAR HARGA (SSH) ==================== -->
+<div class="page" id="page-ssh" style="padding:20px;height:calc(100vh - 70px);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column">
+  <div id="ssh-empty-state" class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">🏷️</div>
+    <h3>Link Aplikasi Standar Harga Belum Diatur</h3>
+    <p style="color:var(--sub);max-width:400px;margin:8px 0 16px;font-size:13px">Untuk mengintegrasikan aplikasi Standar Harga (SSH) yang di-host di GitHub, masukkan URL web Anda pada pengaturan profil SKPD.</p>
+    <button class="btn btn-primary btn-sm" onclick="pg('setup-skpd')">⚙️ Pengaturan SKPD</button>
+  </div>
+  <iframe id="ssh-iframe" style="display:none;width:100%;height:100%;border:none;border-radius:8px;background:#fff"></iframe>
+</div>
 
 <!-- ==================== SETUP SKPD ==================== -->
 <div class="page" id="page-setup-skpd">
@@ -1939,6 +1950,9 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
         </div>
         <div style="font-size:10.5px;color:#888;margin-top:4px">Format: PNG, JPG, SVG. Ukuran ideal: min 100×100px. Logo akan muncul di kuitansi cetakan.</div>
       </div>
+    </div>
+    <div class="form-grid g1" style="margin-bottom:13px">
+      <div class="fg"><label>Link Aplikasi Standar Harga (SSH) di GitHub Pages</label><input id="cfg-sshurl" placeholder="Contoh: https://username-github.io/nama-repositori/ssh.html"></div>
     </div>
     <button class="btn btn-success" onclick="simpanSKPD()">💾 Simpan Profil SKPD</button>
   </div>
@@ -2017,7 +2031,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // ================================================================
 // STATE
 // ================================================================
-let CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'Gorontalo',prov:'',logo:''};
+let CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'Gorontalo',prov:'',logo:'',sshurl:''};
 let PROG=[],KEG=[],SK=[],BEL=[],PEG=[],TAGIHAN=[],TAGIHAN_GU=[],SPJGU=[],SP2D=[],NEWS=[];
 let noUrut=1,noUrutGU=1,noUrutSPJ=1;
 let REAL_MODEL = 'sp2d';
@@ -2229,6 +2243,7 @@ const pgMeta={
   kendali:['Kartu Kendali','Per sub kegiatan'],
   infografis:['Infografis PPTK','Visualisasi serapan'],
   rekon:['Rekonsiliasi SP2D','Cocokkan dengan SIPD'],
+  ssh:['Standar Satuan Harga (SSH)','Aplikasi Standar Harga SKPD'],
   buku:['Buku Besar','Transaksi terverifikasi'],
   evaluasi:['Evaluasi Capaian','Analisis percepatan'],
   'setup-skpd':['Profil SKPD','Identitas instansi'],
@@ -2282,6 +2297,24 @@ function pg(id){
   document.getElementById('pg-title').textContent=t;
   document.getElementById('pg-sub').textContent=(CFG.skpd||'SKPD')+(s?' · '+s:'');
   // page inits
+  if(id==='ssh'){
+    const iframe=document.getElementById('ssh-iframe');
+    const emptyState=document.getElementById('ssh-empty-state');
+    if(iframe && emptyState){
+      const url = CFG.sshurl || '';
+      if(url){
+        if(iframe.src !== url) iframe.src = url;
+        iframe.style.display = 'block';
+        emptyState.style.display = 'none';
+        document.getElementById('page-ssh').style.padding = '0';
+      } else {
+        iframe.src = 'about:blank';
+        iframe.style.display = 'none';
+        emptyState.style.display = 'flex';
+        document.getElementById('page-ssh').style.padding = '20px';
+      }
+    }
+  }
   if(id==='dashboard')updateDashboard();
   if(id==='kuitansi-ls')initKuiLS();
   if(id==='kuitansi-gu')initKuiGU();
@@ -2347,7 +2380,7 @@ function hapusLogo(){
 }
 
 function loadSKPDForm(){
-  ['pemda','ta','skpd','subskpd','kodeskpd','kota','prov'].forEach(k=>{
+  ['pemda','ta','skpd','subskpd','kodeskpd','kota','prov','sshurl'].forEach(k=>{
     const el=document.getElementById('cfg-'+k);if(el)el.value=CFG[k]||'';
   });
   // Logo
@@ -2362,7 +2395,7 @@ function loadSKPDForm(){
   if(CFG.logo) showLogoPreview(CFG.logo);
 }
 function simpanSKPD(){
-  ['pemda','ta','skpd','subskpd','kodeskpd','kota','prov'].forEach(k=>{
+  ['pemda','ta','skpd','subskpd','kodeskpd','kota','prov','sshurl'].forEach(k=>{
     const el=document.getElementById('cfg-'+k);if(el)CFG[k]=el.value.trim();
   });
   // Logo: simpan hanya jika input bukan placeholder [File:...]
@@ -5675,7 +5708,7 @@ function loadData(cloudState = null){
 function clearData(){
   if(!confirm('⚠️ Hapus SEMUA data aplikasi?\n\nTindakan ini tidak dapat dibatalkan.\nSemua tagihan, anggaran, dan pegawai akan dihapus.')) return;
   localStorage.removeItem(STORAGE_KEY);
-  CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'',prov:'',logo:''};
+  CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'',prov:'',logo:'',sshurl:''};
   PROG=[];KEG=[];SK=[];BEL=[];PEG=[];NEWS=[];
   ACCOUNTS=[{id:'acc-admin',username:'admin',password:'admin123',jab:'Admin',nama:'Administrator',nip:'',skIds:[]}];
   TAGIHAN=[];TAGIHAN_GU=[];SPJGU=[];SP2D=[];
