@@ -642,6 +642,8 @@ tr:hover td{background:#fafbfc}
   .ku-page,.rin-page,.sptb-page{page-break-after:always}
 }
 #print-area{display:none}
+body.hide-rincian-cetak .kui-rincian-section{display:none!important}
+
 
 /* ===== WIZARD ===== */
 .wizard{position:fixed;inset:0;background:var(--navy);z-index:99990;display:flex;align-items:center;justify-content:center}
@@ -1047,6 +1049,12 @@ tr:hover td{background:#fafbfc}
 <div class="modal-bg" id="modal-cetak">
   <div class="modal-box" style="max-width:840px">
     <div class="modal-hdr"><span>📄 Preview Dokumen</span>
+      <div id="chk-show-rincian-wrapper" style="display:flex;align-items:center;gap:6px;margin-right:auto;margin-left:16px;font-size:12px;color:#fff;user-select:none">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="chk-show-rincian" checked onchange="toggleRincianCetak()" style="accent-color:var(--teal);width:15px;height:15px;cursor:pointer">
+          Tampilkan Rincian
+        </label>
+      </div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm" onclick="doCetak()" style="background:#4fc3f7;color:#fff;border-color:#4fc3f7">🖨 Cetak</button>
         <button class="btn btn-sm" onclick="tutupModal('modal-cetak')" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">✕</button>
@@ -2041,7 +2049,31 @@ function calcTerb(){const v=Number(document.getElementById('f-jml').value)||0;do
 function calcTerbGU(){const v=Number(document.getElementById('fgu-jml').value)||0;document.getElementById('fgu-terb').value=v?cap(terbilang(v))+' Rupiah':'';}
 function toast(msg,t='info',dur=3500){const c=document.getElementById('toast-wrap');const el=document.createElement('div');el.className='toast-item '+(t==='ok'?'ok':t==='err'?'err':t==='warn'?'warn':'');el.innerHTML=(t==='ok'?'✅':t==='err'?'❌':t==='warn'?'⚠️':'ℹ️')+' '+msg;c.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300)},dur)}
 const tutupModal=id=>document.getElementById(id).classList.remove('open');
-const bukaModal=id=>document.getElementById(id).classList.add('open');
+const bukaModal=id=>{
+  if(id==='modal-cetak'){
+    const chk=document.getElementById('chk-show-rincian');
+    if(chk) chk.checked=true;
+    document.body.classList.remove('hide-rincian-cetak');
+    const container=document.getElementById('modal-cetak-body');
+    const wrapper=document.getElementById('chk-show-rincian-wrapper');
+    if(wrapper){
+      if(container && container.querySelector('.kui-rincian-section')){
+        wrapper.style.display='flex';
+      }else{
+        wrapper.style.display='none';
+      }
+    }
+  }
+  document.getElementById(id).classList.add('open');
+};
+function toggleRincianCetak(){
+  const chk=document.getElementById('chk-show-rincian');
+  if(chk && !chk.checked){
+    document.body.classList.add('hide-rincian-cetak');
+  }else{
+    document.body.classList.remove('hide-rincian-cetak');
+  }
+}
 function doCetak(){document.getElementById('print-area').innerHTML=document.getElementById('modal-cetak-body').innerHTML;window.print();setTimeout(()=>document.getElementById('print-area').innerHTML='',1000)}
 window.addEventListener('beforeprint',()=>{if(!document.getElementById('print-area').innerHTML)document.getElementById('print-area').innerHTML=document.getElementById('modal-cetak-body')?.innerHTML||'';});
 window.addEventListener('afterprint',()=>document.getElementById('print-area').innerHTML='');
@@ -2825,7 +2857,7 @@ function prevGU(id){
 function previewSPJGUDok(id){
   const s=SPJGU.find(x=>x.id===id);if(!s)return;
   // Tampilkan SPJ GU + SPTB sekaligus
-  document.getElementById('modal-cetak-body').innerHTML=buildSPJGU(s)+'<div style="margin:20px 0;border-top:3px dashed #999"></div>'+buildSPTB(s);
+  document.getElementById('modal-cetak-body').innerHTML=buildSPJGU(s)+'<div class="kui-rincian-section"><div style="margin:20px 0;border-top:3px dashed #999"></div>'+buildSPTB(s)+'</div>';
   bukaModal('modal-cetak');
   renderAllBarcodes();
 }
@@ -3044,7 +3076,7 @@ function buildKuiLS(d){
     </div>
   </div>`;
 
-  return ku+'<hr style="margin:18px 0;border-top:2px dashed #bbb">'+rin;
+  return ku+'<div class="kui-rincian-section"><hr style="margin:18px 0;border-top:2px dashed #bbb">'+rin+'</div>';
 }
 
 function buildKuiGU(d){
@@ -3197,7 +3229,7 @@ function buildKuiGU(d){
     </div>
   </div>`;
 
-  return ku+'<hr style="margin:18px 0;border-top:2px dashed #bbb">'+rin;
+  return ku+'<div class="kui-rincian-section"><hr style="margin:18px 0;border-top:2px dashed #bbb">'+rin+'</div>';
 }
 
 function buildSPJGU(spj){
