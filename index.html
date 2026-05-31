@@ -453,7 +453,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:var(--bg)
 .topbar .ttl{font-size:14px;font-weight:600;color:var(--navy)}
 .topbar .tsub{font-size:11px;color:var(--sub);margin-top:1px}
 .content{flex:1;overflow-y:auto;padding:16px 18px;background:var(--bg)}
-.page{display:none}.page.active{display:block}
+.page{display:none}.page.active{display:block}#page-ssh.active{display:flex!important;flex-direction:column}
 
 /* ===== BUTTONS ===== */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:5px;border:1px solid #ccc;background:#fff;font-size:12px;cursor:pointer;transition:all .15s;color:#333;white-space:nowrap;font-family:inherit}
@@ -1908,7 +1908,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
 </div>
 
 <!-- ==================== STANDAR HARGA (SSH) ==================== -->
-<div class="page" id="page-ssh" style="padding:20px;height:calc(100vh - 70px);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column">
+<div class="page" id="page-ssh" style="padding:20px;height:calc(100vh - 70px);box-sizing:border-box;overflow:hidden">
   <div id="ssh-empty-state" class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center">
     <div style="font-size:48px;margin-bottom:12px">🏷️</div>
     <h3>Link Aplikasi Standar Harga Belum Diatur</h3>
