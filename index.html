@@ -819,7 +819,8 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
   <!-- Navbar -->
   <div class="lp-navbar">
     <div class="lp-brand">
-      <span class="lp-brand-logo">🏛️</span>
+      <span class="lp-brand-logo" id="lp-logo-icon">🏛️</span>
+      <img id="lp-logo-img" style="display:none;width:32px;height:32px;object-fit:contain;margin-right:2px" onerror="this.style.display='none';document.getElementById('lp-logo-icon').style.display='block'">
       <span id="lp-title-brand">Portal SKPD</span>
     </div>
     <div class="lp-nav-links">
@@ -4141,6 +4142,17 @@ function renderPublicLanding() {
   const taName = CFG.ta || new Date().getFullYear();
   
   document.getElementById('lp-title-brand').textContent = skpdName;
+  const lpLogoImg = document.getElementById('lp-logo-img');
+  if (lpLogoImg) {
+    if (CFG.logo && (CFG.logo.startsWith('data:') || CFG.logo.startsWith('http'))) {
+      lpLogoImg.src = CFG.logo;
+      lpLogoImg.style.display = 'block';
+      document.getElementById('lp-logo-icon').style.display = 'none';
+    } else {
+      lpLogoImg.style.display = 'none';
+      document.getElementById('lp-logo-icon').style.display = 'block';
+    }
+  }
   document.getElementById('lp-hero-title').innerHTML = `Portal Kinerja &amp; Realisasi Keuangan <br><span style="background:linear-gradient(135deg, var(--blue), var(--navy)); -webkit-background-clip:text; -webkit-text-fill-color:transparent">${skpdName}</span>`;
   document.getElementById('lp-hero-subtitle').textContent = `Transparansi realisasi anggaran pendapatan dan belanja daerah pada ${skpdName} - ${pemdaName} Tahun Anggaran ${taName}.`;
   
