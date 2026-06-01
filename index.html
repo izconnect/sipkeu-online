@@ -4156,7 +4156,7 @@ function populateTicker() {
   }
   
   const rowsHtml = activeList.map(t => {
-    const statusLabel = t.status === 'Di SIPD' ? 'Ajukan ke BKD' : (stOleh[t.status] ? `${t.status} - di ${stOleh[t.status]}` : t.status);
+    const statusLabel = t.status === 'Di SIPD' ? 'Ajukan ke BKD' : t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':(stOleh[t.status] ? `${t.status} - di ${stOleh[t.status]}` : t.status);
     const emoji = stEmoji[t.status] || '⚡';
     const bgClass = stCls[t.status] || 'bg-gray';
     return `
