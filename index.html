@@ -1535,7 +1535,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
       <div class="fg"><label>Sub Kegiatan <span class="req">*</span></label><select id="f-sk" onchange="fLoadBel()"></select></div>
     </div>
     <div class="form-grid g2" style="margin-bottom:11px">
-      <div class="fg"><label>Nomor SPP</label><input id="f-spp" placeholder="Diisi setelah Ajukan ke BKD"></div>
+      <div class="fg"><label>Nomor SPP</label><input id="f-spp" placeholder="Diisi setelah Di Ajukan Ke BKD"></div>
       <div class="fg"><label>Jenis SPP</label><select id="f-jspp"><option>LS</option><option>UP</option><option>GU</option><option>TU</option></select></div>
     </div>
     <!-- SINGLE -->
@@ -3661,7 +3661,7 @@ function renderTagihan(){
     <td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.skNama}</td>
     <td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.urai}</td>
     <td style="text-align:right;white-space:nowrap">Rp ${fmtRp(t.jumlah)}</td>
-    <td><span class="badge ${stCls[t.status]||'bg-gray'}">${stEmoji[t.status]||''} ${t.status==='Di SIPD'?'Ajukan ke BKD':t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':t.status}</span></td>
+    <td><span class="badge ${stCls[t.status]||'bg-gray'}">${stEmoji[t.status]||''} ${t.status==='Di SIPD'?'Di Ajukan Ke BKD':t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':t.status}</span></td>
     <td style="white-space:nowrap">
       <button class="btn btn-sm" onclick="prevTagihan('${t.id}')" title="Preview">👁</button>
       <button class="btn btn-sm" onclick="showStatusModal('${t.id}')" style="margin-left:3px" title="Ubah Status" ${canAdvance(t)?'':'disabled style="opacity:.4;cursor:not-allowed;margin-left:3px"'}>✏</button>
@@ -3729,7 +3729,7 @@ function printTandaTerima(id){
 function showStatusModal(id){
   const t=TAGIHAN.find(x=>x.id===id);if(!t)return;
   document.getElementById('mst-title').textContent='Ubah Status – '+t.no;
-  document.getElementById('mst-info').innerHTML=`Status saat ini: <span class="badge ${stCls[t.status]||'bg-gray'}">${stEmoji[t.status]||''} ${t.status==='Di SIPD'?'Ajukan ke BKD':t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':t.status}</span>`;
+  document.getElementById('mst-info').innerHTML=`Status saat ini: <span class="badge ${stCls[t.status]||'bg-gray'}">${stEmoji[t.status]||''} ${t.status==='Di SIPD'?'Di Ajukan Ke BKD':t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':t.status}</span>`;
   document.getElementById('mst-catatan').value='';
   const nextNormal=ALUR[ALUR.indexOf(t.status)+1];
   const opts=[];
@@ -3745,7 +3745,7 @@ function showStatusModal(id){
     else if(o.s==='Menunggu PPK' && t.status==='Dikirim ke PPK') label = 'Terima Fisik & Proses PPK';
     else if(o.s==='Dikirim ke BPP') label = 'Ajukan Berkas ke BPP';
     else if(o.s==='Menunggu BPP' && t.status==='Dikirim ke BPP') label = 'Terima Fisik & Proses BPP';
-    else if(o.s==='Di SIPD') label = 'Ajukan ke BKD';
+    else if(o.s==='Di SIPD') label = 'Di Ajukan Ke BKD';
     return `<button class="btn ${o.cls}" style="width:100%;margin-bottom:6px;justify-content:flex-start" onclick="doUbahStatus('${id}','${o.s}')">${stEmoji[o.s]||''} ${label}</button>`;
   }).join('');
   if(nextNormal==='SP2D Terbit'){
@@ -3775,7 +3775,7 @@ function doUbahStatus(id,newStatus){
 // ================================================================
 // TRACKING
 // ================================================================
-const TL_STEPS=[{key:'Draft',icon:'📝',label:'Dibuat PPTK'},{key:'Lengkapi TTD & Berkas',icon:'✍️',label:'TTD Basah'},{key:'Berkas Dikirim',icon:'🚚',label:'Ajukan Berkas'},{key:'Menunggu Verifikator',icon:'🔍',label:'Verifikator'},{key:'Dikirim ke PPK',icon:'🚚',label:'Ajukan ke PPK'},{key:'Menunggu PPK',icon:'📋',label:'PPK'},{key:'Dikirim ke BPP',icon:'🚚',label:'Ajukan ke BPP'},{key:'Menunggu BPP',icon:'💰',label:'BPP'},{key:'Di SIPD',icon:'🏢',label:'Ajukan ke BKD'},{key:'SP2D Terbit',icon:'✅',label:'SP2D'}];
+const TL_STEPS=[{key:'Draft',icon:'📝',label:'Dibuat PPTK'},{key:'Lengkapi TTD & Berkas',icon:'✍️',label:'TTD Basah'},{key:'Berkas Dikirim',icon:'🚚',label:'Ajukan Berkas'},{key:'Menunggu Verifikator',icon:'🔍',label:'Verifikator'},{key:'Dikirim ke PPK',icon:'🚚',label:'Ajukan ke PPK'},{key:'Menunggu PPK',icon:'📋',label:'PPK'},{key:'Dikirim ke BPP',icon:'🚚',label:'Ajukan ke BPP'},{key:'Menunggu BPP',icon:'💰',label:'BPP'},{key:'Di SIPD',icon:'🏢',label:'Di Ajukan Ke BKD'},{key:'SP2D Terbit',icon:'✅',label:'SP2D'}];
 function renderTracking(){
   const cari=(document.getElementById('trk-cari')?.value||'').toLowerCase();const fSt=document.getElementById('trk-st')?.value||'';
   let list=TAGIHAN.filter(t=>t.jenis!=='GU');
@@ -3793,7 +3793,7 @@ function buildTLCard(t){
     if(isDitolak&&i===curIdx)cls='rej';else if(i<curIdx||t.status==='SP2D Terbit')cls='done';else if(i===curIdx)cls='cur';
     return`<div class="tl-step ${cls}"><div class="tl-dot">${cls==='done'?'✓':cls==='rej'?'✕':s.icon}</div><div class="tl-lbl">${s.label}</div><div class="tl-time">${he?fmtTS(he.ts):''}</div></div>`;
   }).join('');
-  const logHtml=hist.map((h,i)=>{const dur=i<hist.length-1?durasi(h.ts,hist[i+1].ts):(h.ts?durasi(h.ts,null):'');const dc=h.status==='Ditolak'?'var(--red)':h.status==='SP2D Terbit'?'var(--green)':'var(--navy)';return`<div class="tl-log-item"><div class="tl-log-dot" style="background:${dc}"></div><div class="tl-log-text"><strong>${stEmoji[h.status]||''} ${h.status==='Di SIPD'?'Ajukan ke BKD':h.status==='Berkas Dikirim'?'Ajukan Berkas':h.status==='Dikirim ke PPK'?'Ajukan ke PPK':h.status==='Dikirim ke BPP'?'Ajukan ke BPP':h.status}</strong> — <em>${h.oleh}</em>${h.catatan?' · "'+h.catatan+'"':''}</div><div class="tl-log-time">${h.ts?fmtTS(h.ts):'–'}${dur?' ('+dur+')':''}</div></div>`;}).join('')||'<div style="font-size:11px;color:#aaa">Belum ada riwayat</div>';
+  const logHtml=hist.map((h,i)=>{const dur=i<hist.length-1?durasi(h.ts,hist[i+1].ts):(h.ts?durasi(h.ts,null):'');const dc=h.status==='Ditolak'?'var(--red)':h.status==='SP2D Terbit'?'var(--green)':'var(--navy)';return`<div class="tl-log-item"><div class="tl-log-dot" style="background:${dc}"></div><div class="tl-log-text"><strong>${stEmoji[h.status]||''} ${h.status==='Di SIPD'?'Di Ajukan Ke BKD':h.status==='Berkas Dikirim'?'Ajukan Berkas':h.status==='Dikirim ke PPK'?'Ajukan ke PPK':h.status==='Dikirim ke BPP'?'Ajukan ke BPP':h.status}</strong> — <em>${h.oleh}</em>${h.catatan?' · "'+h.catatan+'"':''}</div><div class="tl-log-time">${h.ts?fmtTS(h.ts):'–'}${dur?' ('+dur+')':''}</div></div>`;}).join('')||'<div style="font-size:11px;color:#aaa">Belum ada riwayat</div>';
   const canAdv=canAdvance(t);const nextSt=ALUR[ALUR.indexOf(t.status)+1];
   let actText = `Proses ke: ${nextSt}`;
   if(nextSt==='Berkas Dikirim') actText = 'Ajukan Berkas Fisik';
@@ -3802,7 +3802,7 @@ function buildTLCard(t){
   else if(nextSt==='Menunggu PPK' && t.status==='Dikirim ke PPK') actText = 'Terima Fisik PPK';
   else if(nextSt==='Dikirim ke BPP') actText = 'Ajukan Berkas ke BPP';
   else if(nextSt==='Menunggu BPP' && t.status==='Dikirim ke BPP') actText = 'Terima Fisik BPP';
-  else if(nextSt==='Di SIPD') actText = 'Ajukan ke BKD';
+  else if(nextSt==='Di SIPD') actText = 'Di Ajukan Ke BKD';
   const actBtn=t.status==='SP2D Terbit'?'<span style="font-size:11px;color:var(--green)">✅ Selesai</span>':isDitolak?`<button class="btn btn-sm btn-warning" onclick="showStatusModal('${t.id}')">🔄 Kembalikan</button>`:nextSt==='SP2D Terbit'?`<span style="font-size:11px;color:#0d9488;font-weight:600">⏳ Menunggu Input SP2D (Rekonsiliasi)</span>`:nextSt&&canAdv?`<button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')">${stEmoji[nextSt]||''} ${actText}</button>`:nextSt?`<span style="font-size:11px;color:#aaa">Menunggu ${stOleh[nextSt]||'pejabat terkait'}</span>`:'';
   const pptk=PEG.find(p=>p.id===t.pptkId);const verif=PEG.find(p=>p.jab==='Verifikator');
   const durTotal=hist[0]?.ts?durasi(hist[0].ts,t.status==='SP2D Terbit'?hist[hist.length-1]?.ts:null):'–';
@@ -3942,7 +3942,7 @@ function renderKendali(){
       </tr>`;
     }).join(''):`<tr><td colspan="7" style="text-align:center;color:#aaa;font-size:11px;padding:8px;border:1px solid #e8e8e8">Belum ada rekening belanja</td></tr>`;
     
-    const tagRows=tagSK.length?tagSK.slice(0,5).map(t=>`<tr style="font-size:11px"><td style="font-family:monospace;font-size:10px;padding:3px 6px;border:1px solid #f0f0f0">${t.no}</td><td style="padding:3px 6px;border:1px solid #f0f0f0;white-space:nowrap">${t.tgl?fmtTgl(t.tgl):'–'}</td><td style="padding:3px 6px;border:1px solid #f0f0f0">${t.urai.substring(0,40)}</td><td style="text-align:right;padding:3px 6px;border:1px solid #f0f0f0;white-space:nowrap">Rp ${fmtRp(t.jumlah)}</td><td style="padding:3px 6px;border:1px solid #f0f0f0"><span class="badge ${stCls[t.status]||'bg-gray'}" style="font-size:9px">${stEmoji[t.status]||''} ${t.status==='Di SIPD'?'Ajukan ke BKD':t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':t.status}</span></td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:#aaa;font-size:11px;padding:8px;border:1px solid #f0f0f0">Belum ada tagihan</td></tr>`;
+    const tagRows=tagSK.length?tagSK.slice(0,5).map(t=>`<tr style="font-size:11px"><td style="font-family:monospace;font-size:10px;padding:3px 6px;border:1px solid #f0f0f0">${t.no}</td><td style="padding:3px 6px;border:1px solid #f0f0f0;white-space:nowrap">${t.tgl?fmtTgl(t.tgl):'–'}</td><td style="padding:3px 6px;border:1px solid #f0f0f0">${t.urai.substring(0,40)}</td><td style="text-align:right;padding:3px 6px;border:1px solid #f0f0f0;white-space:nowrap">Rp ${fmtRp(t.jumlah)}</td><td style="padding:3px 6px;border:1px solid #f0f0f0"><span class="badge ${stCls[t.status]||'bg-gray'}" style="font-size:9px">${stEmoji[t.status]||''} ${t.status==='Di SIPD'?'Di Ajukan Ke BKD':t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':t.status}</span></td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:#aaa;font-size:11px;padding:8px;border:1px solid #f0f0f0">Belum ada tagihan</td></tr>`;
     
     return`<div class="card kk-card-item" data-skid="${s.id}" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px">
@@ -4202,7 +4202,7 @@ function populateTicker() {
   }
   
   const rowsHtml = activeList.map(t => {
-    const statusLabel = t.status === 'Di SIPD' ? 'Ajukan ke BKD' : t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':(stOleh[t.status] ? `${t.status} - di ${stOleh[t.status]}` : t.status);
+    const statusLabel = t.status === 'Di SIPD' ? 'Di Ajukan Ke BKD' : t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':(stOleh[t.status] ? `${t.status} - di ${stOleh[t.status]}` : t.status);
     const emoji = stEmoji[t.status] || '⚡';
     const bgClass = stCls[t.status] || 'bg-gray';
     return `
@@ -5984,7 +5984,7 @@ function updateDashboard(){
           <td style="font-size:11px">${t.pptkNama}</td>
           <td style="text-align:right;font-weight:600">Rp ${fmtShort(t.jumlah)}</td>
           <td style="text-align:center">
-            <button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')" style="padding: 3px 8px; font-size: 10px; font-weight:bold">✏️ Ajukan BKD</button>
+            <button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')" style="padding: 3px 8px; font-size: 10px; font-weight:bold">✏️ Di Ajukan Ke BKD</button>
           </td>
         </tr>`).join('') +
         `</tbody></table></div>`;
@@ -5992,10 +5992,10 @@ function updateDashboard(){
     html += `</div>`;
     html += `<div>
       <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--green); margin-bottom: 6px; display: flex; align-items: center; gap: 5px">
-        <span>🏢</span> Berkas Sudah Diajukan ke BKD (Menunggu SP2D)
+        <span>🏢</span> Berkas Sudah Di Ajukan Ke BKD (Menunggu SP2D)
       </div>`;
     if (!sipdList.length) {
-      html += `<div style="font-size: 11px; color: #888; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; text-align: center">Tidak ada berkas yang sudah diajukan ke BKD.</div>`;
+      html += `<div style="font-size: 11px; color: #888; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; text-align: center">Tidak ada berkas yang sudah Di Ajukan Ke BKD.</div>`;
     } else {
       html += `<div class="tbl-wrap"><table>
         <thead><tr><th>No. Kuitansi</th><th>PPTK</th><th style="text-align:right">Nilai</th><th style="text-align:center;width:120px">Status</th></tr></thead>
@@ -6014,7 +6014,7 @@ function updateDashboard(){
     dt.innerHTML = html;
   } else {
     dt.innerHTML='<table><thead><tr><th>No.</th><th>Jenis</th><th>PPTK/BP</th><th>Sub Kegiatan</th><th style="text-align:right">Nilai</th><th>Status</th></tr></thead><tbody>'+
-    recentTag.slice(0,6).map(t=>`<tr><td style="font-family:monospace;font-size:10.5px">${t.no}</td><td><span class="badge ${t.jenis==='SPJ-GU'?'bg-spj':'bg-sipd'}" style="font-size:9px">${t.jenis||'LS'}</span></td><td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.pptkNama}</td><td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.skNama}</td><td style="text-align:right">Rp ${fmtShort(t.jumlah)}</td><td><span class="badge ${stCls[t.status]||'bg-gray'}">${stEmoji[t.status]||''} ${t.status}</span></td></tr>`).join('')+'</tbody></table>';
+    recentTag.slice(0,6).map(t=>`<tr><td style="font-family:monospace;font-size:10.5px">${t.no}</td><td><span class="badge ${t.jenis==='SPJ-GU'?'bg-spj':'bg-sipd'}" style="font-size:9px">${t.jenis||'LS'}</span></td><td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.pptkNama}</td><td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.skNama}</td><td style="text-align:right">Rp ${fmtShort(t.jumlah)}</td><td><span class="badge ${stCls[t.status]||'bg-gray'}">${stEmoji[t.status]||''} ${t.status==='Di SIPD'?'Di Ajukan Ke BKD':t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':t.status}</span></td></tr>`).join('')+'</tbody></table>';
   }
 }
 
