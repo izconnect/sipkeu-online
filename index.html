@@ -489,6 +489,8 @@ tr:last-child td{border-bottom:none}
 tr:hover td{background:#fafbfc}
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
 .bg-draft{background:#fff3e0;color:#e65100}
+.bg-ttd{background:#fffde7;color:#b78103}
+.bg-dispatch{background:#e0f7fa;color:#006064}
 .bg-verif{background:#e8eaf6;color:#3949ab}
 .bg-ppk{background:#e3f2fd;color:#1565c0}
 .bg-bpp{background:#f3e5f5;color:#6a1b9a}
@@ -1503,7 +1505,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     </div>
     <div style="display:flex;gap:7px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="previewKui()">👁 Preview & Cetak</button>
-      <button class="btn btn-success" onclick="simpanTagihan('Menunggu Verifikator','LS')">✔ Ajukan ke Verifikator</button>
+      <button class="btn btn-success" onclick="simpanTagihan('Lengkapi TTD & Berkas','LS')">✍️ Selesai &amp; Lengkapi TTD</button>
       <button class="btn" onclick="simpanTagihan('Draft','LS')">💾 Simpan Draft</button>
       <button class="btn btn-ghost" onclick="resetForm()" style="margin-left:auto">🔄 Reset</button>
     </div>
@@ -1577,8 +1579,15 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
   <div class="filter-bar">
     <select id="fil-st" onchange="renderTagihan()">
       <option value="">Semua Status</option>
-      <option>Draft</option><option>Menunggu Verifikator</option><option>Menunggu PPK</option>
-      <option>Menunggu BPP</option><option>Di SIPD</option><option>SP2D Terbit</option><option>Ditolak</option>
+      <option>Draft</option>
+      <option>Lengkapi TTD & Berkas</option>
+      <option>Berkas Dikirim</option>
+      <option>Menunggu Verifikator</option>
+      <option>Menunggu PPK</option>
+      <option>Menunggu BPP</option>
+      <option>Di SIPD</option>
+      <option>SP2D Terbit</option>
+      <option>Ditolak</option>
     </select>
     <select id="fil-jenis" onchange="renderTagihan()">
       <option value="">Semua Jenis</option><option value="LS">Kuitansi LS</option><option value="GU">Kuitansi GU</option>
@@ -1603,8 +1612,15 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     <input type="text" id="trk-cari" placeholder="Cari no. kuitansi / PPTK / uraian..." oninput="renderTracking()" style="min-width:240px">
     <select id="trk-st" onchange="renderTracking()">
       <option value="">Semua Status</option>
-      <option>Draft</option><option>Menunggu Verifikator</option><option>Menunggu PPK</option>
-      <option>Menunggu BPP</option><option>Di SIPD</option><option>SP2D Terbit</option><option>Ditolak</option>
+      <option>Draft</option>
+      <option>Lengkapi TTD & Berkas</option>
+      <option>Berkas Dikirim</option>
+      <option>Menunggu Verifikator</option>
+      <option>Menunggu PPK</option>
+      <option>Menunggu BPP</option>
+      <option>Di SIPD</option>
+      <option>SP2D Terbit</option>
+      <option>Ditolak</option>
     </select>
   </div>
   <div id="tracking-list"><div class="empty-state"><div class="es-icon">🔍</div><p>Belum ada tagihan</p></div></div>
@@ -2615,7 +2631,7 @@ function simpanTagihan(status,jenis='LS'){
   const d=getFormDataLS();if(status!=='Draft'&&!validateLS(d))return;
   const no='KU-LS/'+CFG.ta+'/'+String(noUrut).padStart(4,'0');noUrut++;
   TAGIHAN.unshift({id:uid(),no,jenis:'LS',tgl:d.tgl,pptkId:d.pptkId,pptkNama:d.pptk?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai||d.items[0]?.nama||'–',jumlah:d.jumlah,status,history:[{status,ts:new Date().toISOString(),oleh:'PPTK',catatan:''}],data:d});
-  toast(status==='Draft'?'Draft tersimpan':'Tagihan diajukan ke Verifikator','ok');resetFormLS();updateDashboard();scheduleSave();pg('tagihan');
+  toast(status==='Draft'?'Draft tersimpan':(status==='Lengkapi TTD & Berkas'?'Kuitansi disimpan, silakan lengkapi berkas & TTD basah':'Tagihan diajukan'),'ok');resetFormLS();updateDashboard();scheduleSave();pg('tagihan');
 }
 function resetFormLS(){['f-pptk','f-prog','f-keg','f-sk','f-spp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['f-penerima','f-jml','f-terb','f-urai','f-urai-m'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const tagEl=document.getElementById('f-pptk-tag');if(tagEl)tagEl.style.display='none';clearBelLS();curSkId='';}
 const resetForm=resetFormLS;
@@ -3444,22 +3460,22 @@ function buildSPTB(spj){
 // ================================================================
 // TAGIHAN LIST
 // ================================================================
-const ALUR=['Draft','Menunggu Verifikator','Menunggu PPK','Menunggu BPP','Di SIPD','SP2D Terbit'];
-const stClsRaw={Draft:'bg-draft','Menunggu Verifikator':'bg-verif','Menunggu PPK':'bg-ppk','Menunggu BPP':'bg-bpp','Di SIPD':'bg-sipd','SP2D Terbit':'bg-sp2d','Ditolak':'bg-tolak','GU – Belum SPJ':'bg-gu','SPJ GU Dibuat':'bg-gu'};
+const ALUR=['Draft','Lengkapi TTD & Berkas','Berkas Dikirim','Menunggu Verifikator','Menunggu PPK','Menunggu BPP','Di SIPD','SP2D Terbit'];
+const stClsRaw={Draft:'bg-draft','Lengkapi TTD & Berkas':'bg-ttd','Berkas Dikirim':'bg-dispatch','Menunggu Verifikator':'bg-verif','Menunggu PPK':'bg-ppk','Menunggu BPP':'bg-bpp','Di SIPD':'bg-sipd','SP2D Terbit':'bg-sp2d','Ditolak':'bg-tolak','GU – Belum SPJ':'bg-gu','SPJ GU Dibuat':'bg-gu'};
 const stCls = new Proxy(stClsRaw, {
   get: (target, prop) => {
     if (typeof prop === 'string' && prop.startsWith('Sudah SPJ')) return 'bg-sp2d';
     return target[prop];
   }
 });
-const stEmojiRaw={Draft:'📝','Menunggu Verifikator':'🔍','Menunggu PPK':'📋','Menunggu BPP':'💰','Di SIPD':'🖥','SP2D Terbit':'✅','Ditolak':'❌','GU – Belum SPJ':'💵','SPJ GU Dibuat':'📑'};
+const stEmojiRaw={Draft:'📝','Lengkapi TTD & Berkas':'✍️','Berkas Dikirim':'🚚','Menunggu Verifikator':'🔍','Menunggu PPK':'📋','Menunggu BPP':'💰','Di SIPD':'🖥','SP2D Terbit':'✅','Ditolak':'❌','GU – Belum SPJ':'💵','SPJ GU Dibuat':'📑'};
 const stEmoji = new Proxy(stEmojiRaw, {
   get: (target, prop) => {
     if (typeof prop === 'string' && prop.startsWith('Sudah SPJ')) return '✅';
     return target[prop];
   }
 });
-const stOleh={Draft:'PPTK','Menunggu Verifikator':'Verifikator','Menunggu PPK':'PPK','Menunggu BPP':'BPP','Di SIPD':'Bendahara','SP2D Terbit':'KPPD'};
+const stOleh={Draft:'PPTK','Lengkapi TTD & Berkas':'PPTK','Berkas Dikirim':'Kurir/Staf PPTK','Menunggu Verifikator':'Verifikator','Menunggu PPK':'PPK','Menunggu BPP':'BPP','Di SIPD':'Bendahara','SP2D Terbit':'KPPD'};
 
 
 // Helper: hitung realisasi per skId berdasarkan model realisasi terpilih
@@ -3569,6 +3585,8 @@ function canAdvance(t){
   if(!USER)return false;
   const jab=USER.jab;if(jab==='Admin')return true;
   if(t.status==='Draft'&&jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);return myPeg&&t.pptkId===myPeg.id;}
+  if(t.status==='Lengkapi TTD & Berkas'&&jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);return myPeg&&t.pptkId===myPeg.id;}
+  if(t.status==='Berkas Dikirim'&&jab==='Verifikator')return true;
   if(t.status==='Menunggu Verifikator'&&jab==='Verifikator')return true;
   if(t.status==='Menunggu PPK'&&jab==='PPK')return true;
   if((t.status==='Menunggu BPP'||t.status==='Di SIPD')&&(jab==='BPP'||jab==='BP'))return true;
@@ -3594,11 +3612,66 @@ function renderTagihan(){
     <td style="white-space:nowrap">
       <button class="btn btn-sm" onclick="prevTagihan('${t.id}')" title="Preview">👁</button>
       <button class="btn btn-sm" onclick="showStatusModal('${t.id}')" style="margin-left:3px" title="Ubah Status" ${canAdvance(t)?'':'disabled style="opacity:.4;cursor:not-allowed;margin-left:3px"'}>✏</button>
+      ${t.status === 'Berkas Dikirim' || (t.history && t.history.some(h => h.status === 'Berkas Dikirim')) ? `<button class="btn btn-sm" onclick="printTandaTerima('${t.id}')" style="margin-left:3px" title="Cetak Tanda Terima">📄</button>` : ''}
       <button class="btn btn-sm" onclick="pg('tracking');setTimeout(()=>{document.getElementById('trk-cari').value='${t.no}';renderTracking()},50)" style="margin-left:3px" title="Timeline">📍</button>
     </td>
   </tr>`).join('');
 }
 function prevTagihan(id){const t=TAGIHAN.find(x=>x.id===id);if(!t)return;if(t.jenis==='GU'){const gu=TAGIHAN_GU.find(x=>x.id===id);if(gu)document.getElementById('modal-cetak-body').innerHTML=buildKuiGU(gu.data);}else document.getElementById('modal-cetak-body').innerHTML=buildKuiLS({...t.data,no:t.no});bukaModal('modal-cetak');renderAllBarcodes();}
+
+function buildTandaTerima(t){
+  const now = new Date();
+  const formatTS = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + ' ' + now.toLocaleTimeString('id-ID');
+  return `<div class="kui-page" style="font-family:'Plus Jakarta Sans',sans-serif;padding:30px;color:#333;background:#fff;max-width:800px;margin:0 auto;border:1px solid #e0e0e0;border-radius:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px double #333;padding-bottom:12px;margin-bottom:20px">
+      <div style="text-align:left">
+        <h3 style="margin:0;font-size:14px;text-transform:uppercase;font-weight:700;letter-spacing:0.5px">TANDA TERIMA DOKUMEN FISIK</h3>
+        <h4 style="margin:4px 0 0;font-size:11px;color:#666">SIPKeu Pro — Penatausahaan Keuangan SKPD</h4>
+      </div>
+      <div>
+        <svg class="barcode-svg" data-value="${t.no}" style="height:40px;width:140px"></svg>
+      </div>
+    </div>
+    <table style="width:100%;margin-bottom:20px;font-size:11.5px;border-collapse:collapse">
+      <tr style="height:24px"><td style="width:180px;font-weight:600">Nomor Registrasi Kuitansi</td><td>: <strong>${t.no}</strong></td></tr>
+      <tr style="height:24px"><td style="font-weight:600">Tanggal Penyerahan (Sistem)</td><td>: ${formatTS}</td></tr>
+      <tr style="height:24px"><td style="font-weight:600">Nama PPTK</td><td>: ${t.pptkNama || '–'}</td></tr>
+      <tr style="height:24px"><td style="font-weight:600">Sub Kegiatan</td><td>: ${t.skNama || '–'}</td></tr>
+      <tr style="height:24px"><td style="font-weight:600">Uraian Pembayaran</td><td>: ${t.urai || '–'}</td></tr>
+      <tr style="height:24px"><td style="font-weight:600">Jumlah Anggaran Belanja</td><td>: <strong>Rp ${fmtRp(t.jumlah)}</strong></td></tr>
+    </table>
+    <div style="margin-top:15px;padding:12px;background:#f9f9f9;border:1px dashed #ccc;border-radius:6px;font-size:10.5px;color:#555">
+      <strong>Checklist Kelengkapan Berkas Fisik (Wajib Dilampirkan):</strong>
+      <table style="width:100%;margin-top:6px;border:none;font-size:10.5px">
+        <tr><td style="width:20px;text-align:center">[  ]</td><td>Lembar Kuitansi Asli bernomor ${t.no} (tanda tangan penerima & PPTK lengkap)</td></tr>
+        <tr><td style="text-align:center">[  ]</td><td>Nota Belanja / Faktur Pembelian / Bukti Transaksi Asli</td></tr>
+        <tr><td style="text-align:center">[  ]</td><td>Dokumentasi Foto Kegiatan / Laporan Pelaksanaan</td></tr>
+        <tr><td style="text-align:center">[  ]</td><td>Lampiran Pendukung (SPT, SPPD, Undangan, Daftar Hadir, dll.)</td></tr>
+      </table>
+    </div>
+    <div style="margin-top:35px;display:flex;justify-content:space-between;text-align:center;font-size:11px">
+      <div style="width:220px">
+        <div>Yang Menyerahkan,</div>
+        <div style="height:55px"></div>
+        <div style="font-weight:700;text-decoration:underline">${t.pptkNama}</div>
+        <div style="font-size:9.5px;color:#666">PPTK Sub Kegiatan</div>
+      </div>
+      <div style="width:220px">
+        <div>Yang Menerima,</div>
+        <div style="height:55px"></div>
+        <div style="font-weight:700;text-decoration:underline">................................................</div>
+        <div style="font-size:9.5px;color:#666">Staf Verifikasi Keuangan</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function printTandaTerima(id){
+  const t=TAGIHAN.find(x=>x.id===id);if(!t)return;
+  document.getElementById('modal-cetak-body').innerHTML=buildTandaTerima(t);
+  bukaModal('modal-cetak');
+  renderAllBarcodes();
+}
 
 function showStatusModal(id){
   const t=TAGIHAN.find(x=>x.id===id);if(!t)return;
@@ -3611,7 +3684,12 @@ function showStatusModal(id){
   if(t.status!=='Ditolak'&&t.status!=='Draft'&&t.status!=='SP2D Terbit')opts.push({s:'Ditolak',cls:'btn-danger'});
   if(t.status==='Ditolak')opts.push({s:'Draft',cls:'btn-warning'});
   
-  let optsHtml=opts.map(o=>`<button class="btn ${o.cls}" style="width:100%;margin-bottom:6px;justify-content:flex-start" onclick="doUbahStatus('${id}','${o.s}')">${stEmoji[o.s]||''} ${o.s}</button>`).join('');
+  let optsHtml=opts.map(o=>{
+    let label = o.s;
+    if(o.s==='Berkas Dikirim') label = 'Kirim Berkas Fisik & Tanda Terima';
+    else if(o.s==='Menunggu Verifikator' && t.status==='Berkas Dikirim') label = 'Terima Fisik & Mulai Verifikasi';
+    return `<button class="btn ${o.cls}" style="width:100%;margin-bottom:6px;justify-content:flex-start" onclick="doUbahStatus('${id}','${o.s}')">${stEmoji[o.s]||''} ${label}</button>`;
+  }).join('');
   if(nextNormal==='SP2D Terbit'){
     optsHtml+=`<div style="margin-top:10px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:6px;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:6px">
       <span>⏳</span>
@@ -3629,12 +3707,17 @@ function doUbahStatus(id,newStatus){
   t.history.push({status:newStatus,ts:new Date().toISOString(),oleh,catatan});t.status=newStatus;
   if(newStatus==='SP2D Terbit'){t.tglsp2d=new Date().toISOString().split('T')[0];}
   tutupModal('modal-status');renderTagihan();renderBuku();updateDashboard();scheduleSave();toast('Status → '+newStatus,'ok');
+  if(newStatus==='Berkas Dikirim'){
+    setTimeout(()=>{
+      printTandaTerima(id);
+    },300);
+  }
 }
 
 // ================================================================
 // TRACKING
 // ================================================================
-const TL_STEPS=[{key:'Draft',icon:'📝',label:'Dibuat PPTK'},{key:'Menunggu Verifikator',icon:'🔍',label:'Verifikator'},{key:'Menunggu PPK',icon:'📋',label:'PPK'},{key:'Menunggu BPP',icon:'💰',label:'BPP'},{key:'Di SIPD',icon:'🖥',label:'Input SIPD'},{key:'SP2D Terbit',icon:'✅',label:'SP2D'}];
+const TL_STEPS=[{key:'Draft',icon:'📝',label:'Dibuat PPTK'},{key:'Lengkapi TTD & Berkas',icon:'✍️',label:'TTD Basah'},{key:'Berkas Dikirim',icon:'🚚',label:'Kirim Berkas'},{key:'Menunggu Verifikator',icon:'🔍',label:'Verifikator'},{key:'Menunggu PPK',icon:'📋',label:'PPK'},{key:'Menunggu BPP',icon:'💰',label:'BPP'},{key:'Di SIPD',icon:'🖥',label:'Input SIPD'},{key:'SP2D Terbit',icon:'✅',label:'SP2D'}];
 function renderTracking(){
   const cari=(document.getElementById('trk-cari')?.value||'').toLowerCase();const fSt=document.getElementById('trk-st')?.value||'';
   let list=TAGIHAN.filter(t=>t.jenis!=='GU');
@@ -3654,7 +3737,10 @@ function buildTLCard(t){
   }).join('');
   const logHtml=hist.map((h,i)=>{const dur=i<hist.length-1?durasi(h.ts,hist[i+1].ts):(h.ts?durasi(h.ts,null):'');const dc=h.status==='Ditolak'?'var(--red)':h.status==='SP2D Terbit'?'var(--green)':'var(--navy)';return`<div class="tl-log-item"><div class="tl-log-dot" style="background:${dc}"></div><div class="tl-log-text"><strong>${stEmoji[h.status]||''} ${h.status}</strong> — <em>${h.oleh}</em>${h.catatan?' · "'+h.catatan+'"':''}</div><div class="tl-log-time">${h.ts?fmtTS(h.ts):'–'}${dur?' ('+dur+')':''}</div></div>`;}).join('')||'<div style="font-size:11px;color:#aaa">Belum ada riwayat</div>';
   const canAdv=canAdvance(t);const nextSt=ALUR[ALUR.indexOf(t.status)+1];
-  const actBtn=t.status==='SP2D Terbit'?'<span style="font-size:11px;color:var(--green)">✅ Selesai</span>':isDitolak?`<button class="btn btn-sm btn-warning" onclick="showStatusModal('${t.id}')">🔄 Kembalikan</button>`:nextSt==='SP2D Terbit'?`<span style="font-size:11px;color:#0d9488;font-weight:600">⏳ Menunggu Input SP2D (Rekonsiliasi)</span>`:nextSt&&canAdv?`<button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')">${stEmoji[nextSt]||''} Proses ke: ${nextSt}</button>`:nextSt?`<span style="font-size:11px;color:#aaa">Menunggu ${stOleh[nextSt]||'pejabat terkait'}</span>`:'';
+  let actText = `Proses ke: ${nextSt}`;
+  if(nextSt==='Berkas Dikirim') actText = 'Kirim Berkas Fisik';
+  else if(nextSt==='Menunggu Verifikator' && t.status==='Berkas Dikirim') actText = 'Terima Fisik Berkas';
+  const actBtn=t.status==='SP2D Terbit'?'<span style="font-size:11px;color:var(--green)">✅ Selesai</span>':isDitolak?`<button class="btn btn-sm btn-warning" onclick="showStatusModal('${t.id}')">🔄 Kembalikan</button>`:nextSt==='SP2D Terbit'?`<span style="font-size:11px;color:#0d9488;font-weight:600">⏳ Menunggu Input SP2D (Rekonsiliasi)</span>`:nextSt&&canAdv?`<button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')">${stEmoji[nextSt]||''} ${actText}</button>`:nextSt?`<span style="font-size:11px;color:#aaa">Menunggu ${stOleh[nextSt]||'pejabat terkait'}</span>`:'';
   const pptk=PEG.find(p=>p.id===t.pptkId);const verif=PEG.find(p=>p.jab==='Verifikator');
   const durTotal=hist[0]?.ts?durasi(hist[0].ts,t.status==='SP2D Terbit'?hist[hist.length-1]?.ts:null):'–';
   return`<div class="tl-card">
