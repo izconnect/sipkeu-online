@@ -5670,19 +5670,42 @@ function updateDashboard(){
   let tagList=TAGIHAN;
   if(myPeg)tagList=tagList.filter(t=>t.pptkId===myPeg.id||t.spjRef);
 
-  // Realisasi = hanya SP2D Terbit (LS + SPJ-GU SP2D)
-  const realSP2D=Object.values(getReal()).reduce((a,b)=>a+b,0);
-  const pct=totalPagu?Math.min(100,realSP2D/totalPagu*100):0;
-  const pending=TAGIHAN.filter(t=>!['SP2D Terbit','Ditolak','GU – Belum SPJ'].includes(t.status)).length;
+  // Realisasi & Stat Cards
+  let displayPagu = totalPagu;
+  let displayTaSub = (CFG.skpd||'SKPD')+' – TA '+(CFG.ta||'');
+  let displayTagihan = TAGIHAN.filter(t=>t.jenis!=='GU').length;
+  let displayPending = TAGIHAN.filter(t=>!['SP2D Terbit','Ditolak','GU – Belum SPJ'].includes(t.status)).length;
+  let displaySp2dCount = SP2D.length;
+  let displaySp2dVal = SP2D.reduce((s,r)=>s+r.nilai,0);
+  let displayPct = totalPagu ? Math.min(100, Object.values(getReal()).reduce((a,b)=>a+b,0)/totalPagu*100) : 0;
+  
+  if (myPeg) {
+    const mySks = SK.filter(s => s.pptkId === myPeg.id);
+    const mySkIds = mySks.map(s => s.id);
+    
+    displayPagu = mySks.reduce((sum, s) => sum + s.pagu, 0);
+    displayTaSub = mySks.length + ' Sub Kegiatan';
+    
+    const myTags = TAGIHAN.filter(t => t.pptkId === myPeg.id && t.jenis !== 'GU');
+    displayTagihan = myTags.length;
+    
+    displayPending = myTags.filter(t => !['SP2D Terbit','Ditolak'].includes(t.status)).length;
+    
+    const realPerSk = getReal();
+    displaySp2dVal = mySkIds.reduce((sum, sid) => sum + (realPerSk[sid] || 0), 0);
+    displaySp2dCount = myTags.filter(t => t.status === 'SP2D Terbit').length;
+    
+    displayPct = displayPagu ? Math.min(100, displaySp2dVal / displayPagu * 100) : 0;
+  }
 
-  document.getElementById('d-pagu').textContent='Rp '+fmtShort(totalPagu);
-  document.getElementById('d-ta-sub').textContent=(CFG.skpd||'SKPD')+' – TA '+(CFG.ta||'');
-  document.getElementById('d-tagihan').textContent=tagList.filter(t=>t.jenis!=='GU').length;
-  document.getElementById('d-bar').style.width=pct.toFixed(1)+'%';
-  document.getElementById('d-pct').textContent=pct.toFixed(1)+'% dari pagu (SP2D Terbit)';
-  document.getElementById('d-pending').textContent=pending;
-  document.getElementById('d-sp2d').textContent=SP2D.length;
-  document.getElementById('d-sp2d-val').textContent='Rp '+fmtShort(SP2D.reduce((s,r)=>s+r.nilai,0));
+  document.getElementById('d-pagu').textContent='Rp '+fmtShort(displayPagu);
+  document.getElementById('d-ta-sub').textContent=displayTaSub;
+  document.getElementById('d-tagihan').textContent=displayTagihan;
+  document.getElementById('d-bar').style.width=displayPct.toFixed(1)+'%';
+  document.getElementById('d-pct').textContent=displayPct.toFixed(1)+'% dari pagu (SP2D Terbit)';
+  document.getElementById('d-pending').textContent=displayPending;
+  document.getElementById('d-sp2d').textContent=displaySp2dCount;
+  document.getElementById('d-sp2d-val').textContent='Rp '+fmtShort(displaySp2dVal);
 
   // Tren chart & notifikasi
   renderTrenChart();
@@ -5699,10 +5722,10 @@ function updateDashboard(){
   if(isReadonly)document.getElementById('db-role-label').textContent=jab||'–';
   document.getElementById('d-pptk-notice').style.display=jab==='PPTK'?'':'none';
 
-  // Hide other widgets to keep dashboard clean for Verifikator, PPK, and BPP/BP
+  // Hide other widgets to keep dashboard clean for Verifikator, PPK, and BPP/BP. Also hide program summary for PPTK.
   document.getElementById('d-stat-grid').style.display = isCleanRole ? 'none' : '';
   document.getElementById('d-chart-card').style.display = isCleanRole ? 'none' : '';
-  document.getElementById('d-prog-card').style.display = isCleanRole ? 'none' : '';
+  document.getElementById('d-prog-card').style.display = (isCleanRole || jab === 'PPTK') ? 'none' : '';
   document.getElementById('d-notif-wrap').style.display = isCleanRole ? 'none' : '';
 
   // Program table – pakai getReal per SK
@@ -6161,7 +6184,24 @@ function renderTrenChart(){
   }
   const year=selYear?.value||ta;
   const BULAN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
-  const totalPagu=SK.reduce((s,sk)=>s+sk.pagu,0);
+  
+  const jab=USER?.jab;
+  const myPeg=jab==='PPTK'?PEG.find(x=>x.user===USER?.username):null;
+
+  const chartTitleEl = document.querySelector('#d-chart-card .card-title');
+  if (chartTitleEl) {
+    if (myPeg) {
+      chartTitleEl.innerHTML = '📈 Tren Realisasi Sub Kegiatan Anda';
+    } else {
+      chartTitleEl.innerHTML = '📈 Tren Realisasi Bulanan';
+    }
+  }
+
+  let totalPagu=SK.reduce((s,sk)=>s+sk.pagu,0);
+  if (myPeg) {
+    totalPagu = SK.filter(s => s.pptkId === myPeg.id).reduce((s,sk)=>s+sk.pagu,0);
+  }
+
   if(!totalPagu){document.getElementById('tren-chart').innerHTML='<text x="50%" y="40" text-anchor="middle" fill="#ccc" font-size="12" font-family="Arial">Belum ada data pagu</text>';return;}
 
   // Hitung realisasi SP2D dan tagihan per bulan
@@ -6173,6 +6213,10 @@ function renderTrenChart(){
     if(y!==year) return;
     const mi=parseInt(m)-1;
     if(t.jenis==='GU') return;
+    
+    // PPTK scoping
+    if (myPeg && t.pptkId !== myPeg.id) return;
+
     if (REAL_MODEL === 'estimasi') {
       if (t.status !== 'Ditolak' && t.status !== 'Draft') {
         if (t.jenis !== 'SPJ-GU' || ['SP2D Terbit', 'SPJ GU Dibuat'].includes(t.status)) {
