@@ -1419,7 +1419,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
   <div id="db-readonly-notice" class="readonly-notice" style="display:none">
     👁 Anda login sebagai <strong id="db-role-label">–</strong>. Anda dapat melihat seluruh data realisasi namun tidak dapat membuat tagihan.
   </div>
-  <div class="stat-grid">
+  <div class="stat-grid" id="d-stat-grid">
     <div class="stat-card c-blue"><div class="stat-lbl">Total Pagu Anggaran</div><div class="stat-val" id="d-pagu" style="font-size:14px">Rp 0</div><div class="stat-sub" id="d-ta-sub">TA 2026</div></div>
     <div class="stat-card c-green"><div class="stat-lbl">Tagihan Diajukan</div><div class="stat-val" id="d-tagihan">0</div><div class="prog-wrap"><div class="prog-fill" id="d-bar" style="width:0%;background:var(--green)"></div></div><div class="stat-sub" id="d-pct">0% dari pagu</div></div>
     <div class="stat-card c-orange"><div class="stat-lbl">Menunggu Proses</div><div class="stat-val" id="d-pending" style="color:var(--orange)">0</div><div class="stat-sub">Belum SP2D</div></div>
@@ -1434,7 +1434,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
   <div id="d-notif-wrap" style="margin-bottom:12px"></div>
 
   <!-- TREN CHART -->
-  <div class="card" style="margin-bottom:13px">
+  <div class="card" style="margin-bottom:13px" id="d-chart-card">
     <div class="card-hdr">
       <div class="card-title">📈 Tren Realisasi Bulanan</div>
       <div style="display:flex;gap:7px;align-items:center">
@@ -1452,11 +1452,11 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="d-prog-card">
     <div class="card-hdr"><div class="card-title">📂 Ringkasan per Program</div></div>
     <div id="d-prog-wrap"><div class="empty-state"><div class="es-icon">💰</div><p>Belum ada data anggaran</p></div></div>
   </div>
-  <div class="card">
+  <div class="card" id="d-tag-card">
     <div class="card-hdr"><div class="card-title">📄 Tagihan Terbaru</div><button class="btn btn-sm" onclick="pg('tagihan')">Lihat Semua</button></div>
     <div id="d-tag-wrap"><div class="empty-state" style="padding:20px"><p>Belum ada tagihan</p></div></div>
   </div>
@@ -5674,9 +5674,16 @@ function updateDashboard(){
 
   // Role notices
   const isReadonly=jab&&!['Admin','PPTK'].includes(jab);
-  document.getElementById('db-readonly-notice').style.display=isReadonly?'':'none';
+  const isVerif = (jab === 'Verifikator');
+  document.getElementById('db-readonly-notice').style.display=(isReadonly && !isVerif)?'':'none';
   if(isReadonly)document.getElementById('db-role-label').textContent=jab||'–';
   document.getElementById('d-pptk-notice').style.display=jab==='PPTK'?'':'none';
+
+  // Hide other widgets to keep dashboard clean for Verifikator
+  document.getElementById('d-stat-grid').style.display = isVerif ? 'none' : '';
+  document.getElementById('d-chart-card').style.display = isVerif ? 'none' : '';
+  document.getElementById('d-prog-card').style.display = isVerif ? 'none' : '';
+  document.getElementById('d-notif-wrap').style.display = isVerif ? 'none' : '';
 
   // Program table – pakai getReal per SK
   const dp=document.getElementById('d-prog-wrap');
