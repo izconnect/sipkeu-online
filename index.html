@@ -599,6 +599,7 @@ tr:hover td{background:#fafbfc}
 
 /* ===== KUITANSI PRINT ===== */
 .ku-page,.rin-page{width:100%;font-family:Arial,sans-serif;font-size:10.5pt;color:#000}
+.ku-page{max-height:6.1in;box-sizing:border-box;overflow:hidden}
 .rin-page{margin-top:16px}
 .ku-kop,.rin-kop{display:flex;align-items:center;gap:10px;border-bottom:2px solid #000;padding-bottom:7px;margin-bottom:7px}
 .ku-kop-logo{width:55px;height:55px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:7px;color:#888;flex-shrink:0;background:#f9f9f9;overflow:hidden}
@@ -638,9 +639,14 @@ tr:hover td{background:#fafbfc}
 
 /* ===== PRINT ===== */
 @media print{
+  @page {
+    size: 8.5in 13in;
+    margin: 0.3in;
+  }
   .app,.sidebar,.topbar,.modal-bg,.login-screen,.toast-wrap{display:none!important}
   #print-area{display:block!important}
   body{background:#fff!important}
+  .ku-page{height:6.1in;max-height:6.1in;overflow:hidden;box-sizing:border-box}
   .ku-page,.rin-page,.sptb-page{page-break-after:always}
 }
 #print-area{display:none}
@@ -1054,7 +1060,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     <div class="modal-hdr"><span>📄 Preview Dokumen</span>
       <div id="chk-show-rincian-wrapper" style="display:flex;align-items:center;gap:6px;margin-right:auto;margin-left:16px;font-size:12px;color:#fff;user-select:none">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-          <input type="checkbox" id="chk-show-rincian" checked onchange="toggleRincianCetak()" style="accent-color:var(--teal);width:15px;height:15px;cursor:pointer">
+          <input type="checkbox" id="chk-show-rincian" onchange="toggleRincianCetak()" style="accent-color:var(--teal);width:15px;height:15px;cursor:pointer">
           Tampilkan Rincian
         </label>
       </div>
@@ -2083,8 +2089,8 @@ const tutupModal=id=>document.getElementById(id).classList.remove('open');
 const bukaModal=id=>{
   if(id==='modal-cetak'){
     const chk=document.getElementById('chk-show-rincian');
-    if(chk) chk.checked=true;
-    document.body.classList.remove('hide-rincian-cetak');
+    if(chk) chk.checked=false;
+    document.body.classList.add('hide-rincian-cetak');
     const container=document.getElementById('modal-cetak-body');
     const wrapper=document.getElementById('chk-show-rincian-wrapper');
     if(wrapper){
@@ -3016,16 +3022,12 @@ function buildKuiLS(d){
         <div style="display:flex;flex-direction:column;align-items:center;margin-top:2px"><svg class="barcode-svg" data-value="${d.no||''}"></svg></div>
       </div>
     </div>
-    <div class="ku-tag">Tagihan : ${d.jspp||'LS'} &nbsp;&nbsp;|&nbsp;&nbsp; No. Kuitansi : <strong>${d.no||'–'}</strong></div>
+    <div class="ku-tag">No. Kuitansi : <strong>${d.no||'–'}</strong></div>
     <div class="ku-body">
       <div class="ku-row"><div class="ku-rl">Telah Diterima Dari</div><div class="ku-rv">Bendahara Umum Daerah</div></div>
       <div class="ku-row"><div class="ku-rl">Uang Sejumlah</div><div class="ku-rv" style="font-style:italic">${d.terb||''}</div></div>
       <div class="ku-row" style="align-items:center"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex" title="Scan Uraian Pembayaran">${buildQRCode(uraiText,48)}</div></div></div>
       <div class="ku-row"><div class="ku-rl">Sub Kegiatan</div><div class="ku-rv" style="font-size:9.5pt">${d.sk?.nama||''}</div></div>
-      <div class="ku-row">
-        <div class="ku-rl">Nomor SPP</div><div class="ku-rv">${d.spp||'&nbsp;'}</div>
-        <div class="ku-rv" style="border-left:1px solid #aaa">Jenis: ${d.jspp||'LS'}</div>
-      </div>
       <div class="ku-row">
         <div class="ku-rl" style="font-size:11pt;font-weight:700">Jumlah</div>
         <div class="ku-rv" style="font-size:11pt;font-weight:700">Rp ${fmtRp(d.jumlah)}</div>
@@ -3083,8 +3085,6 @@ function buildKuiLS(d){
       <tr><td style="font-weight:600;padding:2px 4px">SUB. SKPD</td><td style="padding:2px 4px">: ${CFG.subskpd||''}</td></tr>
       <tr><td style="font-weight:600;padding:2px 4px">Kegiatan</td><td style="padding:2px 4px">: ${d.keg?.nama||''}</td></tr>
       <tr><td style="font-weight:600;padding:2px 4px">Sub Kegiatan</td><td style="padding:2px 4px">: ${d.sk?.nama||''}</td></tr>
-      <tr><td style="font-weight:600;padding:2px 4px">Nomor SPP</td><td style="padding:2px 4px">: ${d.spp||'–'}</td></tr>
-      <tr><td style="font-weight:600;padding:2px 4px">Jenis SPP</td><td style="padding:2px 4px">: ${d.jspp||'LS'}</td></tr>
     </table>
     <p style="font-size:9.5pt;margin:6px 0 5px">Yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya bahwa rincian bukti pengeluaran dari kegiatan di atas adalah sebagai berikut:</p>
     <table style="width:100%;border-collapse:collapse;font-size:9.5pt">
@@ -3169,7 +3169,7 @@ function buildKuiGU(d){
         <div style="display:flex;flex-direction:column;align-items:center;margin-top:2px"><svg class="barcode-svg" data-value="${d.no||''}"></svg></div>
       </div>
     </div>
-    <div class="ku-tag">Tagihan : GU (Ganti Uang) &nbsp;&nbsp;|&nbsp;&nbsp; No. Kuitansi : <strong>${d.no||'–'}</strong></div>
+    <div class="ku-tag">No. Kuitansi : <strong>${d.no||'–'}</strong></div>
     <div class="ku-body">
       <div class="ku-row"><div class="ku-rl">Telah Diterima Dari</div><div class="ku-rv">${bend.jab || 'BPP'} – ${bend.nama}</div></div>
       <div class="ku-row"><div class="ku-rl">Uang Sejumlah</div><div class="ku-rv" style="font-style:italic">${d.terb||''}</div></div>
@@ -3237,7 +3237,6 @@ function buildKuiGU(d){
       <tr><td style="font-weight:600;padding:2px 4px">Kegiatan</td><td style="padding:2px 4px">: ${d.keg?.nama||''}</td></tr>
       <tr><td style="font-weight:600;padding:2px 4px">Sub Kegiatan</td><td style="padding:2px 4px">: ${d.sk?.nama||''}</td></tr>
       <tr><td style="font-weight:600;padding:2px 4px">No. Bukti Kas</td><td style="padding:2px 4px">: ${d.nobukti||'–'}</td></tr>
-      <tr><td style="font-weight:600;padding:2px 4px">Jenis SPP</td><td style="padding:2px 4px">: GU (Ganti Uang)</td></tr>
     </table>
     <p style="font-size:9.5pt;margin:6px 0 5px">Yang bertanda tangan di bawah ini menyatakan dengan sebenar-benarnya bahwa rincian bukti pengeluaran dari kegiatan di atas adalah sebagai berikut:</p>
     <table style="width:100%;border-collapse:collapse;font-size:9.5pt">
@@ -4131,7 +4130,7 @@ function populateTicker() {
   const tickerText = document.getElementById('lp-ticker-text');
   if (!ticker || !tickerText) return;
   
-  const activeList = TAGIHAN.filter(t => ['Menunggu Verifikator', 'Menunggu PPK', 'Menunggu BPP', 'Di SIPD'].includes(t.status));
+  const activeList = TAGIHAN.filter(t => ['Lengkapi TTD & Berkas', 'Berkas Dikirim', 'Menunggu Verifikator', 'Menunggu PPK', 'Menunggu BPP', 'Di SIPD'].includes(t.status));
   
   if (activeList.length === 0) {
     ticker.style.display = 'none';
