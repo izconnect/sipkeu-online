@@ -5697,8 +5697,73 @@ function updateDashboard(){
   const dt=document.getElementById('d-tag-wrap');
   const recentTag=TAGIHAN.filter(t=>t.jenis!=='GU');
   if(!recentTag.length){dt.innerHTML='<div class="empty-state" style="padding:20px"><p>Belum ada tagihan</p></div>';return;}
-  dt.innerHTML='<table><thead><tr><th>No.</th><th>Jenis</th><th>PPTK/BP</th><th>Sub Kegiatan</th><th style="text-align:right">Nilai</th><th>Status</th></tr></thead><tbody>'+
-  recentTag.slice(0,6).map(t=>`<tr><td style="font-family:monospace;font-size:10.5px">${t.no}</td><td><span class="badge ${t.jenis==='SPJ-GU'?'bg-spj':'bg-sipd'}" style="font-size:9px">${t.jenis||'LS'}</span></td><td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.pptkNama}</td><td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.skNama}</td><td style="text-align:right">Rp ${fmtShort(t.jumlah)}</td><td><span class="badge ${stCls[t.status]||'bg-gray'}">${stEmoji[t.status]||''} ${t.status}</span></td></tr>`).join('')+'</tbody></table>';
+
+  const cardTitleEl = dt.parentElement?.querySelector('.card-title');
+  if (cardTitleEl) {
+    if (jab === 'Verifikator') {
+      cardTitleEl.innerHTML = '📋 Antrean Kerja Verifikator';
+    } else {
+      cardTitleEl.innerHTML = '📄 Tagihan Terbaru';
+    }
+  }
+
+  if (jab === 'Verifikator') {
+    const dikirimList = recentTag.filter(t => t.status === 'Berkas Dikirim');
+    const verifList = recentTag.filter(t => t.status === 'Menunggu Verifikator');
+    
+    let html = '';
+    
+    // Section 1: Berkas Dikirim (Transit)
+    html += `<div style="margin-bottom: 14px">
+      <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; display: flex; align-items: center; gap: 5px">
+        <span>🚚</span> Berkas Dikirim PPTK (Belum Diterima Fisik)
+      </div>`;
+    if (!dikirimList.length) {
+      html += `<div style="font-size: 11px; color: #888; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; text-align: center">Tidak ada berkas dalam pengiriman fisik.</div>`;
+    } else {
+      html += `<div class="tbl-wrap"><table>
+        <thead><tr><th>No. Kuitansi</th><th>PPTK</th><th style="text-align:right">Nilai</th><th style="text-align:center;width:100px">Aksi</th></tr></thead>
+        <tbody>` + 
+        dikirimList.map(t => `<tr>
+          <td style="font-family:monospace;font-size:10.5px">${t.no}</td>
+          <td style="font-size:11px">${t.pptkNama}</td>
+          <td style="text-align:right;font-weight:600">Rp ${fmtShort(t.jumlah)}</td>
+          <td style="text-align:center">
+            <button class="btn btn-sm btn-success" onclick="doUbahStatus('${t.id}', 'Menunggu Verifikator')" style="padding: 3px 8px; font-size: 10px; font-weight:bold">📥 Terima Fisik</button>
+          </td>
+        </tr>`).join('') +
+        `</tbody></table></div>`;
+    }
+    html += `</div>`;
+    
+    // Section 2: Berkas Menunggu Verifikasi
+    html += `<div>
+      <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; display: flex; align-items: center; gap: 5px">
+        <span>🔍</span> Berkas Siap Diverifikasi (Fisik Ada)
+      </div>`;
+    if (!verifList.length) {
+      html += `<div style="font-size: 11px; color: #888; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; text-align: center">Tidak ada berkas yang menunggu verifikasi.</div>`;
+    } else {
+      html += `<div class="tbl-wrap"><table>
+        <thead><tr><th>No. Kuitansi</th><th>PPTK</th><th style="text-align:right">Nilai</th><th style="text-align:center;width:100px">Aksi</th></tr></thead>
+        <tbody>` + 
+        verifList.map(t => `<tr>
+          <td style="font-family:monospace;font-size:10.5px">${t.no}</td>
+          <td style="font-size:11px">${t.pptkNama}</td>
+          <td style="text-align:right;font-weight:600">Rp ${fmtShort(t.jumlah)}</td>
+          <td style="text-align:center">
+            <button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')" style="padding: 3px 8px; font-size: 10px; font-weight:bold">✏️ Verifikasi</button>
+          </td>
+        </tr>`).join('') +
+        `</tbody></table></div>`;
+    }
+    html += `</div>`;
+    
+    dt.innerHTML = html;
+  } else {
+    dt.innerHTML='<table><thead><tr><th>No.</th><th>Jenis</th><th>PPTK/BP</th><th>Sub Kegiatan</th><th style="text-align:right">Nilai</th><th>Status</th></tr></thead><tbody>'+
+    recentTag.slice(0,6).map(t=>`<tr><td style="font-family:monospace;font-size:10.5px">${t.no}</td><td><span class="badge ${t.jenis==='SPJ-GU'?'bg-spj':'bg-sipd'}" style="font-size:9px">${t.jenis||'LS'}</span></td><td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.pptkNama}</td><td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.skNama}</td><td style="text-align:right">Rp ${fmtShort(t.jumlah)}</td><td><span class="badge ${stCls[t.status]||'bg-gray'}">${stEmoji[t.status]||''} ${t.status}</span></td></tr>`).join('')+'</tbody></table>';
+  }
 }
 
 // ================================================================
