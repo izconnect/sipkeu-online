@@ -491,6 +491,8 @@ tr:hover td{background:#fafbfc}
 .bg-draft{background:#fff3e0;color:#e65100}
 .bg-ttd{background:#fffde7;color:#b78103}
 .bg-dispatch{background:#e0f7fa;color:#006064}
+.bg-transit-ppk{background:#e1f5fe;color:#0288d1}
+.bg-transit-bpp{background:#f3e5f5;color:#7b1fa2}
 .bg-verif{background:#e8eaf6;color:#3949ab}
 .bg-ppk{background:#e3f2fd;color:#1565c0}
 .bg-bpp{background:#f3e5f5;color:#6a1b9a}
@@ -1589,7 +1591,9 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
       <option>Lengkapi TTD & Berkas</option>
       <option>Berkas Dikirim</option>
       <option>Menunggu Verifikator</option>
+      <option>Dikirim ke PPK</option>
       <option>Menunggu PPK</option>
+      <option>Dikirim ke BPP</option>
       <option>Menunggu BPP</option>
       <option>Di SIPD</option>
       <option>SP2D Terbit</option>
@@ -1622,7 +1626,9 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
       <option>Lengkapi TTD & Berkas</option>
       <option>Berkas Dikirim</option>
       <option>Menunggu Verifikator</option>
+      <option>Dikirim ke PPK</option>
       <option>Menunggu PPK</option>
+      <option>Dikirim ke BPP</option>
       <option>Menunggu BPP</option>
       <option>Di SIPD</option>
       <option>SP2D Terbit</option>
@@ -3459,22 +3465,22 @@ function buildSPTB(spj){
 // ================================================================
 // TAGIHAN LIST
 // ================================================================
-const ALUR=['Draft','Lengkapi TTD & Berkas','Berkas Dikirim','Menunggu Verifikator','Menunggu PPK','Menunggu BPP','Di SIPD','SP2D Terbit'];
-const stClsRaw={Draft:'bg-draft','Lengkapi TTD & Berkas':'bg-ttd','Berkas Dikirim':'bg-dispatch','Menunggu Verifikator':'bg-verif','Menunggu PPK':'bg-ppk','Menunggu BPP':'bg-bpp','Di SIPD':'bg-sipd','SP2D Terbit':'bg-sp2d','Ditolak':'bg-tolak','GU – Belum SPJ':'bg-gu','SPJ GU Dibuat':'bg-gu'};
+const ALUR=['Draft','Lengkapi TTD & Berkas','Berkas Dikirim','Menunggu Verifikator','Dikirim ke PPK','Menunggu PPK','Dikirim ke BPP','Menunggu BPP','Di SIPD','SP2D Terbit'];
+const stClsRaw={Draft:'bg-draft','Lengkapi TTD & Berkas':'bg-ttd','Berkas Dikirim':'bg-dispatch','Menunggu Verifikator':'bg-verif','Dikirim ke PPK':'bg-transit-ppk','Menunggu PPK':'bg-ppk','Dikirim ke BPP':'bg-transit-bpp','Menunggu BPP':'bg-bpp','Di SIPD':'bg-sipd','SP2D Terbit':'bg-sp2d','Ditolak':'bg-tolak','GU – Belum SPJ':'bg-gu','SPJ GU Dibuat':'bg-gu'};
 const stCls = new Proxy(stClsRaw, {
   get: (target, prop) => {
     if (typeof prop === 'string' && prop.startsWith('Sudah SPJ')) return 'bg-sp2d';
     return target[prop];
   }
 });
-const stEmojiRaw={Draft:'📝','Lengkapi TTD & Berkas':'✍️','Berkas Dikirim':'🚚','Menunggu Verifikator':'🔍','Menunggu PPK':'📋','Menunggu BPP':'💰','Di SIPD':'🖥','SP2D Terbit':'✅','Ditolak':'❌','GU – Belum SPJ':'💵','SPJ GU Dibuat':'📑'};
+const stEmojiRaw={Draft:'📝','Lengkapi TTD & Berkas':'✍️','Berkas Dikirim':'🚚','Menunggu Verifikator':'🔍','Dikirim ke PPK':'🚚','Menunggu PPK':'📋','Dikirim ke BPP':'🚚','Menunggu BPP':'💰','Di SIPD':'🖥','SP2D Terbit':'✅','Ditolak':'❌','GU – Belum SPJ':'💵','SPJ GU Dibuat':'📑'};
 const stEmoji = new Proxy(stEmojiRaw, {
   get: (target, prop) => {
     if (typeof prop === 'string' && prop.startsWith('Sudah SPJ')) return '✅';
     return target[prop];
   }
 });
-const stOleh={Draft:'PPTK','Lengkapi TTD & Berkas':'PPTK','Berkas Dikirim':'Kurir/Staf PPTK','Menunggu Verifikator':'Verifikator','Menunggu PPK':'PPK','Menunggu BPP':'BPP','Di SIPD':'Bendahara','SP2D Terbit':'KPPD'};
+const stOleh={Draft:'PPTK','Lengkapi TTD & Berkas':'PPTK','Berkas Dikirim':'Kurir/Staf PPTK','Menunggu Verifikator':'Verifikator','Dikirim ke PPK':'Kurir/Staf Verif','Menunggu PPK':'PPK','Dikirim ke BPP':'Kurir/Staf PPK','Menunggu BPP':'BPP','Di SIPD':'Bendahara','SP2D Terbit':'KPPD'};
 
 
 // Helper: hitung realisasi per skId berdasarkan model realisasi terpilih
@@ -3587,7 +3593,9 @@ function canAdvance(t){
   if(t.status==='Lengkapi TTD & Berkas'&&jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);return myPeg&&t.pptkId===myPeg.id;}
   if(t.status==='Berkas Dikirim'&&jab==='Verifikator')return true;
   if(t.status==='Menunggu Verifikator'&&jab==='Verifikator')return true;
+  if(t.status==='Dikirim ke PPK'&&jab==='PPK')return true;
   if(t.status==='Menunggu PPK'&&jab==='PPK')return true;
+  if(t.status==='Dikirim ke BPP'&&(jab==='BPP'||jab==='BP'))return true;
   if((t.status==='Menunggu BPP'||t.status==='Di SIPD')&&(jab==='BPP'||jab==='BP'))return true;
   return false;
 }
@@ -3687,6 +3695,10 @@ function showStatusModal(id){
     let label = o.s;
     if(o.s==='Berkas Dikirim') label = 'Kirim Berkas Fisik & Tanda Terima';
     else if(o.s==='Menunggu Verifikator' && t.status==='Berkas Dikirim') label = 'Terima Fisik & Mulai Verifikasi';
+    else if(o.s==='Dikirim ke PPK') label = 'Kirim Berkas ke PPK';
+    else if(o.s==='Menunggu PPK' && t.status==='Dikirim ke PPK') label = 'Terima Fisik & Proses PPK';
+    else if(o.s==='Dikirim ke BPP') label = 'Kirim Berkas ke BPP';
+    else if(o.s==='Menunggu BPP' && t.status==='Dikirim ke BPP') label = 'Terima Fisik & Proses BPP';
     return `<button class="btn ${o.cls}" style="width:100%;margin-bottom:6px;justify-content:flex-start" onclick="doUbahStatus('${id}','${o.s}')">${stEmoji[o.s]||''} ${label}</button>`;
   }).join('');
   if(nextNormal==='SP2D Terbit'){
@@ -3716,7 +3728,7 @@ function doUbahStatus(id,newStatus){
 // ================================================================
 // TRACKING
 // ================================================================
-const TL_STEPS=[{key:'Draft',icon:'📝',label:'Dibuat PPTK'},{key:'Lengkapi TTD & Berkas',icon:'✍️',label:'TTD Basah'},{key:'Berkas Dikirim',icon:'🚚',label:'Kirim Berkas'},{key:'Menunggu Verifikator',icon:'🔍',label:'Verifikator'},{key:'Menunggu PPK',icon:'📋',label:'PPK'},{key:'Menunggu BPP',icon:'💰',label:'BPP'},{key:'Di SIPD',icon:'🖥',label:'Input SIPD'},{key:'SP2D Terbit',icon:'✅',label:'SP2D'}];
+const TL_STEPS=[{key:'Draft',icon:'📝',label:'Dibuat PPTK'},{key:'Lengkapi TTD & Berkas',icon:'✍️',label:'TTD Basah'},{key:'Berkas Dikirim',icon:'🚚',label:'Kirim Berkas'},{key:'Menunggu Verifikator',icon:'🔍',label:'Verifikator'},{key:'Dikirim ke PPK',icon:'🚚',label:'Kirim PPK'},{key:'Menunggu PPK',icon:'📋',label:'PPK'},{key:'Dikirim ke BPP',icon:'🚚',label:'Kirim BPP'},{key:'Menunggu BPP',icon:'💰',label:'BPP'},{key:'Di SIPD',icon:'🖥',label:'Input SIPD'},{key:'SP2D Terbit',icon:'✅',label:'SP2D'}];
 function renderTracking(){
   const cari=(document.getElementById('trk-cari')?.value||'').toLowerCase();const fSt=document.getElementById('trk-st')?.value||'';
   let list=TAGIHAN.filter(t=>t.jenis!=='GU');
@@ -3739,6 +3751,10 @@ function buildTLCard(t){
   let actText = `Proses ke: ${nextSt}`;
   if(nextSt==='Berkas Dikirim') actText = 'Kirim Berkas Fisik';
   else if(nextSt==='Menunggu Verifikator' && t.status==='Berkas Dikirim') actText = 'Terima Fisik Berkas';
+  else if(nextSt==='Dikirim ke PPK') actText = 'Kirim Berkas ke PPK';
+  else if(nextSt==='Menunggu PPK' && t.status==='Dikirim ke PPK') actText = 'Terima Fisik PPK';
+  else if(nextSt==='Dikirim ke BPP') actText = 'Kirim Berkas ke BPP';
+  else if(nextSt==='Menunggu BPP' && t.status==='Dikirim ke BPP') actText = 'Terima Fisik BPP';
   const actBtn=t.status==='SP2D Terbit'?'<span style="font-size:11px;color:var(--green)">✅ Selesai</span>':isDitolak?`<button class="btn btn-sm btn-warning" onclick="showStatusModal('${t.id}')">🔄 Kembalikan</button>`:nextSt==='SP2D Terbit'?`<span style="font-size:11px;color:#0d9488;font-weight:600">⏳ Menunggu Input SP2D (Rekonsiliasi)</span>`:nextSt&&canAdv?`<button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')">${stEmoji[nextSt]||''} ${actText}</button>`:nextSt?`<span style="font-size:11px;color:#aaa">Menunggu ${stOleh[nextSt]||'pejabat terkait'}</span>`:'';
   const pptk=PEG.find(p=>p.id===t.pptkId);const verif=PEG.find(p=>p.jab==='Verifikator');
   const durTotal=hist[0]?.ts?durasi(hist[0].ts,t.status==='SP2D Terbit'?hist[hist.length-1]?.ts:null):'–';
@@ -4130,7 +4146,7 @@ function populateTicker() {
   const tickerText = document.getElementById('lp-ticker-text');
   if (!ticker || !tickerText) return;
   
-  const activeList = TAGIHAN.filter(t => ['Lengkapi TTD & Berkas', 'Berkas Dikirim', 'Menunggu Verifikator', 'Menunggu PPK', 'Menunggu BPP', 'Di SIPD'].includes(t.status));
+  const activeList = TAGIHAN.filter(t => ['Lengkapi TTD & Berkas', 'Berkas Dikirim', 'Menunggu Verifikator', 'Dikirim ke PPK', 'Menunggu PPK', 'Dikirim ke BPP', 'Menunggu BPP', 'Di SIPD'].includes(t.status));
   
   if (activeList.length === 0) {
     ticker.style.display = 'none';
@@ -5675,15 +5691,19 @@ function updateDashboard(){
   // Role notices
   const isReadonly=jab&&!['Admin','PPTK'].includes(jab);
   const isVerif = (jab === 'Verifikator');
-  document.getElementById('db-readonly-notice').style.display=(isReadonly && !isVerif)?'':'none';
+  const isPPK = (jab === 'PPK');
+  const isBPP = (jab === 'BPP' || jab === 'BP');
+  const isCleanRole = isVerif || isPPK || isBPP;
+
+  document.getElementById('db-readonly-notice').style.display=(isReadonly && !isCleanRole)?'':'none';
   if(isReadonly)document.getElementById('db-role-label').textContent=jab||'–';
   document.getElementById('d-pptk-notice').style.display=jab==='PPTK'?'':'none';
 
-  // Hide other widgets to keep dashboard clean for Verifikator
-  document.getElementById('d-stat-grid').style.display = isVerif ? 'none' : '';
-  document.getElementById('d-chart-card').style.display = isVerif ? 'none' : '';
-  document.getElementById('d-prog-card').style.display = isVerif ? 'none' : '';
-  document.getElementById('d-notif-wrap').style.display = isVerif ? 'none' : '';
+  // Hide other widgets to keep dashboard clean for Verifikator, PPK, and BPP/BP
+  document.getElementById('d-stat-grid').style.display = isCleanRole ? 'none' : '';
+  document.getElementById('d-chart-card').style.display = isCleanRole ? 'none' : '';
+  document.getElementById('d-prog-card').style.display = isCleanRole ? 'none' : '';
+  document.getElementById('d-notif-wrap').style.display = isCleanRole ? 'none' : '';
 
   // Program table – pakai getReal per SK
   const dp=document.getElementById('d-prog-wrap');
@@ -5709,6 +5729,10 @@ function updateDashboard(){
   if (cardTitleEl) {
     if (jab === 'Verifikator') {
       cardTitleEl.innerHTML = '📋 Antrean Kerja Verifikator';
+    } else if (jab === 'PPK') {
+      cardTitleEl.innerHTML = '📋 Antrean Kerja PPK';
+    } else if (jab === 'BPP' || jab === 'BP') {
+      cardTitleEl.innerHTML = '📋 Antrean Kerja Bendahara/BPP';
     } else {
       cardTitleEl.innerHTML = '📄 Tagihan Terbaru';
     }
@@ -5717,10 +5741,7 @@ function updateDashboard(){
   if (jab === 'Verifikator') {
     const dikirimList = recentTag.filter(t => t.status === 'Berkas Dikirim');
     const verifList = recentTag.filter(t => t.status === 'Menunggu Verifikator');
-    
     let html = '';
-    
-    // Section 1: Berkas Dikirim (Transit)
     html += `<div style="margin-bottom: 14px">
       <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; display: flex; align-items: center; gap: 5px">
         <span>🚚</span> Berkas Dikirim PPTK (Belum Diterima Fisik)
@@ -5742,8 +5763,6 @@ function updateDashboard(){
         `</tbody></table></div>`;
     }
     html += `</div>`;
-    
-    // Section 2: Berkas Menunggu Verifikasi
     html += `<div>
       <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; display: flex; align-items: center; gap: 5px">
         <span>🔍</span> Berkas Siap Diverifikasi (Fisik Ada)
@@ -5765,7 +5784,100 @@ function updateDashboard(){
         `</tbody></table></div>`;
     }
     html += `</div>`;
-    
+    dt.innerHTML = html;
+  } else if (jab === 'PPK') {
+    const dikirimPPKList = recentTag.filter(t => t.status === 'Dikirim ke PPK');
+    const ppkList = recentTag.filter(t => t.status === 'Menunggu PPK');
+    let html = '';
+    html += `<div style="margin-bottom: 14px">
+      <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; display: flex; align-items: center; gap: 5px">
+        <span>🚚</span> Berkas Dikirim Verifikator (Belum Diterima Fisik)
+      </div>`;
+    if (!dikirimPPKList.length) {
+      html += `<div style="font-size: 11px; color: #888; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; text-align: center">Tidak ada berkas dalam pengiriman fisik.</div>`;
+    } else {
+      html += `<div class="tbl-wrap"><table>
+        <thead><tr><th>No. Kuitansi</th><th>PPTK</th><th style="text-align:right">Nilai</th><th style="text-align:center;width:100px">Aksi</th></tr></thead>
+        <tbody>` + 
+        dikirimPPKList.map(t => `<tr>
+          <td style="font-family:monospace;font-size:10.5px">${t.no}</td>
+          <td style="font-size:11px">${t.pptkNama}</td>
+          <td style="text-align:right;font-weight:600">Rp ${fmtShort(t.jumlah)}</td>
+          <td style="text-align:center">
+            <button class="btn btn-sm btn-success" onclick="doUbahStatus('${t.id}', 'Menunggu PPK')" style="padding: 3px 8px; font-size: 10px; font-weight:bold">📥 Terima Fisik</button>
+          </td>
+        </tr>`).join('') +
+        `</tbody></table></div>`;
+    }
+    html += `</div>`;
+    html += `<div>
+      <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; display: flex; align-items: center; gap: 5px">
+        <span>📋</span> Berkas Siap Di-review PPK (Fisik Ada)
+      </div>`;
+    if (!ppkList.length) {
+      html += `<div style="font-size: 11px; color: #888; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; text-align: center">Tidak ada berkas yang menunggu review PPK.</div>`;
+    } else {
+      html += `<div class="tbl-wrap"><table>
+        <thead><tr><th>No. Kuitansi</th><th>PPTK</th><th style="text-align:right">Nilai</th><th style="text-align:center;width:100px">Aksi</th></tr></thead>
+        <tbody>` + 
+        ppkList.map(t => `<tr>
+          <td style="font-family:monospace;font-size:10.5px">${t.no}</td>
+          <td style="font-size:11px">${t.pptkNama}</td>
+          <td style="text-align:right;font-weight:600">Rp ${fmtShort(t.jumlah)}</td>
+          <td style="text-align:center">
+            <button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')" style="padding: 3px 8px; font-size: 10px; font-weight:bold">✏️ Review PPK</button>
+          </td>
+        </tr>`).join('') +
+        `</tbody></table></div>`;
+    }
+    html += `</div>`;
+    dt.innerHTML = html;
+  } else if (jab === 'BPP' || jab === 'BP') {
+    const dikirimBPPList = recentTag.filter(t => t.status === 'Dikirim ke BPP');
+    const bppList = recentTag.filter(t => ['Menunggu BPP', 'Di SIPD'].includes(t.status));
+    let html = '';
+    html += `<div style="margin-bottom: 14px">
+      <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; display: flex; align-items: center; gap: 5px">
+        <span>🚚</span> Berkas Dikirim PPK (Belum Diterima Fisik)
+      </div>`;
+    if (!dikirimBPPList.length) {
+      html += `<div style="font-size: 11px; color: #888; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; text-align: center">Tidak ada berkas dalam pengiriman fisik.</div>`;
+    } else {
+      html += `<div class="tbl-wrap"><table>
+        <thead><tr><th>No. Kuitansi</th><th>PPTK</th><th style="text-align:right">Nilai</th><th style="text-align:center;width:100px">Aksi</th></tr></thead>
+        <tbody>` + 
+        dikirimBPPList.map(t => `<tr>
+          <td style="font-family:monospace;font-size:10.5px">${t.no}</td>
+          <td style="font-size:11px">${t.pptkNama}</td>
+          <td style="text-align:right;font-weight:600">Rp ${fmtShort(t.jumlah)}</td>
+          <td style="text-align:center">
+            <button class="btn btn-sm btn-success" onclick="doUbahStatus('${t.id}', 'Menunggu BPP')" style="padding: 3px 8px; font-size: 10px; font-weight:bold">📥 Terima Fisik</button>
+          </td>
+        </tr>`).join('') +
+        `</tbody></table></div>`;
+    }
+    html += `</div>`;
+    html += `<div>
+      <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; display: flex; align-items: center; gap: 5px">
+        <span>💰</span> Berkas Siap Di-input BPP (Fisik Ada)
+      </div>`;
+    if (!bppList.length) {
+      html += `<div style="font-size: 11px; color: #888; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; text-align: center">Tidak ada berkas yang menunggu input BPP.</div>`;
+    } else {
+      html += `<div class="tbl-wrap"><table>
+        <thead><tr><th>No. Kuitansi</th><th>PPTK</th><th style="text-align:right">Nilai</th><th style="text-align:center;width:100px">Aksi</th></tr></thead>
+        <tbody>` + 
+        bppList.map(t => `<tr>
+          <td style="font-family:monospace;font-size:10.5px">${t.no}</td>
+          <td style="font-size:11px">${t.pptkNama}</td>
+          <td style="text-align:right;font-weight:600">Rp ${fmtShort(t.jumlah)}</td>
+          <td style="text-align:center">
+            <button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')" style="padding: 3px 8px; font-size: 10px; font-weight:bold">✏️ Proses BPP</button>
+          </td>
+        </tr>`).join('') +
+        `</tbody></table></div>`;
+    }
+    html += `</div>`;
     dt.innerHTML = html;
   } else {
     dt.innerHTML='<table><thead><tr><th>No.</th><th>Jenis</th><th>PPTK/BP</th><th>Sub Kegiatan</th><th style="text-align:right">Nilai</th><th>Status</th></tr></thead><tbody>'+
