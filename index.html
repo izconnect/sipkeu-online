@@ -36,6 +36,7 @@
   --ku-ttd-spc-height: 44px;
   --ku-ttd-gap: 8px;
   --ku-font-scale: 1;
+  --ku-qr-size: 80px;
 }
 
 body {
@@ -1158,6 +1159,15 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
           </div>
           <input type="range" id="slide-font-scale" min="0.75" max="1.25" step="0.05" value="1.0" oninput="adjustPrintLayout('font-scale', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
         </div>
+
+        <!-- Slider 5: Ukuran QR Code -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:#1e293b">
+            <span>Ukuran QR Code:</span>
+            <span id="val-qr-size" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">80 px</span>
+          </div>
+          <input type="range" id="slide-qr-size" min="48" max="120" value="80" oninput="adjustPrintLayout('qr-size', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
+        </div>
       </div>
     </div>
     <div class="modal-body" id="modal-cetak-body" style="max-height:82vh;overflow-y:auto"></div>
@@ -2237,6 +2247,10 @@ function adjustPrintLayout(type, value){
     document.documentElement.style.setProperty('--ku-font-scale', value);
     const lbl=document.getElementById('val-font-scale'); if(lbl) lbl.textContent=Math.round(value*100)+' %';
     const sld=document.getElementById('slide-font-scale'); if(sld) sld.value=value;
+  }else if(type==='qr-size'){
+    document.documentElement.style.setProperty('--ku-qr-size', value+'px');
+    const lbl=document.getElementById('val-qr-size'); if(lbl) lbl.textContent=value+' px';
+    const sld=document.getElementById('slide-qr-size'); if(sld) sld.value=value;
   }
 }
 // Initialize print layout on load
@@ -2246,6 +2260,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adjustPrintLayout('margin', 0.3);
     adjustPrintLayout('ttd-gap', 8);
     adjustPrintLayout('font-scale', 1.0);
+    adjustPrintLayout('qr-size', 80);
   } catch(e) {}
 });
 
@@ -3161,7 +3176,7 @@ function buildKuiLS(d){
     <div class="ku-body">
       <div class="ku-row"><div class="ku-rl">Telah Diterima Dari</div><div class="ku-rv">Bendahara Umum Daerah</div></div>
       <div class="ku-row"><div class="ku-rl">Uang Sejumlah</div><div class="ku-rv" style="font-style:italic">${d.terb||''}</div></div>
-      <div class="ku-row" style="align-items:center"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex" title="Scan Uraian Pembayaran">${buildQRCode(uraiText,48)}</div></div></div>
+      <div class="ku-row" style="align-items:center"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex;width:var(--ku-qr-size, 80px);height:var(--ku-qr-size, 80px)" title="Scan Uraian Pembayaran">${buildQRCode(uraiText)}</div></div></div>
       <div class="ku-row"><div class="ku-rl">Sub Kegiatan</div><div class="ku-rv" style="font-size:9.5pt">${d.sk?.nama||''}</div></div>
       <div class="ku-row">
         <div class="ku-rl" style="font-size:11pt;font-weight:700">Jumlah</div>
@@ -3308,7 +3323,7 @@ function buildKuiGU(d){
     <div class="ku-body">
       <div class="ku-row"><div class="ku-rl">Telah Diterima Dari</div><div class="ku-rv">${bend.jab || 'BPP'} – ${bend.nama}</div></div>
       <div class="ku-row"><div class="ku-rl">Uang Sejumlah</div><div class="ku-rv" style="font-style:italic">${d.terb||''}</div></div>
-      <div class="ku-row" style="align-items:center"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex" title="Scan Uraian Pembayaran">${buildQRCode(uraiText,48)}</div></div></div>
+      <div class="ku-row" style="align-items:center"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex;width:var(--ku-qr-size, 80px);height:var(--ku-qr-size, 80px)" title="Scan Uraian Pembayaran">${buildQRCode(uraiText)}</div></div></div>
       <div class="ku-row"><div class="ku-rl">Sub Kegiatan</div><div class="ku-rv" style="font-size:9.5pt">${d.sk?.nama||''}</div></div>
       <div class="ku-row">
         <div class="ku-rl">No. Bukti Kas</div><div class="ku-rv">${d.nobukti||'–'}</div>
@@ -6624,9 +6639,10 @@ function doExportExcel(){
 // ================================================================
 // QR CODE KUITANSI (menggunakan QR Server API online)
 // ================================================================
-function buildQRCode(text,size=60){
+function buildQRCode(text){
   const encoded=encodeURIComponent(text);
-  return`<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}" width="${size}" height="${size}" style="image-rendering:pixelated" alt="QR">`;
+  const apiSize = 300; // Resolusi tinggi untuk cetakan tajam
+  return`<img src="https://api.qrserver.com/v1/create-qr-code/?size=${apiSize}x${apiSize}&ecc=M&data=${encoded}" style="width:100%;height:100%;image-rendering:pixelated;object-fit:contain" alt="QR">`;
 }
 
 // 1. Load session login jika ada
