@@ -3473,14 +3473,14 @@ const stCls = new Proxy(stClsRaw, {
     return target[prop];
   }
 });
-const stEmojiRaw={Draft:'📝','Lengkapi TTD & Berkas':'✍️','Berkas Dikirim':'🚚','Menunggu Verifikator':'🔍','Dikirim ke PPK':'🚚','Menunggu PPK':'📋','Dikirim ke BPP':'🚚','Menunggu BPP':'💰','Di SIPD':'🖥','SP2D Terbit':'✅','Ditolak':'❌','GU – Belum SPJ':'💵','SPJ GU Dibuat':'📑'};
+const stEmojiRaw={Draft:'📝','Lengkapi TTD & Berkas':'✍️','Berkas Dikirim':'🚚','Menunggu Verifikator':'🔍','Dikirim ke PPK':'🚚','Menunggu PPK':'📋','Dikirim ke BPP':'🚚','Menunggu BPP':'💰','Di SIPD':'🏢','SP2D Terbit':'✅','Ditolak':'❌','GU – Belum SPJ':'💵','SPJ GU Dibuat':'📑'};
 const stEmoji = new Proxy(stEmojiRaw, {
   get: (target, prop) => {
     if (typeof prop === 'string' && prop.startsWith('Sudah SPJ')) return '✅';
     return target[prop];
   }
 });
-const stOleh={Draft:'PPTK','Lengkapi TTD & Berkas':'PPTK','Berkas Dikirim':'Kurir/Staf PPTK','Menunggu Verifikator':'Verifikator','Dikirim ke PPK':'Kurir/Staf Verif','Menunggu PPK':'PPK','Dikirim ke BPP':'Kurir/Staf PPK','Menunggu BPP':'BPP','Di SIPD':'Bendahara','SP2D Terbit':'KPPD'};
+const stOleh={Draft:'PPTK','Lengkapi TTD & Berkas':'PPTK','Berkas Dikirim':'Kurir/Staf PPTK','Menunggu Verifikator':'Verifikator','Dikirim ke PPK':'Kurir/Staf Verif','Menunggu PPK':'PPK','Dikirim ke BPP':'Kurir/Staf PPK','Menunggu BPP':'BPP','Di SIPD':'BKD','SP2D Terbit':'KPPD'};
 
 
 // Helper: hitung realisasi per skId berdasarkan model realisasi terpilih
@@ -4156,7 +4156,7 @@ function populateTicker() {
   }
   
   const rowsHtml = activeList.map(t => {
-    const statusLabel = stOleh[t.status] ? `${t.status} - di ${stOleh[t.status]}` : t.status;
+    const statusLabel = t.status === 'Di SIPD' ? 'Ajukan ke BKD' : (stOleh[t.status] ? `${t.status} - di ${stOleh[t.status]}` : t.status);
     const emoji = stEmoji[t.status] || '⚡';
     const bgClass = stCls[t.status] || 'bg-gray';
     return `
