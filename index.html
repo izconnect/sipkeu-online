@@ -5722,31 +5722,67 @@ function updateDashboard(){
   if(isReadonly)document.getElementById('db-role-label').textContent=jab||'–';
   document.getElementById('d-pptk-notice').style.display=jab==='PPTK'?'':'none';
 
-  // Hide other widgets to keep dashboard clean for Verifikator, PPK, and BPP/BP. Also hide program summary for PPTK.
+  // Hide other widgets to keep dashboard clean for Verifikator, PPK, and BPP/BP.
   document.getElementById('d-stat-grid').style.display = isCleanRole ? 'none' : '';
   document.getElementById('d-chart-card').style.display = isCleanRole ? 'none' : '';
-  document.getElementById('d-prog-card').style.display = (isCleanRole || jab === 'PPTK') ? 'none' : '';
+  document.getElementById('d-prog-card').style.display = isCleanRole ? 'none' : '';
   document.getElementById('d-notif-wrap').style.display = isCleanRole ? 'none' : '';
 
-  // Program table – pakai getReal per SK
+  // Update d-prog-card title dynamically
+  const progTitleEl = document.querySelector('#d-prog-card .card-title');
+  if (progTitleEl) {
+    if (jab === 'PPTK') {
+      progTitleEl.innerHTML = '📋 Sub Kegiatan Anda';
+    } else {
+      progTitleEl.innerHTML = '📂 Ringkasan per Program';
+    }
+  }
+
+  // Program table / Sub Kegiatan table – pakai getReal per SK
   const dp=document.getElementById('d-prog-wrap');
-  if(!PROG.length){dp.innerHTML='<div class="empty-state"><div class="es-icon">💰</div><p>Belum ada data. Setup melalui <strong>Setup Data → Data Anggaran</strong> atau <strong>Import dari SIPD</strong></p></div>';return;}
-  const realPerSk=getReal();
-  const aktifPerSk=getTagihanAktif();
-  dp.innerHTML='<table><thead><tr><th>Program</th><th style="text-align:right">Pagu</th><th style="text-align:right">✅ Realisasi SP2D</th><th style="text-align:right">⏳ Proses</th><th>%</th></tr></thead><tbody>'+
-  PROG.sort((a,b)=>a.urut-b.urut).map(p=>{
-    const kIds=KEG.filter(k=>k.progId===p.id).map(k=>k.id);const sIds=SK.filter(s=>kIds.includes(s.kegId)).map(s=>s.id);
-    const pagu=SK.filter(s=>sIds.includes(s.id)).reduce((s,sk)=>s+sk.pagu,0);
-    const real=sIds.reduce((s,sid)=>s+(realPerSk[sid]||0),0);
-    const ak=sIds.reduce((s,sid)=>s+(aktifPerSk[sid]||0),0);
-    const pct2=pagu?Math.min(100,Math.round(real/pagu*100)):0;
-    return`<tr><td>${p.kode} – ${p.nama}</td><td style="text-align:right">Rp ${fmtShort(pagu)}</td><td style="text-align:right;color:var(--green)">Rp ${fmtShort(real)}</td><td style="text-align:right;color:var(--orange)">${ak?'Rp '+fmtShort(ak):'–'}</td><td><span class="badge ${pct2>=80?'bg-tolak':pct2>=50?'bg-draft':'bg-sipd'}">${pct2}%</span></td></tr>`;
-  }).join('')+'</tbody></table>';
+  if (jab === 'PPTK' && myPeg) {
+    const mySks = SK.filter(s => s.pptkId === myPeg.id);
+    if (!mySks.length) {
+      dp.innerHTML = '<div class="empty-state"><p>Anda belum ditugaskan ke Sub Kegiatan apa pun.</p></div>';
+    } else {
+      const realPerSk = getReal();
+      dp.innerHTML = '<table><thead><tr><th>Sub Kegiatan</th><th style="text-align:right">Pagu</th><th style="text-align:right">✅ Realisasi SP2D</th><th style="text-align:right">💵 Sisa Anggaran</th><th>%</th></tr></thead><tbody>' +
+      mySks.map(s => {
+        const real = realPerSk[s.id] || 0;
+        const sisa = s.pagu - real;
+        const pct2 = s.pagu ? Math.min(100, Math.round(real/s.pagu*100)) : 0;
+        return `<tr>
+          <td style="font-size:11px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.kode} - ${s.nama}"><strong>${s.kode}</strong><br>${s.nama}</td>
+          <td style="text-align:right">Rp ${fmtShort(s.pagu)}</td>
+          <td style="text-align:right;color:var(--green)">Rp ${fmtShort(real)}</td>
+          <td style="text-align:right;color:var(--navy)">Rp ${fmtShort(sisa)}</td>
+          <td><span class="badge ${pct2>=80?'bg-tolak':pct2>=50?'bg-draft':'bg-sipd'}">${pct2}%</span></td>
+        </tr>`;
+      }).join('') + '</tbody></table>';
+    }
+  } else {
+    if(!PROG.length){dp.innerHTML='<div class="empty-state"><div class="es-icon">💰</div><p>Belum ada data. Setup melalui <strong>Setup Data → Data Anggaran</strong> atau <strong>Import dari SIPD</strong></p></div>';}
+    else {
+      const realPerSk=getReal();
+      const aktifPerSk=getTagihanAktif();
+      dp.innerHTML='<table><thead><tr><th>Program</th><th style="text-align:right">Pagu</th><th style="text-align:right">✅ Realisasi SP2D</th><th style="text-align:right">⏳ Proses</th><th>%</th></tr></thead><tbody>'+
+      PROG.sort((a,b)=>a.urut-b.urut).map(p=>{
+        const kIds=KEG.filter(k=>k.progId===p.id).map(k=>k.id);const sIds=SK.filter(s=>kIds.includes(s.kegId)).map(s=>s.id);
+        const pagu=SK.filter(s=>sIds.includes(s.id)).reduce((s,sk)=>s+sk.pagu,0);
+        const real=sIds.reduce((s,sid)=>s+(realPerSk[sid]||0),0);
+        const ak=sIds.reduce((s,sid)=>s+(aktifPerSk[sid]||0),0);
+        const pct2=pagu?Math.min(100,Math.round(real/pagu*100)):0;
+        return`<tr><td>${p.kode} – ${p.nama}</td><td style="text-align:right">Rp ${fmtShort(pagu)}</td><td style="text-align:right;color:var(--green)">Rp ${fmtShort(real)}</td><td style="text-align:right;color:var(--orange)">${ak?'Rp '+fmtShort(ak):'–'}</td><td><span class="badge ${pct2>=80?'bg-tolak':pct2>=50?'bg-draft':'bg-sipd'}">${pct2}%</span></td></tr>`;
+      }).join('')+'</tbody></table>';
+    }
+  }
 
   // Recent tagihan
   const dt=document.getElementById('d-tag-wrap');
-  const recentTag=TAGIHAN.filter(t=>t.jenis!=='GU');
-  if(!recentTag.length){dt.innerHTML='<div class="empty-state" style="padding:20px"><p>Belum ada tagihan</p></div>';return;}
+  let recentTag=TAGIHAN.filter(t=>t.jenis!=='GU');
+  if(myPeg) {
+    recentTag = recentTag.filter(t => t.pptkId === myPeg.id);
+  }
 
   const cardTitleEl = dt.parentElement?.querySelector('.card-title');
   if (cardTitleEl) {
@@ -5756,10 +5792,14 @@ function updateDashboard(){
       cardTitleEl.innerHTML = '📋 Antrean Kerja PPK';
     } else if (jab === 'BPP' || jab === 'BP') {
       cardTitleEl.innerHTML = '📋 Antrean Kerja Bendahara/BPP';
+    } else if (jab === 'PPTK') {
+      cardTitleEl.innerHTML = '📄 Daftar Tagihan Anda';
     } else {
       cardTitleEl.innerHTML = '📄 Tagihan Terbaru';
     }
   }
+
+  if(!recentTag.length){dt.innerHTML='<div class="empty-state" style="padding:20px"><p>Belum ada tagihan</p></div>';return;}
 
   if (jab === 'Verifikator') {
     const dikirimList = recentTag.filter(t => t.status === 'Berkas Dikirim');
