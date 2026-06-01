@@ -33,6 +33,9 @@
   --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --ku-ttd-spc-height: 44px;
+  --ku-ttd-gap: 8px;
+  --ku-font-scale: 1;
 }
 
 body {
@@ -646,32 +649,32 @@ tr:hover td{background:#f8fafc}
 .toast-item.ok{background:var(--green);box-shadow:0 10px 15px -3px rgba(13,148,136,0.3)}.toast-item.err{background:var(--red);box-shadow:0 10px 15px -3px rgba(225,29,72,0.3)}.toast-item.warn{background:var(--orange);box-shadow:0 10px 15px -3px rgba(234,88,12,0.3)}
 @keyframes tin{from{opacity:0;transform:translateY(12px) scale(0.96)}to{opacity:1;transform:none}}
 
-.ku-page,.rin-page{width:100%;font-family:Arial,sans-serif;font-size:10.5pt;color:#000}
+.ku-page,.rin-page{width:100%;font-family:Arial,sans-serif;font-size:calc(10.5pt * var(--ku-font-scale, 1));color:#000}
 .ku-page{max-height:6.1in;box-sizing:border-box;overflow:hidden}
 .rin-page{margin-top:16px}
 .ku-kop,.rin-kop{display:flex;align-items:center;gap:10px;border-bottom:2px solid #000;padding-bottom:7px;margin-bottom:7px}
 .ku-kop-logo{width:55px;height:55px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:7px;color:#888;flex-shrink:0;background:#f9f9f9;overflow:hidden}
 .ku-kop-logo img{width:100%;height:100%;object-fit:contain}
 .ku-kop-text{text-align:center;flex:1}
-.k-inst{font-size:12.5pt;font-weight:700}.k-unit{font-size:10.5pt;font-weight:700}
-.ku-kop-right{font-size:12.5pt;font-weight:700;color:#c00;border:2px solid #c00;padding:4px 12px;border-radius:4px;white-space:nowrap}
-.ku-tag{text-align:right;font-size:10.5pt;margin-bottom:5px}
+.k-inst{font-size:calc(12.5pt * var(--ku-font-scale, 1));font-weight:700}.k-unit{font-size:calc(10.5pt * var(--ku-font-scale, 1));font-weight:700}
+.ku-kop-right{font-size:calc(12.5pt * var(--ku-font-scale, 1));font-weight:700;color:#c00;border:2px solid #c00;padding:4px 12px;border-radius:4px;white-space:nowrap}
+.ku-tag{text-align:right;font-size:calc(10.5pt * var(--ku-font-scale, 1));margin-bottom:5px}
 .ku-body{border:1px solid #000;margin-bottom:7px}
 .ku-row{display:flex;border-bottom:1px solid #aaa}.ku-row:last-child{border-bottom:none}
-.ku-rl{width:125px;padding:5px 7px;font-weight:600;border-right:1px solid #aaa;flex-shrink:0;font-size:10pt}
-.ku-rv{flex:1;padding:5px 7px;font-size:10pt;min-height:24px}
-.ku-ttd{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;font-size:10pt}
-.ku-ttd-box{text-align:center}.ku-ttd-spc{height:44px}
-.ku-ttd-name{font-weight:700;text-decoration:underline}.ku-ttd-nip{font-size:9pt}
-.ku-verf{border:1px solid #000;margin-top:7px;font-size:8.5pt}
+.ku-rl{width:125px;padding:5px 7px;font-weight:600;border-right:1px solid #aaa;flex-shrink:0;font-size:calc(10pt * var(--ku-font-scale, 1))}
+.ku-rv{flex:1;padding:5px 7px;font-size:calc(10pt * var(--ku-font-scale, 1));min-height:24px}
+.ku-ttd{display:grid;grid-template-columns:1fr 1fr;gap:var(--ku-ttd-gap, 8px);margin-top:10px;font-size:calc(10pt * var(--ku-font-scale, 1))}
+.ku-ttd-box{text-align:center}.ku-ttd-spc{height:var(--ku-ttd-spc-height, 44px)}
+.ku-ttd-name{font-weight:700;text-decoration:underline}.ku-ttd-nip{font-size:calc(9pt * var(--ku-font-scale, 1))}
+.ku-verf{border:1px solid #000;margin-top:7px;font-size:calc(8.5pt * var(--ku-font-scale, 1))}
 .ku-verf-r{display:flex}
 .ku-verf-c{flex:1;padding:4px 6px;border-right:1px solid #aaa;text-align:center;border-bottom:1px solid #aaa}
 .ku-verf-c:last-child{border-right:none}
-.ku-verf-cb{flex:1;padding:3px 6px;border-right:1px solid #aaa;font-size:8pt;min-height:22px}
+.ku-verf-cb{flex:1;padding:3px 6px;border-right:1px solid #aaa;font-size:calc(8pt * var(--ku-font-scale, 1));min-height:22px}
 .ku-verf-cb:last-child{border-right:none}
-.rin-title{text-align:center;font-size:13.5pt;font-weight:700;flex:1}
-.rin-meta td{padding:2px 4px;vertical-align:top;font-size:10pt}.rin-meta .rl{width:115px;font-weight:600}
-.rin-tbl{width:100%;border-collapse:collapse;font-size:10pt;margin-top:5px}
+.rin-title{text-align:center;font-size:calc(13.5pt * var(--ku-font-scale, 1));font-weight:700;flex:1}
+.rin-meta td{padding:2px 4px;vertical-align:top;font-size:calc(10pt * var(--ku-font-scale, 1))}.rin-meta .rl{width:115px;font-weight:600}
+.rin-tbl{width:100%;border-collapse:collapse;font-size:calc(10pt * var(--ku-font-scale, 1));margin-top:5px}
 .rin-tbl th,.rin-tbl td{border:1px solid #000;padding:4px 6px}
 .rin-tbl th{background:#e8e8e8;font-weight:700;text-align:center}
 .rin-tbl td.r{text-align:right}.rin-tbl td.c{text-align:center}
@@ -1112,9 +1115,49 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
           Tampilkan Rincian
         </label>
       </div>
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-sm" onclick="togglePrintSettings()" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.3);display:inline-flex;align-items:center;gap:4px">⚙️ Layout</button>
         <button class="btn btn-sm" onclick="doCetak()" style="background:#4fc3f7;color:#fff;border-color:#4fc3f7">🖨 Cetak</button>
         <button class="btn btn-sm" onclick="tutupModal('modal-cetak')" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">✕</button>
+      </div>
+    </div>
+    <div id="print-settings-panel" style="display:none;background:#f1f5f9;border-bottom:1px solid #e2e8f0;padding:12px 20px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px;align-items:center">
+        <!-- Slider 1: Tinggi TTD -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:#1e293b">
+            <span>Tinggi Kolom TTD:</span>
+            <span id="val-ttd-height" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">44 px</span>
+          </div>
+          <input type="range" id="slide-ttd-height" min="20" max="120" value="44" oninput="adjustPrintLayout('ttd-height', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
+        </div>
+        
+        <!-- Slider 2: Margin Cetak -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:#1e293b">
+            <span>Margin Cetak:</span>
+            <span id="val-margin" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">0.3 in</span>
+          </div>
+          <input type="range" id="slide-margin" min="0.1" max="1.0" step="0.05" value="0.3" oninput="adjustPrintLayout('margin', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
+        </div>
+
+        <!-- Slider 3: Jarak Kolom TTD -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:#1e293b">
+            <span>Jarak Kolom TTD:</span>
+            <span id="val-ttd-gap" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">8 px</span>
+          </div>
+          <input type="range" id="slide-ttd-gap" min="0" max="80" value="8" oninput="adjustPrintLayout('ttd-gap', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
+        </div>
+
+        <!-- Slider 4: Skala Ukuran Huruf -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:#1e293b">
+            <span>Skala Ukuran Huruf:</span>
+            <span id="val-font-scale" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">100 %</span>
+          </div>
+          <input type="range" id="slide-font-scale" min="0.75" max="1.25" step="0.05" value="1.0" oninput="adjustPrintLayout('font-scale', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
+        </div>
       </div>
     </div>
     <div class="modal-body" id="modal-cetak-body" style="max-height:82vh;overflow-y:auto"></div>
@@ -2166,6 +2209,46 @@ function toggleRincianCetak(){
 function doCetak(){document.getElementById('print-area').innerHTML=document.getElementById('modal-cetak-body').innerHTML;window.print();setTimeout(()=>document.getElementById('print-area').innerHTML='',1000)}
 window.addEventListener('beforeprint',()=>{if(!document.getElementById('print-area').innerHTML)document.getElementById('print-area').innerHTML=document.getElementById('modal-cetak-body')?.innerHTML||'';});
 window.addEventListener('afterprint',()=>document.getElementById('print-area').innerHTML='');
+
+function togglePrintSettings(){
+  const panel=document.getElementById('print-settings-panel');
+  if(panel) panel.style.display=panel.style.display==='none'?'block':'none';
+}
+function adjustPrintLayout(type, value){
+  if(type==='ttd-height'){
+    document.documentElement.style.setProperty('--ku-ttd-spc-height', value+'px');
+    const lbl=document.getElementById('val-ttd-height'); if(lbl) lbl.textContent=value+' px';
+    const sld=document.getElementById('slide-ttd-height'); if(sld) sld.value=value;
+  }else if(type==='margin'){
+    let styleEl=document.getElementById('dynamic-print-style');
+    if(!styleEl){
+      styleEl=document.createElement('style');
+      styleEl.id='dynamic-print-style';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.innerHTML=`@media print{@page{margin:${value}in!important}}`;
+    const lbl=document.getElementById('val-margin'); if(lbl) lbl.textContent=value+' in';
+    const sld=document.getElementById('slide-margin'); if(sld) sld.value=value;
+  }else if(type==='ttd-gap'){
+    document.documentElement.style.setProperty('--ku-ttd-gap', value+'px');
+    const lbl=document.getElementById('val-ttd-gap'); if(lbl) lbl.textContent=value+' px';
+    const sld=document.getElementById('slide-ttd-gap'); if(sld) sld.value=value;
+  }else if(type==='font-scale'){
+    document.documentElement.style.setProperty('--ku-font-scale', value);
+    const lbl=document.getElementById('val-font-scale'); if(lbl) lbl.textContent=Math.round(value*100)+' %';
+    const sld=document.getElementById('slide-font-scale'); if(sld) sld.value=value;
+  }
+}
+// Initialize print layout on load
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    adjustPrintLayout('ttd-height', 44);
+    adjustPrintLayout('margin', 0.3);
+    adjustPrintLayout('ttd-gap', 8);
+    adjustPrintLayout('font-scale', 1.0);
+  } catch(e) {}
+});
+
 
 // ================================================================
 // LOGIN / AUTH
@@ -4205,6 +4288,8 @@ function populateTicker() {
     const statusLabel = t.status === 'Di SIPD' ? 'Di Ajukan Ke BKD' : t.status==='Berkas Dikirim'?'Berkas Diajukan':t.status==='Dikirim ke PPK'?'Diajukan ke PPK':t.status==='Dikirim ke BPP'?'Diajukan ke BPP':(stOleh[t.status] ? `${t.status} - di ${stOleh[t.status]}` : t.status);
     const emoji = stEmoji[t.status] || '⚡';
     const bgClass = stCls[t.status] || 'bg-gray';
+    const lastHist = t.history && t.history.length ? t.history[t.history.length - 1] : null;
+    const lastTime = lastHist ? fmtTS(lastHist.ts) : '';
     return `
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px; background:#fff; border:1px solid #cbd5e1; border-left:4px solid var(--blue); border-radius:8px; font-size:12px; flex-wrap:wrap; box-shadow:0 1px 3px rgba(0,0,0,0.02); width:100%;">
         <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:280px;">
@@ -4213,9 +4298,12 @@ function populateTicker() {
         </div>
         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
           <span style="font-weight:700; color:var(--navy); font-size:12.5px;">Rp ${fmtRp(t.jumlah)}</span>
-          <span class="badge ${bgClass}" style="font-size:10px; font-weight:700; padding:4px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:5px; border:1px solid rgba(0,0,0,0.03);">
-            ${emoji} ${statusLabel}
-          </span>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+            <span class="badge ${bgClass}" style="font-size:10px; font-weight:700; padding:4px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:5px; border:1px solid rgba(0,0,0,0.03);">
+              ${emoji} ${statusLabel}
+            </span>
+            ${lastTime ? `<span style="font-size:9.5px; color:#64748b;">🕒 ${lastTime}</span>` : ''}
+          </div>
         </div>
       </div>
     `;
