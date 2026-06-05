@@ -3385,15 +3385,14 @@ function buildKuiLS(d){
         <div style="display:flex;flex-direction:column;align-items:center;margin-top:2px"><svg class="barcode-svg" data-value="${d.no||''}"></svg></div>
       </div>
     </div>
-    <div class="ku-tag">No. Kuitansi : <strong>${d.no||'–'}</strong></div>
     <div class="ku-body">
       <div class="ku-row"><div class="ku-rl">Telah Diterima Dari</div><div class="ku-rv">Bendahara Umum Daerah</div></div>
       <div class="ku-row"><div class="ku-rl">Uang Sejumlah</div><div class="ku-rv" style="font-style:italic">${d.terb||''}</div></div>
-      <div class="ku-row" style="align-items:center"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex;width:var(--ku-qr-size, 80px);height:var(--ku-qr-size, 80px)" title="Scan Uraian Pembayaran">${buildQRCode(uraiText)}</div></div></div>
+      <div class="ku-row"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex;width:var(--ku-qr-size, 80px);height:var(--ku-qr-size, 80px)" title="Scan Uraian Pembayaran">${buildQRCode(uraiText)}</div></div></div>
       <div class="ku-row"><div class="ku-rl">Sub Kegiatan</div><div class="ku-rv" style="font-size:9.5pt">${d.sk?.nama||''}</div></div>
     </div>
     <div style="display:flex;justify-content:flex-start;margin:6px 0">
-      <div style="border:1.5px solid #000;padding:5px 12px;font-size:11pt;font-weight:800;background:#fff;min-width:180px;text-align:center;box-shadow:var(--shadow-sm);border-radius:4px">
+      <div style="margin-left:140px;border:1.5px solid #000;padding:5px 12px;font-size:11pt;font-weight:800;background:#fff;min-width:180px;text-align:center;box-shadow:var(--shadow-sm);border-radius:4px">
         Jumlah: Rp ${fmtRp(d.jumlah)}
       </div>
     </div>
@@ -3534,11 +3533,10 @@ function buildKuiGU(d){
         <div style="display:flex;flex-direction:column;align-items:center;margin-top:2px"><svg class="barcode-svg" data-value="${d.no||''}"></svg></div>
       </div>
     </div>
-    <div class="ku-tag">No. Kuitansi : <strong>${d.no||'–'}</strong></div>
     <div class="ku-body">
       <div class="ku-row"><div class="ku-rl">Telah Diterima Dari</div><div class="ku-rv">${bend.jab || 'BPP'} – ${bend.nama}</div></div>
       <div class="ku-row"><div class="ku-rl">Uang Sejumlah</div><div class="ku-rv" style="font-style:italic">${d.terb||''}</div></div>
-      <div class="ku-row" style="align-items:center"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex;width:var(--ku-qr-size, 80px);height:var(--ku-qr-size, 80px)" title="Scan Uraian Pembayaran">${buildQRCode(uraiText)}</div></div></div>
+      <div class="ku-row"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex;width:var(--ku-qr-size, 80px);height:var(--ku-qr-size, 80px)" title="Scan Uraian Pembayaran">${buildQRCode(uraiText)}</div></div></div>
       <div class="ku-row"><div class="ku-rl">Sub Kegiatan</div><div class="ku-rv" style="font-size:9.5pt">${d.sk?.nama||''}</div></div>
       <div class="ku-row">
         <div class="ku-rl">No. Bukti Kas</div><div class="ku-rv">${d.nobukti||'–'}</div>
@@ -3546,7 +3544,7 @@ function buildKuiGU(d){
       </div>
     </div>
     <div style="display:flex;justify-content:flex-start;margin:6px 0">
-      <div style="border:1.5px solid #000;padding:5px 12px;font-size:11pt;font-weight:800;background:#fff;min-width:180px;text-align:center;box-shadow:var(--shadow-sm);border-radius:4px">
+      <div style="margin-left:140px;border:1.5px solid #000;padding:5px 12px;font-size:11pt;font-weight:800;background:#fff;min-width:180px;text-align:center;box-shadow:var(--shadow-sm);border-radius:4px">
         Jumlah: Rp ${fmtRp(d.jml)}
       </div>
     </div>
