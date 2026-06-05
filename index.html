@@ -1345,6 +1345,29 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
       </div>
       <div class="fg" style="margin-bottom:9px"><label>Nama Sub Kegiatan <span class="req">*</span></label><input id="msk-nama"></div>
       <div class="fg"><label>PPTK Penanggung Jawab</label><select id="msk-pptk"></select></div>
+      <div class="fg" style="margin-top:10px;border-top:1px dashed #ccc;padding-top:10px">
+        <label style="font-weight:700">Daftar Dokumen DPA PDF (Referensi)</label>
+        <div id="msk-pdf-list" style="margin-top:5px;display:flex;flex-direction:column;gap:5px"></div>
+        <div style="background:#f1f5f9;border-radius:6px;padding:8px 10px;margin-top:8px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-weight:600;font-size:11px;color:var(--navy)">+ Tambah Dokumen Versi Baru</div>
+          <div style="display:flex;gap:6px">
+            <select id="msk-pdf-label" onchange="toggleMskPdfLabelCustom()" style="flex:1;padding:4px;font-size:11px;border:1px solid #ccc;border-radius:4px">
+              <option value="Penetapan APBD">Penetapan APBD</option>
+              <option value="APBD Pergeseran 1">APBD Pergeseran 1</option>
+              <option value="APBD Pergeseran 2">APBD Pergeseran 2</option>
+              <option value="APBD Pergeseran 3">APBD Pergeseran 3</option>
+              <option value="APBD Pergeseran 4">APBD Pergeseran 4</option>
+              <option value="Kustom">-- Label Kustom --</option>
+            </select>
+            <input type="text" id="msk-pdf-label-custom" placeholder="Nama versi kustom..." style="display:none;flex:1;padding:4px;font-size:11px;border:1px solid #ccc;border-radius:4px">
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+            <input type="file" id="msk-pdf" accept=".pdf" style="font-size:11px;flex:1">
+            <button type="button" class="btn btn-sm btn-primary" onclick="addMskPdfVersion()" style="font-size:11px;padding:4px 8px">Tambah</button>
+          </div>
+          <div id="msk-pdf-add-status" style="font-size:10px;color:#666"></div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="tutupModal('modal-sk')">Batal</button><button class="btn btn-primary" onclick="simpSK()">Simpan</button></div>
   </div>
@@ -2788,9 +2811,91 @@ function mskLoadKeg(){const pId=document.getElementById('msk-prog').value;const 
 // ================================================================
 function skFilProg(){const pId=document.getElementById('skfil-prog')?.value||'';const sel=document.getElementById('skfil-keg');sel.innerHTML='<option value="">Semua Kegiatan</option>';KEG.filter(k=>!pId||k.progId===pId).forEach(k=>sel.innerHTML+=`<option value="${k.id}">${k.kode} – ${k.nama}</option>`);renderSK();}
 function renderSK(){const fP=document.getElementById('skfil-prog')?.value||'';const fK=document.getElementById('skfil-keg')?.value||'';const el=document.getElementById('list-sk');let list=SK;if(fP){const kIds=KEG.filter(k=>k.progId===fP).map(k=>k.id);list=list.filter(s=>kIds.includes(s.kegId));}if(fK)list=list.filter(s=>s.kegId===fK);if(!list.length){el.innerHTML='<div class="empty-state"><div class="es-icon">📄</div><p>Belum ada sub kegiatan</p></div>';return;}el.innerHTML='<div class="setup-list">'+list.sort((a,b)=>a.kode.localeCompare(b.kode)).map(s=>{const keg=KEG.find(k=>k.id===s.kegId);const pptk=PEG.find(p=>p.id===s.pptkId);return`<div class="setup-item"><div class="setup-kode" style="min-width:170px">${s.kode}</div><div class="setup-nama">${s.nama}<br><span style="font-size:10px;color:#aaa">${keg?.nama||''}</span>${pptk?'<br><span class="chip chip-purple" style="font-size:9px">PPTK: '+pptk.nama+'</span>':''}</div><div class="setup-pagu">Rp ${fmtShort(s.pagu)}</div><div class="setup-acts"><button class="btn btn-sm" onclick="editSK('${s.id}')">✏</button><button class="btn btn-sm btn-danger" onclick="hapusSK('${s.id}')">✕</button></div></div>`;}).join('')+'</div>';}
-function bukaSK(id){popAllFilters();editIds.sk=id||null;document.getElementById('msk-ttl').textContent=id?'Edit Sub Kegiatan':'Tambah Sub Kegiatan';const s=id?SK.find(x=>x.id===id):{};if(s?.kegId){const keg=KEG.find(k=>k.id===s.kegId);if(keg){document.getElementById('msk-prog').value=keg.progId;mskLoadKeg();document.getElementById('msk-keg').value=s.kegId;}}document.getElementById('msk-kode').value=s?.kode||'';document.getElementById('msk-nama').value=s?.nama||'';document.getElementById('msk-pagu').value=s?.pagu||'';document.getElementById('msk-pptk').value=s?.pptkId||'';bukaModal('modal-sk');}
+let tempSkPdfs = [];
+function toggleMskPdfLabelCustom(){
+  const sel = document.getElementById('msk-pdf-label');
+  const customInput = document.getElementById('msk-pdf-label-custom');
+  if(sel && customInput){
+    customInput.style.display = sel.value === 'Kustom' ? 'block' : 'none';
+  }
+}
+function renderMskPdfList(){
+  const el = document.getElementById('msk-pdf-list');
+  if(!el) return;
+  if(tempSkPdfs.length === 0){
+    el.innerHTML = '<div style="font-size:11px;color:#aaa;font-style:italic">Belum ada file PDF terunggah</div>';
+    return;
+  }
+  el.innerHTML = tempSkPdfs.map((p,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px">
+      <span style="font-weight:600">📄 ${p.label}</span>
+      <a href="javascript:void(0)" onclick="removeMskPdfVersion(${i})" style="color:var(--red);text-decoration:none;font-weight:700;margin-left:8px">✕</a>
+    </div>
+  `).join('');
+}
+function addMskPdfVersion(){
+  const labelSel = document.getElementById('msk-pdf-label').value;
+  const labelCust = document.getElementById('msk-pdf-label-custom').value.trim();
+  const label = labelSel === 'Kustom' ? (labelCust || 'Kustom') : labelSel;
+  const fileInput = document.getElementById('msk-pdf');
+  const file = fileInput ? fileInput.files[0] : null;
+  const statusEl = document.getElementById('msk-pdf-add-status');
+  
+  if(!file){
+    toast('Pilih file PDF terlebih dahulu','err');
+    return;
+  }
+  if(file.size > 2.5 * 1024 * 1024){
+    toast('Ukuran file PDF maksimal 2.5MB agar penyimpanan lancar','err');
+    return;
+  }
+  
+  statusEl.textContent = '⏳ Membaca PDF...';
+  const reader = new FileReader();
+  reader.onload = function(e){
+    tempSkPdfs.push({
+      id: 'pdf-' + Math.random().toString(36).substr(2, 9),
+      label: label,
+      pdf: e.target.result,
+      uploadedAt: new Date().toISOString()
+    });
+    fileInput.value = '';
+    document.getElementById('msk-pdf-label-custom').value = '';
+    document.getElementById('msk-pdf-label').value = 'Penetapan APBD';
+    toggleMskPdfLabelCustom();
+    statusEl.textContent = '🟢 File berhasil ditambahkan';
+    renderMskPdfList();
+  };
+  reader.onerror = () => {
+    statusEl.textContent = '❌ Gagal membaca file';
+  };
+  reader.readAsDataURL(file);
+}
+function removeMskPdfVersion(index){
+  tempSkPdfs.splice(index, 1);
+  renderMskPdfList();
+}
+function openDpaPdf(base64Data){
+  const win = window.open();
+  if(win){
+    win.document.write('<iframe src="' + base64Data + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
+  } else {
+    toast('Pop-up terblokir oleh browser','err');
+  }
+}
+
+function bukaSK(id){popAllFilters();editIds.sk=id||null;document.getElementById('msk-ttl').textContent=id?'Edit Sub Kegiatan':'Tambah Sub Kegiatan';const s=id?SK.find(x=>x.id===id):{};if(s?.kegId){const keg=KEG.find(k=>k.id===s.kegId);if(keg){document.getElementById('msk-prog').value=keg.progId;mskLoadKeg();document.getElementById('msk-keg').value=s.kegId;}}document.getElementById('msk-kode').value=s?.kode||'';document.getElementById('msk-nama').value=s?.nama||'';document.getElementById('msk-pagu').value=s?.pagu||'';document.getElementById('msk-pptk').value=s?.pptkId||'';
+  tempSkPdfs = s?.dpaPdfs ? JSON.parse(JSON.stringify(s.dpaPdfs)) : [];
+  document.getElementById('msk-pdf').value = '';
+  document.getElementById('msk-pdf-label-custom').value = '';
+  document.getElementById('msk-pdf-label').value = 'Penetapan APBD';
+  toggleMskPdfLabelCustom();
+  document.getElementById('msk-pdf-add-status').textContent = '';
+  renderMskPdfList();
+  bukaModal('modal-sk');
+}
 function editSK(id){bukaSK(id);}
-function simpSK(){const kegId=document.getElementById('msk-keg').value;const kode=document.getElementById('msk-kode').value.trim();const nama=document.getElementById('msk-nama').value.trim();const pagu=Number(document.getElementById('msk-pagu').value)||0;const pptkId=document.getElementById('msk-pptk').value||'';if(!kegId||!kode||!nama){toast('Lengkapi field wajib','err');return;}if(editIds.sk){const s=SK.find(x=>x.id===editIds.sk);if(s){s.kegId=kegId;s.kode=kode;s.nama=nama;s.pagu=pagu;s.pptkId=pptkId;}}else SK.push({id:uid(),kegId,kode,nama,pagu,pptkId});tutupModal('modal-sk');renderSK();scheduleSave();toast('Sub Kegiatan tersimpan','ok');}
+function simpSK(){const kegId=document.getElementById('msk-keg').value;const kode=document.getElementById('msk-kode').value.trim();const nama=document.getElementById('msk-nama').value.trim();const pagu=Number(document.getElementById('msk-pagu').value)||0;const pptkId=document.getElementById('msk-pptk').value||'';if(!kegId||!kode||!nama){toast('Lengkapi field wajib','err');return;}if(editIds.sk){const s=SK.find(x=>x.id===editIds.sk);if(s){s.kegId=kegId;s.kode=kode;s.nama=nama;s.pagu=pagu;s.pptkId=pptkId;s.dpaPdfs=tempSkPdfs;}}else SK.push({id:uid(),kegId,kode,nama,pagu,pptkId,dpaPdfs:tempSkPdfs});tutupModal('modal-sk');renderSK();scheduleSave();toast('Sub Kegiatan tersimpan','ok');}
 function hapusSK(id){if(!confirm('Hapus sub kegiatan ini?'))return;BEL=BEL.filter(b=>b.skId!==id);SK=SK.filter(s=>s.id!==id);renderSK();scheduleSave();toast('Sub Kegiatan dihapus','warn');}
 
 // ================================================================
@@ -4438,7 +4543,13 @@ function renderKendali(){
           <div style="font-size:13px;font-weight:700;color:var(--navy)">${s.nama}</div>
           <div style="font-size:10px;color:#888;font-family:monospace;margin-top:2px">${s.kode}</div>
           <div style="font-size:10px;color:#aaa;margin-top:1px">${prog?.kode||''} › ${keg?.kode||''} › ${keg?.nama||''}</div>
-          ${pptk?`<span class="chip chip-purple" style="margin-top:4px;font-size:9px">⚙️ PPTK: ${pptk.nama}</span>`:''}
+          ${pptk?`<span class="chip chip-purple" style="margin-top:4px;font-size:9px;margin-right:5px">⚙️ PPTK: ${pptk.nama}</span>`:''}
+          ${s.dpaPdfs && s.dpaPdfs.length > 0 ? `
+            <div style="margin-top:5px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10px;color:#555">
+              <strong>📄 DPA PDF:</strong>
+              ${s.dpaPdfs.map(p => `<button class="btn btn-sm" onclick="openDpaPdf('${p.pdf}')" style="font-size:9px;padding:2px 6px;background:#e0f2f1;color:#00796b;border-color:#b2dfdb;cursor:pointer">${p.label}</button>`).join(' ')}
+            </div>
+          ` : ''}
         </div>
         <span class="chip ${pct>=80?'chip-red':pct>=50?'chip-orange':'chip-green'}" style="font-size:13px">${pct}%</span>
       </div>
