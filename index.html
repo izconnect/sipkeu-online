@@ -2213,6 +2213,22 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const fmtRp=n=>{if(n===undefined||n===null||n==='')return'0';const num=Number(n);return isNaN(num)?'0':num.toLocaleString('id-ID',{maximumFractionDigits:20});};
 const fmtShort=fmtRp;
 function getCurrentPegawai(){if(!USER)return null;return PEG.find(x=>x.user&&x.user.toLowerCase()===USER.username.toLowerCase());}
+function getSisaBel(skId, belKode, excludeId = null) {
+  const b = BEL.find(x => x.skId === skId && x.kode === belKode);
+  if (!b) return 0;
+  const pagu = b.pagu || 0;
+  const spentLS = TAGIHAN.filter(t => t.skId === skId && t.jenis === 'LS' && t.id !== excludeId && t.status !== 'Draft' && t.status !== 'Ditolak')
+    .reduce((sum, t) => {
+      const item = (t.data?.items || []).find(it => it.kode === belKode);
+      return sum + (item ? item.jumlah : 0);
+    }, 0);
+  const spentGU = TAGIHAN.filter(t => t.skId === skId && t.jenis === 'GU' && t.id !== excludeId && t.status !== 'Ditolak')
+    .reduce((sum, t) => {
+      const item = (t.data?.items || []).find(it => it.kode === belKode);
+      return sum + (item ? item.jumlah : 0);
+    }, 0);
+  return Math.max(0, pagu - (spentLS + spentGU));
+}
 function fmtTgl(s){if(!s)return'';const[y,m,d]=s.split('-');const B=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];return parseInt(d)+' '+B[parseInt(m)-1]+' '+y}
 function fmtTS(ts){if(!ts)return'';const d=new Date(ts);return`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
 function durasi(tsA,tsB){const d=Math.floor((new Date(tsB||Date.now())-new Date(tsA||Date.now()))/60000);if(d<60)return d+'m';if(d<1440)return Math.floor(d/60)+'j '+d%60+'m';return Math.floor(d/1440)+'h'}
@@ -2822,9 +2838,17 @@ function fLoadBel(){
   if(sk?.pptkId){const pptk=PEG.find(p=>p.id===sk.pptkId);if(pptk){document.getElementById('f-pptk').value=sk.pptkId;if(tagEl){tagEl.textContent='⚙️ PPTK otomatis: '+pptk.nama;tagEl.style.display='inline-flex';}}}else{if(tagEl)tagEl.style.display='none';}
   const list=BEL.filter(b=>b.skId===skId).sort((a,b)=>a.kode.localeCompare(b.kode));
   if(!skId||!list.length){clearBelLS();return;}
-  let hs='';list.forEach((b,i)=>{hs+=`<div class="bel-row" id="sr-${i}" onclick="selSingle(${i})"><input type="radio" name="bel-s" value="${i}" id="r-${i}"><div style="flex:1"><div class="bel-kode">${b.kode}</div><div class="bel-nama">${b.nama}</div></div><div class="bel-pagu">Rp ${fmtShort(b.pagu)}</div></div>`;});
+  let hs='';list.forEach((b,i)=>{
+    const sisa = getSisaBel(skId, b.kode, editTagihanId);
+    const sisaColor = sisa <= 0 ? 'var(--red)' : 'var(--green)';
+    hs+=`<div class="bel-row" id="sr-${i}" onclick="selSingle(${i})"><input type="radio" name="bel-s" value="${i}" id="r-${i}"><div style="flex:1"><div class="bel-kode">${b.kode}</div><div class="bel-nama">${b.nama}</div><div style="font-size:10px;color:${sisaColor};margin-top:2px;">Sisa Anggaran: <strong>Rp ${fmtShort(sisa)}</strong></div></div><div class="bel-pagu">Rp ${fmtShort(b.pagu)}</div></div>`;
+  });
   document.getElementById('list-single').innerHTML=hs;
-  let hm='';list.forEach((b,i)=>{hm+=`<div class="bel-row" id="mr-${i}"><input type="checkbox" id="chk-${i}" onchange="togMulti(${i})"><div style="flex:1"><div class="bel-kode">${b.kode}</div><div class="bel-nama">${b.nama}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><div class="bel-pagu">Pagu: Rp ${fmtShort(b.pagu)}</div><input class="amt-inp" id="amt-${i}" type="number" placeholder="Nilai" oninput="calcMulti()" style="display:none"></div></div>`;});
+  let hm='';list.forEach((b,i)=>{
+    const sisa = getSisaBel(skId, b.kode, editTagihanId);
+    const sisaColor = sisa <= 0 ? 'var(--red)' : 'var(--green)';
+    hm+=`<div class="bel-row" id="mr-${i}"><input type="checkbox" id="chk-${i}" onchange="togMulti(${i})"><div style="flex:1"><div class="bel-kode">${b.kode}</div><div class="bel-nama">${b.nama}</div><div style="font-size:10px;color:${sisaColor};margin-top:2px;">Sisa Anggaran: <strong>Rp ${fmtShort(sisa)}</strong></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><div class="bel-pagu">Pagu: Rp ${fmtShort(b.pagu)}</div><input class="amt-inp" id="amt-${i}" type="number" placeholder="Nilai" oninput="calcMulti()" style="display:none"></div></div>`;
+  });
   document.getElementById('list-multi').innerHTML=hm;
 }
 function clearBelLS(){const e='<div class="empty-state" style="padding:14px"><p>Pilih Sub Kegiatan dahulu</p></div>';document.getElementById('list-single').innerHTML=e;document.getElementById('list-multi').innerHTML=e;}
@@ -2854,6 +2878,14 @@ function validateLS(d){if(!d.skId){toast('Pilih Sub Kegiatan','err');return fals
 function previewKui(){const d=getFormDataLS();if(!validateLS(d))return;const no='KU-LS/'+CFG.ta+'/'+String(noUrut).padStart(4,'0');document.getElementById('modal-cetak-body').innerHTML=buildKuiLS({...d,no});bukaModal('modal-cetak');renderAllBarcodes();}
 function simpanTagihan(status,jenis='LS'){
   const d=getFormDataLS();if(status!=='Draft'&&!validateLS(d))return;
+  // Budget validation:
+  for(const item of d.items){
+    const sisa = getSisaBel(d.skId, item.kode, editTagihanId);
+    if(item.jumlah > sisa){
+      toast('Anggaran tidak mencukupi untuk rekening ' + item.kode + '! Sisa anggaran: Rp ' + fmtRp(sisa), 'err', 5000);
+      return;
+    }
+  }
   if(editTagihanId){
     const t=TAGIHAN.find(x=>x.id===editTagihanId);
     if(t){
@@ -2903,7 +2935,17 @@ function initKuiGU(){
 }
 function guLoadKeg(){const pId=document.getElementById('fgu-prog').value;const sel=document.getElementById('fgu-keg');sel.innerHTML='<option value="">-- Pilih Kegiatan --</option>';KEG.filter(k=>k.progId===pId).sort((a,b)=>a.urut-b.urut).forEach(k=>sel.innerHTML+=`<option value="${k.id}">${k.kode} – ${k.nama}</option>`);document.getElementById('fgu-sk').innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';clearBelGU();}
 function guLoadSk(){const kId=document.getElementById('fgu-keg').value;const sel=document.getElementById('fgu-sk');sel.innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';SK.filter(s=>s.kegId===kId).forEach(s=>sel.innerHTML+=`<option value="${s.id}">${s.kode} – ${s.nama} [Rp ${fmtShort(s.pagu)}]</option>`);clearBelGU();}
-function guLoadBel(){const skId=document.getElementById('fgu-sk').value;curSkIdGU=skId;const list=BEL.filter(b=>b.skId===skId).sort((a,b)=>a.kode.localeCompare(b.kode));if(!skId||!list.length){clearBelGU();return;}let h='';list.forEach((b,i)=>{h+=`<div class="bel-row" id="gsr-${i}" onclick="selGU(${i})"><input type="radio" name="bel-gu" value="${i}" id="gr-${i}"><div style="flex:1"><div class="bel-kode">${b.kode}</div><div class="bel-nama">${b.nama}</div></div><div class="bel-pagu">Rp ${fmtShort(b.pagu)}</div></div>`;});document.getElementById('list-gu').innerHTML=h;}
+function guLoadBel(){
+  const skId=document.getElementById('fgu-sk').value;curSkIdGU=skId;
+  const list=BEL.filter(b=>b.skId===skId).sort((a,b)=>a.kode.localeCompare(b.kode));
+  if(!skId||!list.length){clearBelGU();return;}
+  let h='';list.forEach((b,i)=>{
+    const sisa = getSisaBel(skId, b.kode, editTagihanId);
+    const sisaColor = sisa <= 0 ? 'var(--red)' : 'var(--green)';
+    h+=`<div class="bel-row" id="gsr-${i}" onclick="selGU(${i})"><input type="radio" name="bel-gu" value="${i}" id="gr-${i}"><div style="flex:1"><div class="bel-kode">${b.kode}</div><div class="bel-nama">${b.nama}</div><div style="font-size:10px;color:${sisaColor};margin-top:2px;">Sisa Anggaran: <strong>Rp ${fmtShort(sisa)}</strong></div></div><div class="bel-pagu">Rp ${fmtShort(b.pagu)}</div></div>`;
+  });
+  document.getElementById('list-gu').innerHTML=h;
+}
 function clearBelGU(){document.getElementById('list-gu').innerHTML='<div class="empty-state" style="padding:14px"><p>Pilih Sub Kegiatan dahulu</p></div>';}
 function selGU(i){document.querySelectorAll('[id^="gsr-"]').forEach(r=>r.classList.remove('selected'));document.getElementById('gsr-'+i)?.classList.add('selected');document.getElementById('gr-'+i).checked=true;}
 function getFormDataGU(){
@@ -2922,6 +2964,14 @@ function validateGU(d){if(!d.bendId){toast('Pilih Bendahara','err');return false
 function previewKuiGU(){const d=getFormDataGU();if(!validateGU(d))return;const no='KU-GU/'+CFG.ta+'/'+String(noUrutGU).padStart(4,'0');document.getElementById('modal-cetak-body').innerHTML=buildKuiGU({...d,no});bukaModal('modal-cetak');renderAllBarcodes();}
 function simpanGU(){
   const d=getFormDataGU();if(!validateGU(d))return;
+  // Budget validation
+  if(d.bel){
+    const sisa = getSisaBel(d.skId, d.bel.kode, editTagihanId);
+    if(d.jml > sisa){
+      toast('Anggaran tidak mencukupi untuk rekening ' + d.bel.kode + '! Sisa anggaran: Rp ' + fmtRp(sisa), 'err', 5000);
+      return;
+    }
+  }
   if(editTagihanId){
     const tg=TAGIHAN_GU.find(x=>x.id===editTagihanId);
     if(tg){
