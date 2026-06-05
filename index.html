@@ -696,6 +696,9 @@ body.use-pa-signer .signer-pa-section { display: block !important; }
 .signer-bp-header, .signer-bp-cell { display: none; }
 body.use-bp-signer .signer-bpp-header, body.use-bp-signer .signer-bpp-cell { display: none !important; }
 body.use-bp-signer .signer-bp-header, body.use-bp-signer .signer-bp-cell { display: table-cell !important; }
+.signer-bp-inline { display: none; }
+body.use-bp-signer .signer-bpp-inline { display: none !important; }
+body.use-bp-signer .signer-bp-inline { display: inline !important; }
 .rin-title{text-align:center;font-size:calc(13.5pt * var(--ku-font-scale, 1));font-weight:700;flex:1}
 .rin-meta td{padding:2px 4px;vertical-align:top;font-size:calc(10pt * var(--ku-font-scale, 1))}.rin-meta .rl{width:115px;font-weight:600}
 .rin-tbl{width:100%;border-collapse:collapse;font-size:calc(10pt * var(--ku-font-scale, 1));margin-top:5px}
@@ -2313,10 +2316,19 @@ function toggleDateCetak(){
 }
 function toggleSignerCetak(){
   const chk=document.getElementById('chk-signer-pa');
+  const chkBP=document.getElementById('chk-signer-bp');
   if(chk && chk.checked){
     document.body.classList.add('use-pa-signer');
+    if(chkBP){
+      chkBP.checked = true;
+      document.body.classList.add('use-bp-signer');
+    }
   }else{
     document.body.classList.remove('use-pa-signer');
+    if(chkBP){
+      chkBP.checked = false;
+      document.body.classList.remove('use-bp-signer');
+    }
   }
 }
 function toggleSignerBPCetak(){
@@ -2327,20 +2339,30 @@ function toggleSignerBPCetak(){
     document.body.classList.remove('use-bp-signer');
   }
 }
-function checkAutoSigner(urai){
+function checkAutoSigner(urai, docType){
   const txt = String(urai || '').toLowerCase();
   const isGajiTunjangan = txt.includes('gaji') || txt.includes('tunjangan');
+  const isSPJGU = (docType === 'SPJGU');
+  
   const chk = document.getElementById('chk-signer-pa');
-  if(chk) chk.checked = isGajiTunjangan;
-  if(isGajiTunjangan){
+  const chkBP = document.getElementById('chk-signer-bp');
+  
+  const usePA = isGajiTunjangan;
+  const useBP = isGajiTunjangan || isSPJGU || usePA;
+  
+  if(chk) chk.checked = usePA;
+  if(usePA){
     document.body.classList.add('use-pa-signer');
   }else{
     document.body.classList.remove('use-pa-signer');
   }
   
-  const chkBP = document.getElementById('chk-signer-bp');
-  if(chkBP) chkBP.checked = false;
-  document.body.classList.remove('use-bp-signer');
+  if(chkBP) chkBP.checked = useBP;
+  if(useBP){
+    document.body.classList.add('use-bp-signer');
+  }else{
+    document.body.classList.remove('use-bp-signer');
+  }
 }
 function doCetak(){document.getElementById('print-area').innerHTML=document.getElementById('modal-cetak-body').innerHTML;window.print();setTimeout(()=>document.getElementById('print-area').innerHTML='',1000)}
 window.addEventListener('beforeprint',()=>{if(!document.getElementById('print-area').innerHTML)document.getElementById('print-area').innerHTML=document.getElementById('modal-cetak-body')?.innerHTML||'';});
@@ -3324,6 +3346,7 @@ function previewSPJGUDok(id){
   // Tampilkan SPJ GU + SPTB sekaligus
   document.getElementById('modal-cetak-body').innerHTML=buildSPJGU(s)+'<div class="kui-rincian-section"><div style="margin:20px 0;border-top:3px dashed #999"></div>'+buildSPTB(s)+'</div>';
   bukaModal('modal-cetak');
+  checkAutoSigner(s.ket||s.no||'','SPJGU');
   renderAllBarcodes();
 }
 
@@ -3367,7 +3390,8 @@ function buildKuiSPJGU(s){
     </div>
     <div style="margin-top:9px;font-size:8.5pt;border:1px solid #aaa;padding:5px 9px;display:flex;gap:30px">
       <span><strong>Verifikasi PPK:</strong> ${ppk.nama}</span>
-      <span><strong>BPP:</strong> ${bpp.nama}</span>
+      <span class="signer-bpp-inline"><strong>BPP:</strong> ${bpp.nama}</span>
+      <span class="signer-bp-inline"><strong>BP:</strong> ${bp.nama}</span>
     </div>
   </div>`;
 }
@@ -3375,6 +3399,7 @@ function buildKuiSPJGU(s){
 function previewSPJGU(id){
   const s=SPJGU.find(x=>x.id===id);if(!s)return;
   document.getElementById('modal-cetak-body').innerHTML=buildKuiSPJGU(s);bukaModal('modal-cetak');
+  checkAutoSigner(s.ket||s.no||'','SPJGU');
   renderAllBarcodes();
 }
 
