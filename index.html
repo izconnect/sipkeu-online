@@ -141,6 +141,16 @@ body {
   transform: translateY(-1.5px);
   box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
 }
+.btn-masuk-text-mobile { display: none; }
+@media(max-width:768px) {
+  .btn-masuk-text-desktop { display: none; }
+  .btn-masuk-text-mobile { display: inline; }
+}
+@media(max-width:480px) {
+  .lp-brand { font-size: 13px; gap: 6px; }
+  .lp-brand-logo { font-size: 20px; }
+  .btn-masuk { padding: 6px 12px; font-size: 11px; }
+}
 .lp-hero {
   padding: 60px 40px 40px;
   max-width: 1100px;
@@ -890,8 +900,12 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
       <a href="#lp-section-capaian">Capaian Kinerja</a>
       <a href="#lp-section-profil">Profil SKPD</a>
       <a href="#lp-section-berita">Kegiatan & Berita</a>
-      <a href="javascript:void(0)" class="btn-masuk" onclick="openLogin()">Masuk Penatausahaan →</a>
     </div>
+    <a href="javascript:void(0)" class="btn-masuk" onclick="openLogin()">
+      <span class="btn-masuk-text-desktop">Masuk Penatausahaan</span>
+      <span class="btn-masuk-text-mobile">Masuk</span>
+      →
+    </a>
   </div>
 
 
@@ -1582,7 +1596,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
 <div class="page" id="page-kuitansi-ls">
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title">📝 Kuitansi LS (Langsung)</div>
+      <div class="card-title" id="f-title-lbl">📝 Kuitansi LS (Langsung)</div>
       <div style="font-size:11px;color:var(--sub)" id="f-no-lbl">No: –</div>
     </div>
     <div class="tab-bar">
@@ -1638,7 +1652,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
 <div class="page" id="page-kuitansi-gu">
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title">💵 Kuitansi GU (Ganti Uang)</div>
+      <div class="card-title" id="fgu-title-lbl">💵 Kuitansi GU (Ganti Uang)</div>
       <div style="font-size:11px;color:var(--sub)" id="fgu-no-lbl">No: –</div>
     </div>
     <div style="background:#e1f5fe;border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:11.5px;color:#01579b">
@@ -2182,6 +2196,7 @@ let hasUnsavedChanges=false;
 let editIds={prog:null,keg:null,sk:null,bel:null,peg:null};
 let activeTab='single',curSkId='',curSkIdGU='',wizStep=0;
 let importData=null,activeRankTab='high';
+let editTagihanId=null;
 
 // Current logged-in user
 let USER=null; // {id,username,nama,jab,skIds:[]} – skIds for PPTK only
@@ -2518,6 +2533,13 @@ function pg(id){
       }
     }
   }
+  if (id !== 'kuitansi-ls' && id !== 'kuitansi-gu') {
+    editTagihanId = null;
+    const titleLS = document.getElementById('f-title-lbl');
+    if (titleLS) titleLS.textContent = '📝 Kuitansi LS (Langsung)';
+    const titleGU = document.getElementById('fgu-title-lbl');
+    if (titleGU) titleGU.textContent = '💵 Kuitansi GU (Ganti Uang)';
+  }
   if(id==='dashboard')updateDashboard();
   if(id==='kuitansi-ls')initKuiLS();
   if(id==='kuitansi-gu')initKuiGU();
@@ -2816,11 +2838,36 @@ function validateLS(d){if(!d.skId){toast('Pilih Sub Kegiatan','err');return fals
 function previewKui(){const d=getFormDataLS();if(!validateLS(d))return;const no='KU-LS/'+CFG.ta+'/'+String(noUrut).padStart(4,'0');document.getElementById('modal-cetak-body').innerHTML=buildKuiLS({...d,no});bukaModal('modal-cetak');renderAllBarcodes();}
 function simpanTagihan(status,jenis='LS'){
   const d=getFormDataLS();if(status!=='Draft'&&!validateLS(d))return;
-  const no='KU-LS/'+CFG.ta+'/'+String(noUrut).padStart(4,'0');noUrut++;
-  TAGIHAN.unshift({id:uid(),no,jenis:'LS',tgl:d.tgl,pptkId:d.pptkId,pptkNama:d.pptk?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai||d.items[0]?.nama||'–',jumlah:d.jumlah,status,history:[{status,ts:new Date().toISOString(),oleh:'PPTK',catatan:''}],data:d});
-  toast(status==='Draft'?'Draft tersimpan':(status==='Lengkapi TTD & Berkas'?'Kuitansi disimpan, silakan lengkapi berkas & TTD basah':'Tagihan diajukan'),'ok');resetFormLS();updateDashboard();scheduleSave();pg('tagihan');
+  if(editTagihanId){
+    const t=TAGIHAN.find(x=>x.id===editTagihanId);
+    if(t){
+      t.tgl=d.tgl;
+      t.pptkId=d.pptkId;
+      t.pptkNama=d.pptk?.nama||'–';
+      t.skId=d.skId;
+      t.skNama=d.sk?.nama||'–';
+      t.urai=d.urai||d.items[0]?.nama||'–';
+      t.jumlah=d.jumlah;
+      t.status=status;
+      t.history.push({status,ts:new Date().toISOString(),oleh:'PPTK',catatan:'Revisi Tagihan'});
+      t.data=d;
+    }
+    editTagihanId=null;
+    toast(status==='Draft'?'Draft tersimpan':(status==='Lengkapi TTD & Berkas'?'Kuitansi diperbarui, silakan lengkapi berkas & TTD basah':'Tagihan diajukan kembali'),'ok');
+  } else {
+    const no='KU-LS/'+CFG.ta+'/'+String(noUrut).padStart(4,'0');noUrut++;
+    TAGIHAN.unshift({id:uid(),no,jenis:'LS',tgl:d.tgl,pptkId:d.pptkId,pptkNama:d.pptk?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai||d.items[0]?.nama||'–',jumlah:d.jumlah,status,history:[{status,ts:new Date().toISOString(),oleh:'PPTK',catatan:''}],data:d});
+    toast(status==='Draft'?'Draft tersimpan':(status==='Lengkapi TTD & Berkas'?'Kuitansi disimpan, silakan lengkapi berkas & TTD basah':'Tagihan diajukan'),'ok');
+  }
+  resetFormLS();updateDashboard();scheduleSave();pg('tagihan');
 }
-function resetFormLS(){['f-pptk','f-prog','f-keg','f-sk','f-spp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['f-penerima','f-jml','f-terb','f-urai','f-urai-m'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const tagEl=document.getElementById('f-pptk-tag');if(tagEl)tagEl.style.display='none';clearBelLS();curSkId='';}
+function resetFormLS(){
+  editTagihanId=null;
+  const titleLbl=document.getElementById('f-title-lbl');
+  if(titleLbl)titleLbl.textContent='📝 Kuitansi LS (Langsung)';
+  ['f-pptk','f-prog','f-keg','f-sk','f-spp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-penerima','f-jml','f-terb','f-urai','f-urai-m'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const tagEl=document.getElementById('f-pptk-tag');if(tagEl)tagEl.style.display='none';clearBelLS();curSkId='';
+}
 const resetForm=resetFormLS;
 
 // ================================================================
@@ -2859,13 +2906,49 @@ function validateGU(d){if(!d.bendId){toast('Pilih Bendahara','err');return false
 function previewKuiGU(){const d=getFormDataGU();if(!validateGU(d))return;const no='KU-GU/'+CFG.ta+'/'+String(noUrutGU).padStart(4,'0');document.getElementById('modal-cetak-body').innerHTML=buildKuiGU({...d,no});bukaModal('modal-cetak');renderAllBarcodes();}
 function simpanGU(){
   const d=getFormDataGU();if(!validateGU(d))return;
-  const no='KU-GU/'+CFG.ta+'/'+String(noUrutGU).padStart(4,'0');noUrutGU++;
-  TAGIHAN_GU.push({id:uid(),no,jenis:'GU',tgl:d.tgl,bendId:d.bendId,bendNama:d.bend?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai,jumlah:d.jml,nota:d.nota,nobukti:d.nobukti,bel:d.bel,data:d,spjId:null});
-  // Also push to TAGIHAN for unified list
-  TAGIHAN.unshift({id:TAGIHAN_GU[TAGIHAN_GU.length-1].id,no,jenis:'GU',tgl:d.tgl,pptkNama:d.bend?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai,jumlah:d.jml,status:'GU – Belum SPJ',history:[{status:'Dibuat',ts:new Date().toISOString(),oleh:d.bend?.jab||'BP',catatan:''}],data:{...d,items:[{kode:d.bel.kode,nama:d.bel.nama,jumlah:d.jml,penerima:d.penerima}],jspp:'GU'}});
-  toast('Kuitansi GU '+no+' tersimpan','ok');resetFormGU();scheduleSave();pg('spj-gu');renderSPJGU();
+  if(editTagihanId){
+    const tg=TAGIHAN_GU.find(x=>x.id===editTagihanId);
+    if(tg){
+      tg.tgl=d.tgl;
+      tg.bendId=d.bendId;
+      tg.bendNama=d.bend?.nama||'–';
+      tg.skId=d.skId;
+      tg.skNama=d.sk?.nama||'–';
+      tg.urai=d.urai;
+      tg.jumlah=d.jml;
+      tg.nota=d.nota;
+      tg.nobukti=d.nobukti;
+      tg.bel=d.bel;
+      tg.data=d;
+    }
+    const t=TAGIHAN.find(x=>x.id===editTagihanId);
+    if(t){
+      t.tgl=d.tgl;
+      t.pptkNama=d.bend?.nama||'–';
+      t.skId=d.skId;
+      t.skNama=d.sk?.nama||'–';
+      t.urai=d.urai;
+      t.jumlah=d.jml;
+      t.status='GU – Belum SPJ';
+      t.history.push({status:'Dibuat',ts:new Date().toISOString(),oleh:d.bend?.jab||'BP',catatan:'Revisi Kuitansi'});
+      t.data={...d,items:[{kode:d.bel.kode,nama:d.bel.nama,jumlah:d.jml,penerima:d.penerima}],jspp:'GU'};
+    }
+    editTagihanId=null;
+    toast('Kuitansi GU diperbarui','ok');
+  } else {
+    const no='KU-GU/'+CFG.ta+'/'+String(noUrutGU).padStart(4,'0');noUrutGU++;
+    TAGIHAN_GU.push({id:uid(),no,jenis:'GU',tgl:d.tgl,bendId:d.bendId,bendNama:d.bend?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai,jumlah:d.jml,nota:d.nota,nobukti:d.nobukti,bel:d.bel,data:d,spjId:null});
+    TAGIHAN.unshift({id:TAGIHAN_GU[TAGIHAN_GU.length-1].id,no,jenis:'GU',tgl:d.tgl,pptkNama:d.bend?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai,jumlah:d.jml,status:'GU – Belum SPJ',history:[{status:'Dibuat',ts:new Date().toISOString(),oleh:d.bend?.jab||'BP',catatan:''}],data:{...d,items:[{kode:d.bel.kode,nama:d.bel.nama,jumlah:d.jml,penerima:d.penerima}],jspp:'GU'}});
+    toast('Kuitansi GU '+no+' tersimpan','ok');
+  }
+  resetFormGU();scheduleSave();pg('spj-gu');renderSPJGU();
 }
-function resetFormGU(){['fgu-bend','fgu-prog','fgu-keg','fgu-sk'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['fgu-penerima','fgu-jml','fgu-terb','fgu-urai','fgu-nota','fgu-nobukti'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});clearBelGU();curSkIdGU='';}
+function resetFormGU(){
+  editTagihanId=null;
+  const titleLbl=document.getElementById('fgu-title-lbl');
+  if(titleLbl)titleLbl.textContent='💵 Kuitansi GU (Ganti Uang)';
+  ['fgu-bend','fgu-prog','fgu-keg','fgu-sk'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['fgu-penerima','fgu-jml','fgu-terb','fgu-urai','fgu-nota','fgu-nobukti'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});clearBelGU();curSkIdGU='';
+}
 
 // ================================================================
 // SPJ GU
@@ -3800,10 +3883,106 @@ function renderTagihan(){
       <button class="btn btn-sm" onclick="showStatusModal('${t.id}')" style="margin-left:3px" title="Ubah Status" ${canAdvance(t)?'':'disabled style="opacity:.4;cursor:not-allowed;margin-left:3px"'}>✏</button>
       ${t.status === 'Berkas Dikirim' || (t.history && t.history.some(h => h.status === 'Berkas Dikirim')) ? `<button class="btn btn-sm" onclick="printTandaTerima('${t.id}')" style="margin-left:3px" title="Cetak Tanda Terima">📄</button>` : ''}
       <button class="btn btn-sm" onclick="pg('tracking');setTimeout(()=>{document.getElementById('trk-cari').value='${t.no}';renderTracking()},50)" style="margin-left:3px" title="Timeline">📍</button>
+      ${t.status==='Ditolak'?`
+        <button class="btn btn-sm" onclick="editTagihan('${t.id}')" style="margin-left:3px;background-color:var(--orange);color:#fff;border:none;" title="Edit Tagihan">✏️ Edit</button>
+        <button class="btn btn-sm" onclick="hapusTagihan('${t.id}')" style="margin-left:3px;background-color:var(--red);color:#fff;border:none;" title="Hapus Tagihan">🗑️ Hapus</button>
+      `:''}
     </td>
   </tr>`).join('');
 }
 function prevTagihan(id){const t=TAGIHAN.find(x=>x.id===id);if(!t)return;if(t.jenis==='GU'){const gu=TAGIHAN_GU.find(x=>x.id===id);if(gu)document.getElementById('modal-cetak-body').innerHTML=buildKuiGU(gu.data);}else document.getElementById('modal-cetak-body').innerHTML=buildKuiLS({...t.data,no:t.no});bukaModal('modal-cetak');renderAllBarcodes();}
+function editTagihan(id){
+  const t = TAGIHAN.find(x => x.id === id);
+  if(!t) return;
+  editTagihanId = id;
+  if(t.jenis === 'GU'){
+    const gu = TAGIHAN_GU.find(x => x.id === id);
+    if(!gu){
+      toast('Data kuitansi GU tidak ditemukan','err');
+      editTagihanId = null;
+      return;
+    }
+    pg('kuitansi-gu');
+    const titleLbl = document.getElementById('fgu-title-lbl');
+    if(titleLbl)titleLbl.textContent = '✏️ Edit Kuitansi GU';
+    document.getElementById('fgu-no-lbl').textContent = 'No: ' + t.no;
+    document.getElementById('fgu-tgl').value = gu.tgl || '';
+    document.getElementById('fgu-penerima').value = gu.data.penerima || '';
+    document.getElementById('fgu-bend').value = gu.bendId || '';
+    document.getElementById('fgu-prog').value = gu.data.progId || '';
+    guLoadKeg();
+    document.getElementById('fgu-keg').value = gu.data.kegId || '';
+    guLoadSk();
+    document.getElementById('fgu-sk').value = gu.data.skId || '';
+    guLoadBel();
+    if(gu.bel){
+      const list = BEL.filter(b => b.skId === gu.data.skId).sort((a,b) => a.kode.localeCompare(b.kode));
+      const idx = list.findIndex(b => b.id === gu.bel.id);
+      if(idx >= 0) selGU(idx);
+    }
+    document.getElementById('fgu-jml').value = gu.jumlah || 0;
+    document.getElementById('fgu-terb').value = gu.data.terb || '';
+    document.getElementById('fgu-urai').value = gu.urai || '';
+    document.getElementById('fgu-nota').value = gu.nota || '';
+    document.getElementById('fgu-nobukti').value = gu.nobukti || '';
+  } else {
+    pg('kuitansi-ls');
+    const titleLbl = document.getElementById('f-title-lbl');
+    if(titleLbl)titleLbl.textContent = '✏️ Edit Kuitansi LS';
+    document.getElementById('f-no-lbl').textContent = 'No: ' + t.no;
+    document.getElementById('f-pptk').value = t.data.pptkId || '';
+    document.getElementById('f-tgl').value = t.tgl || '';
+    document.getElementById('f-penerima').value = t.data.penerima || '';
+    document.getElementById('f-prog').value = t.data.progId || '';
+    fLoadKeg();
+    document.getElementById('f-keg').value = t.data.kegId || '';
+    fLoadSk();
+    document.getElementById('f-sk').value = t.data.skId || '';
+    fLoadBel();
+    document.getElementById('f-spp').value = t.data.spp || '';
+    document.getElementById('f-jspp').value = t.data.jspp || 'LS';
+    switchTab(t.data.mode || 'single');
+    const list = BEL.filter(b => b.skId === t.data.skId).sort((a,b) => a.kode.localeCompare(b.kode));
+    if(t.data.mode === 'single'){
+      const bItem = t.data.items[0];
+      if(bItem){
+        const idx = list.findIndex(b => b.id === bItem.id);
+        if(idx >= 0) selSingle(idx);
+      }
+      document.getElementById('f-jml').value = t.jumlah || 0;
+      document.getElementById('f-terb').value = t.data.terb || '';
+      document.getElementById('f-urai').value = t.urai || '';
+    } else {
+      if(t.data.items){
+        t.data.items.forEach(item => {
+          const idx = list.findIndex(b => b.id === item.id);
+          if(idx >= 0){
+            const chk = document.getElementById('chk-' + idx);
+            if(chk){
+              chk.checked = true;
+              togMulti(idx);
+            }
+            const amt = document.getElementById('amt-' + idx);
+            if(amt) amt.value = item.jumlah;
+          }
+        });
+      }
+      document.getElementById('f-urai-m').value = t.urai || '';
+      calcMulti();
+    }
+  }
+}
+function hapusTagihan(id){
+  const t = TAGIHAN.find(x => x.id === id);
+  if(!t) return;
+  if(!confirm('Apakah Anda yakin ingin menghapus tagihan ' + t.no + '?')) return;
+  TAGIHAN = TAGIHAN.filter(x => x.id !== id);
+  TAGIHAN_GU = TAGIHAN_GU.filter(x => x.id !== id);
+  scheduleSave();
+  updateDashboard();
+  renderTagihan();
+  toast('Tagihan ' + t.no + ' berhasil dihapus','ok');
+}
 
 function buildTandaTerima(t){
   const now = new Date();
@@ -4344,7 +4523,14 @@ function populateTicker() {
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px; background:#fff; border:1px solid #cbd5e1; border-left:4px solid var(--blue); border-radius:8px; font-size:12px; flex-wrap:wrap; box-shadow:0 1px 3px rgba(0,0,0,0.02); width:100%;">
         <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:280px;">
           <span style="font-family:monospace; font-weight:700; color:var(--navy); background:#f1f5f9; border:1px solid #cbd5e1; padding:3px 8px; border-radius:6px; font-size:11px;">${t.no}</span>
-          <span style="color:#1e293b; font-weight:600; font-size:12px;">${t.urai}</span>
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <span style="color:#1e293b; font-weight:600; font-size:12px;">${t.urai}</span>
+            <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#64748b; flex-wrap:wrap; margin-top:4px;">
+              <span>📋 Sub Kegiatan: <strong>${t.skNama || '–'}</strong></span>
+              <span style="color:#cbd5e1">|</span>
+              <span>👤 PPTK: <strong>${t.pptkNama || '–'}</strong></span>
+            </div>
+          </div>
         </div>
         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
           <span style="font-weight:700; color:var(--navy); font-size:12.5px;">Rp ${fmtRp(t.jumlah)}</span>
@@ -4557,6 +4743,16 @@ function renderPublicLanding() {
       listEl.innerHTML = sortedPegs.map(p => {
         const bg = jabBg[p.jab] || '#f5f5f5';
         const emoji = jabEmoji[p.jab] || '👤';
+        let pending = 0;
+        if (p.jab === 'PPTK') {
+          pending = TAGIHAN.filter(t => t.pptkId === p.id && !['Draft', 'Ditolak', 'SP2D Terbit'].includes(t.status)).length;
+        } else if (p.jab === 'Verifikator') {
+          pending = TAGIHAN.filter(t => ['Menunggu Verifikator', 'Berkas Dikirim'].includes(t.status)).length;
+        } else if (p.jab === 'PPK') {
+          pending = TAGIHAN.filter(t => ['Menunggu PPK', 'Dikirim ke PPK'].includes(t.status)).length;
+        } else if (p.jab === 'BP' || p.jab === 'BPP') {
+          pending = TAGIHAN.filter(t => ['Menunggu BPP', 'Di SIPD', 'Dikirim ke BPP'].includes(t.status)).length;
+        }
         return `
           <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f1f5f9">
             <div style="display:flex; align-items:center; gap:8px">
@@ -4564,7 +4760,10 @@ function renderPublicLanding() {
                 ${emoji}
               </div>
               <div>
-                <strong style="color:var(--navy); display:block; font-size:12px">${p.nama}</strong>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <strong style="color:var(--navy); font-size:12px">${p.nama}</strong>
+                  ${pending > 0 ? `<span style="background:var(--red);color:#fff;font-size:9.5px;padding:2px 6px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;box-shadow:0 2px 5px rgba(225,29,72,0.3)" title="${pending} Tagihan Aktif">🔔 ${pending}</span>` : ''}
+                </div>
                 <span style="color:#64748b; font-size:11px">NIP. ${p.nip || '–'}</span>
               </div>
             </div>
