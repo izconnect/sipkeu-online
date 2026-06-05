@@ -37,6 +37,7 @@
   --ku-ttd-gap: 8px;
   --ku-font-scale: 1;
   --ku-qr-size: 80px;
+  --ku-verf-margin: 4px;
 }
 
 body {
@@ -667,12 +668,13 @@ tr:hover td{background:#f8fafc}
 .ku-ttd{display:grid;grid-template-columns:1fr 1fr;gap:var(--ku-ttd-gap, 8px);margin-top:10px;font-size:calc(10pt * var(--ku-font-scale, 1))}
 .ku-ttd-box{text-align:center}.ku-ttd-spc{height:var(--ku-ttd-spc-height, 44px)}
 .ku-ttd-name{font-weight:700;text-decoration:underline}.ku-ttd-nip{font-size:calc(9pt * var(--ku-font-scale, 1))}
-.ku-verf{border:1px solid #000;margin-top:7px;font-size:calc(8.5pt * var(--ku-font-scale, 1))}
+.ku-verf{border:1px solid #000;margin-top:var(--ku-verf-margin, 7px);font-size:calc(8.5pt * var(--ku-font-scale, 1))}
 .ku-verf-r{display:flex}
 .ku-verf-c{flex:1;padding:4px 6px;border-right:1px solid #aaa;text-align:center;border-bottom:1px solid #aaa}
 .ku-verf-c:last-child{border-right:none}
 .ku-verf-cb{flex:1;padding:3px 6px;border-right:1px solid #aaa;font-size:calc(8pt * var(--ku-font-scale, 1));min-height:22px}
 .ku-verf-cb:last-child{border-right:none}
+body.hide-print-date .ku-print-date{visibility:hidden!important}
 .rin-title{text-align:center;font-size:calc(13.5pt * var(--ku-font-scale, 1));font-weight:700;flex:1}
 .rin-meta td{padding:2px 4px;vertical-align:top;font-size:calc(10pt * var(--ku-font-scale, 1))}.rin-meta .rl{width:115px;font-weight:600}
 .rin-tbl{width:100%;border-collapse:collapse;font-size:calc(10pt * var(--ku-font-scale, 1));margin-top:5px}
@@ -1110,10 +1112,14 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
 <div class="modal-bg" id="modal-cetak">
   <div class="modal-box" style="max-width:840px">
     <div class="modal-hdr"><span>📄 Preview Dokumen</span>
-      <div id="chk-show-rincian-wrapper" style="display:flex;align-items:center;gap:6px;margin-right:auto;margin-left:16px;font-size:12px;color:#fff;user-select:none">
+      <div id="chk-show-rincian-wrapper" style="display:flex;align-items:center;gap:12px;margin-right:auto;margin-left:16px;font-size:12px;color:#fff;user-select:none">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
           <input type="checkbox" id="chk-show-rincian" onchange="toggleRincianCetak()" style="accent-color:var(--teal);width:15px;height:15px;cursor:pointer">
           Tampilkan Rincian
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="chk-show-date" onchange="toggleDateCetak()" checked style="accent-color:var(--teal);width:15px;height:15px;cursor:pointer">
+          Tampilkan Tanggal
         </label>
       </div>
       <div style="display:flex;gap:6px;align-items:center">
@@ -1167,6 +1173,15 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
             <span id="val-qr-size" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">80 px</span>
           </div>
           <input type="range" id="slide-qr-size" min="48" max="120" value="80" oninput="adjustPrintLayout('qr-size', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
+        </div>
+
+        <!-- Slider 6: Jarak Tabel Verifikasi -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:#1e293b">
+            <span>Jarak Tabel Verifikasi:</span>
+            <span id="val-verf-margin" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">4 px</span>
+          </div>
+          <input type="range" id="slide-verf-margin" min="0" max="50" value="4" oninput="adjustPrintLayout('verf-margin', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
         </div>
       </div>
     </div>
@@ -2196,6 +2211,9 @@ const bukaModal=id=>{
     const chk=document.getElementById('chk-show-rincian');
     if(chk) chk.checked=false;
     document.body.classList.add('hide-rincian-cetak');
+    const chkDate=document.getElementById('chk-show-date');
+    if(chkDate) chkDate.checked=true;
+    document.body.classList.remove('hide-print-date');
     const container=document.getElementById('modal-cetak-body');
     const wrapper=document.getElementById('chk-show-rincian-wrapper');
     if(wrapper){
@@ -2214,6 +2232,14 @@ function toggleRincianCetak(){
     document.body.classList.add('hide-rincian-cetak');
   }else{
     document.body.classList.remove('hide-rincian-cetak');
+  }
+}
+function toggleDateCetak(){
+  const chk=document.getElementById('chk-show-date');
+  if(chk && !chk.checked){
+    document.body.classList.add('hide-print-date');
+  }else{
+    document.body.classList.remove('hide-print-date');
   }
 }
 function doCetak(){document.getElementById('print-area').innerHTML=document.getElementById('modal-cetak-body').innerHTML;window.print();setTimeout(()=>document.getElementById('print-area').innerHTML='',1000)}
@@ -2251,6 +2277,10 @@ function adjustPrintLayout(type, value){
     document.documentElement.style.setProperty('--ku-qr-size', value+'px');
     const lbl=document.getElementById('val-qr-size'); if(lbl) lbl.textContent=value+' px';
     const sld=document.getElementById('slide-qr-size'); if(sld) sld.value=value;
+  }else if(type==='verf-margin'){
+    document.documentElement.style.setProperty('--ku-verf-margin', value+'px');
+    const lbl=document.getElementById('val-verf-margin'); if(lbl) lbl.textContent=value+' px';
+    const sld=document.getElementById('slide-verf-margin'); if(sld) sld.value=value;
   }
 }
 // Initialize print layout on load
@@ -2261,6 +2291,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adjustPrintLayout('ttd-gap', 8);
     adjustPrintLayout('font-scale', 1.0);
     adjustPrintLayout('qr-size', 80);
+    adjustPrintLayout('verf-margin', 4);
   } catch(e) {}
 });
 
@@ -3178,28 +3209,30 @@ function buildKuiLS(d){
       <div class="ku-row"><div class="ku-rl">Uang Sejumlah</div><div class="ku-rv" style="font-style:italic">${d.terb||''}</div></div>
       <div class="ku-row" style="align-items:center"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex;width:var(--ku-qr-size, 80px);height:var(--ku-qr-size, 80px)" title="Scan Uraian Pembayaran">${buildQRCode(uraiText)}</div></div></div>
       <div class="ku-row"><div class="ku-rl">Sub Kegiatan</div><div class="ku-rv" style="font-size:9.5pt">${d.sk?.nama||''}</div></div>
-      <div class="ku-row">
-        <div class="ku-rl" style="font-size:11pt;font-weight:700">Jumlah</div>
-        <div class="ku-rv" style="font-size:11pt;font-weight:700">Rp ${fmtRp(d.jumlah)}</div>
-        <div style="padding:5px 7px;font-size:9.5pt;white-space:nowrap;border-left:1px solid #aaa">${CFG.kota||'–'}, ${tglF}</div>
+    </div>
+    <div style="display:flex;justify-content:flex-start;margin:6px 0">
+      <div style="border:1.5px solid #000;padding:5px 12px;font-size:11pt;font-weight:800;background:#fff;min-width:180px;text-align:center;box-shadow:var(--shadow-sm);border-radius:4px">
+        Jumlah: Rp ${fmtRp(d.jumlah)}
       </div>
     </div>
     <div class="ku-ttd" style="margin-bottom:8px">
       <div class="ku-ttd-box">
         <div>Menyetujui,</div>
-        <div style="font-weight:700">KUASA PENGGUNA ANGGARAN</div>
+        <div style="font-weight:700;margin-top:5px">KUASA PENGGUNA ANGGARAN</div>
         <div class="ku-ttd-spc"></div>
         <div class="ku-ttd-name">${kpa.nama}</div>
         <div class="ku-ttd-nip">NIP. ${kpa.nip||''}</div>
       </div>
       <div class="ku-ttd-box">
-        <div style="font-weight:700">YANG MENERIMA</div>
+        <div class="ku-print-date">${CFG.kota||'–'}, ${tglF}</div>
+        <div style="font-weight:700;margin-top:5px">YANG MENERIMA</div>
         <div class="ku-ttd-spc"></div>
         <div class="ku-ttd-name">${d.penerima||''}</div>
+        <div class="ku-ttd-nip" style="visibility:hidden">NIP.</div>
       </div>
     </div>
     <!-- TABEL VERIFIKATOR – satu baris per rekening -->
-    <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-top:4px">
+    <table class="ku-verf" style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-top:var(--ku-verf-margin, 4px)">
       <thead>
         <tr style="background:#f0f0f0">
           <th style="border:1px solid #000;padding:3px 5px;text-align:center;width:140px">Kode Rekening</th>
@@ -3329,28 +3362,30 @@ function buildKuiGU(d){
         <div class="ku-rl">No. Bukti Kas</div><div class="ku-rv">${d.nobukti||'–'}</div>
         <div class="ku-rv" style="border-left:1px solid #aaa">No. Nota/Bon: ${d.nota||'–'}</div>
       </div>
-      <div class="ku-row">
-        <div class="ku-rl" style="font-size:11pt;font-weight:700">Jumlah</div>
-        <div class="ku-rv" style="font-size:11pt;font-weight:700">Rp ${fmtRp(d.jml)}</div>
-        <div style="padding:5px 7px;font-size:9.5pt;white-space:nowrap;border-left:1px solid #aaa">${CFG.kota||'–'}, ${tglF}</div>
+    </div>
+    <div style="display:flex;justify-content:flex-start;margin:6px 0">
+      <div style="border:1.5px solid #000;padding:5px 12px;font-size:11pt;font-weight:800;background:#fff;min-width:180px;text-align:center;box-shadow:var(--shadow-sm);border-radius:4px">
+        Jumlah: Rp ${fmtRp(d.jml)}
       </div>
     </div>
     <div class="ku-ttd" style="margin-bottom:8px">
       <div class="ku-ttd-box">
         <div>Menyetujui,</div>
-        <div style="font-weight:700">KUASA PENGGUNA ANGGARAN</div>
+        <div style="font-weight:700;margin-top:5px">KUASA PENGGUNA ANGGARAN</div>
         <div class="ku-ttd-spc"></div>
         <div class="ku-ttd-name">${kpa.nama}</div>
         <div class="ku-ttd-nip">NIP. ${kpa.nip||''}</div>
       </div>
       <div class="ku-ttd-box">
-        <div style="font-weight:700">YANG MENERIMA</div>
+        <div class="ku-print-date">${CFG.kota||'–'}, ${tglF}</div>
+        <div style="font-weight:700;margin-top:5px">YANG MENERIMA</div>
         <div class="ku-ttd-spc"></div>
         <div class="ku-ttd-name">${d.penerima||''}</div>
+        <div class="ku-ttd-nip" style="visibility:hidden">NIP.</div>
       </div>
     </div>
     <!-- TABEL VERIFIKATOR – satu baris per rekening -->
-    <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-top:4px">
+    <table class="ku-verf" style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-top:var(--ku-verf-margin, 4px)">
       <thead>
         <tr style="background:#f0f0f0">
           <th style="border:1px solid #000;padding:3px 5px;text-align:center;width:140px">Kode Rekening</th>
