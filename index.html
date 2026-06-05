@@ -2212,6 +2212,7 @@ let ACCOUNTS=[
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const fmtRp=n=>{if(n===undefined||n===null||n==='')return'0';const num=Number(n);return isNaN(num)?'0':num.toLocaleString('id-ID',{maximumFractionDigits:20});};
 const fmtShort=fmtRp;
+function getCurrentPegawai(){if(!USER)return null;return PEG.find(x=>x.user&&x.user.toLowerCase()===USER.username.toLowerCase());}
 function fmtTgl(s){if(!s)return'';const[y,m,d]=s.split('-');const B=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];return parseInt(d)+' '+B[parseInt(m)-1]+' '+y}
 function fmtTS(ts){if(!ts)return'';const d=new Date(ts);return`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
 function durasi(tsA,tsB){const d=Math.floor((new Date(tsB||Date.now())-new Date(tsA||Date.now()))/60000);if(d<60)return d+'m';if(d<1440)return Math.floor(d/60)+'j '+d%60+'m';return Math.floor(d/1440)+'h'}
@@ -2418,9 +2419,9 @@ function wizNext(){
       const nip=document.getElementById('w-'+el+'-nip').value.trim();
       if(nama&&!PEG.find(p=>p.jab===jab)){
         const id=uid();
-        PEG.push({id,jab,nama,nip,pangkat:'',jabstr:'',hp:'',user:'',pass:''});
-        // Auto-create demo account
         const autoUser=jab.toLowerCase();
+        PEG.push({id,jab,nama,nip,pangkat:'',jabstr:'',hp:'',user:autoUser,pass:''});
+        // Auto-create demo account
         if(!ACCOUNTS.find(a=>a.username===autoUser)){
           ACCOUNTS.push({id:'acc-'+id,username:autoUser,password:autoUser+'123',jab,nama,nip,skIds:[]});
         }
@@ -2768,18 +2769,18 @@ function initKuiLS(){
   let pptks=PEG.filter(p=>p.jab==='PPTK');
   if(USER?.jab==='PPTK'){
     // Only self
-    pptks=pptks.filter(p=>p.id===PEG.find(x=>x.user===USER.username)?.id);
+    pptks=pptks.filter(p=>p.id===getCurrentPegawai()?.id);
   }
   pptks.forEach(p=>fPptk.innerHTML+=`<option value="${p.id}">${p.nama}</option>`);
   // Auto-select if PPTK user
-  if(USER?.jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);if(myPeg)fPptk.value=myPeg.id;}
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)fPptk.value=myPeg.id;}
   if(cur)fPptk.value=cur;
   const fProg=document.getElementById('f-prog');const curP=fProg.value;
   fProg.innerHTML='<option value="">-- Pilih Program --</option>';
   // PPTK: only programs that have their SK
   let progs=PROG;
   if(USER?.jab==='PPTK'){
-    const myPeg=PEG.find(x=>x.user===USER.username);
+    const myPeg=getCurrentPegawai();
     if(myPeg){const skIds=SK.filter(s=>s.pptkId===myPeg.id).map(s=>s.kegId);const kegIds=new Set(skIds);const progIds=new Set(KEG.filter(k=>kegIds.has(k.id)).map(k=>k.progId));progs=PROG.filter(p=>progIds.has(p.id));}
   }
   progs.sort((a,b)=>a.urut-b.urut).forEach(p=>fProg.innerHTML+=`<option value="${p.id}">${p.kode} – ${p.nama}</option>`);
@@ -2789,13 +2790,28 @@ function initKuiLS(){
 }
 
 function switchTab(t){activeTab=t;document.getElementById('tab-single').classList.toggle('active',t==='single');document.getElementById('tab-multi').classList.toggle('active',t==='multi');document.getElementById('panel-single').style.display=t==='single'?'':'none';document.getElementById('panel-multi').style.display=t==='multi'?'':'none';}
-function fLoadKeg(){const pId=document.getElementById('f-prog').value;const sel=document.getElementById('f-keg');sel.innerHTML='<option value="">-- Pilih Kegiatan --</option>';KEG.filter(k=>k.progId===pId).sort((a,b)=>a.urut-b.urut).forEach(k=>sel.innerHTML+=`<option value="${k.id}">${k.kode} – ${k.nama}</option>`);document.getElementById('f-sk').innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';clearBelLS();}
+function fLoadKeg(){
+  const pId=document.getElementById('f-prog').value;
+  const sel=document.getElementById('f-keg');
+  sel.innerHTML='<option value="">-- Pilih Kegiatan --</option>';
+  let list = KEG.filter(k=>k.progId===pId);
+  if(USER?.jab==='PPTK'){
+    const myPeg=getCurrentPegawai();
+    if(myPeg){
+      const mySkKegIds = SK.filter(s=>s.pptkId===myPeg.id).map(s=>s.kegId);
+      list = list.filter(k=>mySkKegIds.includes(k.id));
+    }
+  }
+  list.sort((a,b)=>a.urut-b.urut).forEach(k=>sel.innerHTML+=`<option value="${k.id}">${k.kode} – ${k.nama}</option>`);
+  document.getElementById('f-sk').innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';
+  clearBelLS();
+}
 function fLoadSk(){
   const kId=document.getElementById('f-keg').value;const sel=document.getElementById('f-sk');
   sel.innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';
   let sks=SK.filter(s=>s.kegId===kId);
   // PPTK: only own SK
-  if(USER?.jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);if(myPeg)sks=sks.filter(s=>s.pptkId===myPeg.id);}
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)sks=sks.filter(s=>s.pptkId===myPeg.id);}
   sks.forEach(s=>{const pptk=PEG.find(p=>p.id===s.pptkId);const tag=pptk?` ⚙️${pptk.nama}`:'';sel.innerHTML+=`<option value="${s.id}">${s.kode} – ${s.nama}${tag} [Rp ${fmtShort(s.pagu)}]</option>`;});
   clearBelLS();
   document.getElementById('f-pptk-tag').style.display='none';
@@ -2879,7 +2895,7 @@ function initKuiGU(){
   sel.innerHTML='<option value="">-- Pilih Bendahara --</option>';
   PEG.filter(p=>p.jab==='BP'||p.jab==='BPP').forEach(p=>sel.innerHTML+=`<option value="${p.id}">${p.jab} – ${p.nama}</option>`);
   // If current user is BP/BPP, auto-select
-  if(USER?.jab==='BP'||USER?.jab==='BPP'){const myPeg=PEG.find(x=>x.user===USER.username);if(myPeg)sel.value=myPeg.id;}
+  if(USER?.jab==='BP'||USER?.jab==='BPP'){const myPeg=getCurrentPegawai();if(myPeg)sel.value=myPeg.id;}
   // Prog dropdown
   const fProg=document.getElementById('fgu-prog');fProg.innerHTML='<option value="">-- Pilih Program --</option>';PROG.sort((a,b)=>a.urut-b.urut).forEach(p=>fProg.innerHTML+=`<option value="${p.id}">${p.kode} – ${p.nama}</option>`);
   document.getElementById('fgu-no-lbl').textContent='No: KU-GU/'+CFG.ta+'/'+(String(noUrutGU).padStart(4,'0'));
@@ -3851,8 +3867,8 @@ function getTagihanAktif(tagList){
 function canAdvance(t){
   if(!USER)return false;
   const jab=USER.jab;if(jab==='Admin')return true;
-  if(t.status==='Draft'&&jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);return myPeg&&t.pptkId===myPeg.id;}
-  if(t.status==='Lengkapi TTD & Berkas'&&jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);return myPeg&&t.pptkId===myPeg.id;}
+  if(t.status==='Draft'&&jab==='PPTK'){const myPeg=getCurrentPegawai();return myPeg&&t.pptkId===myPeg.id;}
+  if(t.status==='Lengkapi TTD & Berkas'&&jab==='PPTK'){const myPeg=getCurrentPegawai();return myPeg&&t.pptkId===myPeg.id;}
   if(t.status==='Berkas Dikirim'&&jab==='Verifikator')return true;
   if(t.status==='Menunggu Verifikator'&&jab==='Verifikator')return true;
   if(t.status==='Dikirim ke PPK'&&jab==='PPK')return true;
@@ -3865,7 +3881,7 @@ function canAdvance(t){
 function renderTagihan(){
   const fSt=document.getElementById('fil-st')?.value||'';const fBln=document.getElementById('fil-bln')?.value||'';const fJenis=document.getElementById('fil-jenis')?.value||'';
   let list=TAGIHAN;
-  if(USER?.jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id||t.jenis==='GU');}
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id||t.jenis==='GU');}
   if(fSt)list=list.filter(t=>t.status===fSt);if(fBln)list=list.filter(t=>t.tgl?.startsWith(fBln));if(fJenis)list=list.filter(t=>t.jenis===fJenis);
   const tbody=document.getElementById('tbody-tagihan');
   if(!list.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:28px;color:#aaa">Tidak ada tagihan</td></tr>';return;}
@@ -4091,7 +4107,7 @@ const TL_STEPS=[{key:'Draft',icon:'📝',label:'Dibuat PPTK'},{key:'Lengkapi TTD
 function renderTracking(){
   const cari=(document.getElementById('trk-cari')?.value||'').toLowerCase();const fSt=document.getElementById('trk-st')?.value||'';
   let list=TAGIHAN.filter(t=>t.jenis!=='GU');
-  if(USER?.jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id);}
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id);}
   if(cari)list=list.filter(t=>t.no.toLowerCase().includes(cari)||t.pptkNama.toLowerCase().includes(cari)||t.urai.toLowerCase().includes(cari)||t.skNama.toLowerCase().includes(cari));
   if(fSt)list=list.filter(t=>t.status===fSt);
   const el=document.getElementById('tracking-list');
@@ -4183,7 +4199,7 @@ function renderKendali(){
   const isEstimasi = (REAL_MODEL === 'estimasi');
 
   let list=SK;
-  if(USER?.jab==='PPTK'){const myPeg=PEG.find(x=>x.user===USER.username);if(myPeg)list=list.filter(s=>s.pptkId===myPeg.id);}
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(s=>s.pptkId===myPeg.id);}
   if(fS) list=list.filter(s=>s.id===fS);
   else if(fK) list=list.filter(s=>s.kegId===fK);
   else if(fP){const kIds=KEG.filter(k=>k.progId===fP).map(k=>k.id);list=list.filter(s=>kIds.includes(s.kegId));}
@@ -4909,7 +4925,7 @@ function renderRealBel(){
   
   // Filter by PPTK role limits
   if(USER?.jab==='PPTK'){
-    const myPeg=PEG.find(x=>x.user===USER.username);
+    const myPeg=getCurrentPegawai();
     if(myPeg) {
       list=list.filter(b=>SK.find(s=>s.id===b.skId)?.pptkId===myPeg.id);
     }
@@ -5255,7 +5271,7 @@ function renderInfografis(){
   });
   
   if(USER?.jab==='PPTK'){
-    const myPeg=PEG.find(x=>x.user===USER.username);
+    const myPeg=getCurrentPegawai();
     if(myPeg)rows=rows.filter(s=>s.pptkId===myPeg.id);
   }
   
@@ -5318,7 +5334,7 @@ function renderRankings(){
   });
   
   if(USER?.jab==='PPTK'){
-    const myPeg=PEG.find(x=>x.user===USER.username);
+    const myPeg=getCurrentPegawai();
     if(myPeg)rows=rows.filter(s=>s.pptkId===myPeg.id);
   }
   
@@ -5577,7 +5593,7 @@ function popBukuFilters(){
   
   let sks = SK;
   if(USER?.jab==='PPTK'){
-    const myPeg = PEG.find(x=>x.user===USER.username);
+    const myPeg = getCurrentPegawai();
     if(myPeg){
       sks = SK.filter(s=>s.pptkId===myPeg.id);
     }
@@ -6050,7 +6066,7 @@ function renderEvaluasi(){
 function updateDashboard(){
   const totalPagu=SK.reduce((s,sk)=>s+sk.pagu,0);
   const jab=USER?.jab;
-  const myPeg=jab==='PPTK'?PEG.find(x=>x.user===USER?.username):null;
+  const myPeg=jab==='PPTK'?getCurrentPegawai():null;
   // PPTK: filter tagihan per sub kegiatan miliknya
   let tagList=TAGIHAN;
   if(myPeg)tagList=tagList.filter(t=>t.pptkId===myPeg.id||t.spjRef);
@@ -6611,7 +6627,7 @@ function renderTrenChart(){
   const BULAN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
   
   const jab=USER?.jab;
-  const myPeg=jab==='PPTK'?PEG.find(x=>x.user===USER?.username):null;
+  const myPeg=jab==='PPTK'?getCurrentPegawai():null;
 
   const chartTitleEl = document.querySelector('#d-chart-card .card-title');
   if (chartTitleEl) {
