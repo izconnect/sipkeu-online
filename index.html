@@ -38,6 +38,8 @@
   --ku-font-scale: 1;
   --ku-qr-size: 80px;
   --ku-verf-margin: 4px;
+  --ku-verf-font-scale: 1;
+  --ku-verf-row-padding: 4px;
 }
 
 body {
@@ -669,7 +671,7 @@ tr:hover td{background:#f8fafc}
 .ku-kop-logo img{width:100%;height:100%;object-fit:contain}
 .ku-kop-text{text-align:center;flex:1}
 .k-inst{font-size:calc(12.5pt * var(--ku-font-scale, 1));font-weight:700}.k-unit{font-size:calc(10.5pt * var(--ku-font-scale, 1));font-weight:700}
-.ku-kop-right{font-size:calc(12.5pt * var(--ku-font-scale, 1));font-weight:700;color:#c00;border:2px solid #c00;padding:4px 12px;border-radius:4px;white-space:nowrap}
+.ku-kop-right{font-size:calc(12.5pt * var(--ku-font-scale, 1));font-weight:700;color:#000;border:2px solid #000;padding:4px 12px;border-radius:4px;white-space:nowrap}
 .ku-tag{text-align:right;font-size:calc(10.5pt * var(--ku-font-scale, 1));margin-bottom:5px}
 .ku-body{border:1px solid #000;margin-bottom:7px}
 .ku-row{display:flex;border-bottom:1px solid #aaa}.ku-row:last-child{border-bottom:none}
@@ -678,11 +680,11 @@ tr:hover td{background:#f8fafc}
 .ku-ttd{display:grid;grid-template-columns:1fr 1fr;gap:var(--ku-ttd-gap, 8px);margin-top:10px;font-size:calc(10pt * var(--ku-font-scale, 1))}
 .ku-ttd-box{text-align:center}.ku-ttd-spc{height:var(--ku-ttd-spc-height, 44px)}
 .ku-ttd-name{font-weight:700;text-decoration:underline}.ku-ttd-nip{font-size:calc(9pt * var(--ku-font-scale, 1))}
-.ku-verf{border:1px solid #000;margin-top:var(--ku-verf-margin, 7px);font-size:calc(8.5pt * var(--ku-font-scale, 1))}
+.ku-verf{border:1px solid #000;margin-top:var(--ku-verf-margin, 7px);font-size:calc(8.5pt * var(--ku-font-scale, 1) * var(--ku-verf-font-scale, 1))}
 .ku-verf-r{display:flex}
-.ku-verf-c{flex:1;padding:4px 6px;border-right:1px solid #aaa;text-align:center;border-bottom:1px solid #aaa}
+.ku-verf-c{flex:1;padding:var(--ku-verf-row-padding, 4px) 6px;border-right:1px solid #aaa;text-align:center;border-bottom:1px solid #aaa}
 .ku-verf-c:last-child{border-right:none}
-.ku-verf-cb{flex:1;padding:3px 6px;border-right:1px solid #aaa;font-size:calc(8pt * var(--ku-font-scale, 1));min-height:22px}
+.ku-verf-cb{flex:1;padding:calc(var(--ku-verf-row-padding, 4px) - 1px) 6px;border-right:1px solid #aaa;font-size:calc(8pt * var(--ku-font-scale, 1) * var(--ku-verf-font-scale, 1));min-height:22px}
 .ku-verf-cb:last-child{border-right:none}
 body.hide-print-date .ku-print-date{visibility:hidden!important}
 .rin-title{text-align:center;font-size:calc(13.5pt * var(--ku-font-scale, 1));font-weight:700;flex:1}
@@ -1196,6 +1198,24 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
             <span id="val-verf-margin" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">4 px</span>
           </div>
           <input type="range" id="slide-verf-margin" min="0" max="50" value="4" oninput="adjustPrintLayout('verf-margin', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
+        </div>
+
+        <!-- Slider 7: Huruf Tabel Verifikasi -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:#1e293b">
+            <span>Huruf Tabel Verifikasi:</span>
+            <span id="val-verf-font" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">100 %</span>
+          </div>
+          <input type="range" id="slide-verf-font" min="0.5" max="1.5" step="0.05" value="1.0" oninput="adjustPrintLayout('verf-font', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
+        </div>
+
+        <!-- Slider 8: Lebar Baris Verifikasi -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;color:#1e293b">
+            <span>Lebar Baris Verifikasi:</span>
+            <span id="val-verf-padding" style="background:#0f766e;color:#fff;padding:1px 4px;border-radius:4px;font-size:10px">4 px</span>
+          </div>
+          <input type="range" id="slide-verf-padding" min="1" max="15" value="4" oninput="adjustPrintLayout('verf-padding', this.value)" style="width:100%;accent-color:#0f766e;cursor:pointer">
         </div>
       </div>
     </div>
@@ -2313,6 +2333,14 @@ function adjustPrintLayout(type, value){
     document.documentElement.style.setProperty('--ku-verf-margin', value+'px');
     const lbl=document.getElementById('val-verf-margin'); if(lbl) lbl.textContent=value+' px';
     const sld=document.getElementById('slide-verf-margin'); if(sld) sld.value=value;
+  }else if(type==='verf-font'){
+    document.documentElement.style.setProperty('--ku-verf-font-scale', value);
+    const lbl=document.getElementById('val-verf-font'); if(lbl) lbl.textContent=Math.round(value*100)+' %';
+    const sld=document.getElementById('slide-verf-font'); if(sld) sld.value=value;
+  }else if(type==='verf-padding'){
+    document.documentElement.style.setProperty('--ku-verf-row-padding', value+'px');
+    const lbl=document.getElementById('val-verf-padding'); if(lbl) lbl.textContent=value+' px';
+    const sld=document.getElementById('slide-verf-padding'); if(sld) sld.value=value;
   }
 }
 // Initialize print layout on load
@@ -2324,6 +2352,8 @@ document.addEventListener('DOMContentLoaded', () => {
     adjustPrintLayout('font-scale', 1.0);
     adjustPrintLayout('qr-size', 80);
     adjustPrintLayout('verf-margin', 4);
+    adjustPrintLayout('verf-font', 1.0);
+    adjustPrintLayout('verf-padding', 4);
   } catch(e) {}
 });
 
