@@ -3417,11 +3417,7 @@ function buildKuiLS(d){
       <div class="ku-row"><div class="ku-rl">Uang Sejumlah</div><div class="ku-rv" style="font-style:italic">${d.terb||''}</div></div>
       <div class="ku-row"><div class="ku-rl">Untuk Pembayaran</div><div class="ku-rv" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>${uraiText}</span><div style="flex-shrink:0;border:1px solid #ccc;padding:2px;background:#fff;display:flex;width:var(--ku-qr-size, 80px);height:var(--ku-qr-size, 80px)" title="Scan Uraian Pembayaran">${buildQRCode(uraiText)}</div></div></div>
       <div class="ku-row"><div class="ku-rl">Sub Kegiatan</div><div class="ku-rv" style="font-size:9.5pt">${d.sk?.nama||''}</div></div>
-    </div>
-    <div style="display:flex;justify-content:flex-start;margin:6px 0">
-      <div style="margin-left:140px;border:1.5px solid #000;padding:5px 12px;font-size:11pt;font-weight:800;background:#fff;min-width:180px;text-align:center;box-shadow:var(--shadow-sm);border-radius:4px">
-        Jumlah: Rp ${fmtRp(d.jumlah)}
-      </div>
+      <div class="ku-row" style="font-weight:700;font-size:11pt;border-top:1.5px solid #000"><div class="ku-rl" style="font-size:11pt">Jumlah</div><div class="ku-rv" style="font-size:11pt">Rp ${fmtRp(d.jumlah)}</div></div>
     </div>
     <div class="ku-ttd" style="margin-bottom:8px">
       <div class="ku-ttd-box">
@@ -3577,11 +3573,7 @@ function buildKuiGU(d){
         <div class="ku-rl">No. Bukti Kas</div><div class="ku-rv">${d.nobukti||'–'}</div>
         <div class="ku-rv" style="border-left:1px solid #aaa">No. Nota/Bon: ${d.nota||'–'}</div>
       </div>
-    </div>
-    <div style="display:flex;justify-content:flex-start;margin:6px 0">
-      <div style="margin-left:140px;border:1.5px solid #000;padding:5px 12px;font-size:11pt;font-weight:800;background:#fff;min-width:180px;text-align:center;box-shadow:var(--shadow-sm);border-radius:4px">
-        Jumlah: Rp ${fmtRp(d.jml)}
-      </div>
+      <div class="ku-row" style="font-weight:700;font-size:11pt;border-top:1.5px solid #000"><div class="ku-rl" style="font-size:11pt">Jumlah</div><div class="ku-rv" style="font-size:11pt">Rp ${fmtRp(d.jml)}</div></div>
     </div>
     <div class="ku-ttd" style="margin-bottom:8px">
       <div class="ku-ttd-box">
