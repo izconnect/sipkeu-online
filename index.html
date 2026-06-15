@@ -1239,6 +1239,14 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
         </div>
       </div>
     </div>
+    <div id="print-doc-tabs-container" style="display:none; padding:10px 20px 0; background:#fff;">
+      <div class="tab-bar" style="margin-bottom:0">
+        <button class="tab-btn active" id="tab-print-kuitansi" onclick="switchPrintDoc('kuitansi')">📄 Kuitansi</button>
+        <button class="tab-btn" id="tab-print-tanda-terima" onclick="switchPrintDoc('tanda-terima')">📄 Tanda Terima</button>
+        <button class="tab-btn" id="tab-print-lembar-kontrol" onclick="switchPrintDoc('lembar-kontrol')">📄 Lembar Kontrol</button>
+        <button class="tab-btn" id="tab-print-daftar-uji" onclick="switchPrintDoc('daftar-uji')">📄 Daftar Uji</button>
+      </div>
+    </div>
     <div class="modal-body" id="modal-cetak-body" style="max-height:82vh;overflow-y:auto"></div>
   </div>
 </div>
@@ -1249,6 +1257,10 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     <div class="modal-hdr"><span id="mst-title">Ubah Status Tagihan</span></div>
     <div class="modal-body">
       <div style="font-size:12px;color:#555;margin-bottom:10px" id="mst-info"></div>
+      <div id="mst-spp-block" style="display:none; margin-bottom:12px;" class="fg">
+        <label>Nomor SPP dari SIPD <span class="req">*</span></label>
+        <input id="mst-spp-val" placeholder="Contoh: 0001/SPP/LS/BU/2026">
+      </div>
       <div class="fg" style="margin-bottom:10px">
         <label>Catatan (opsional)</label>
         <input id="mst-catatan" placeholder="Catatan perubahan status...">
@@ -1680,7 +1692,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
       <div class="fg"><label>Sub Kegiatan <span class="req">*</span></label><select id="f-sk" onchange="fLoadBel()"></select></div>
     </div>
     <div class="form-grid g2" style="margin-bottom:11px">
-      <div class="fg"><label>Nomor SPP</label><input id="f-spp" placeholder="Diisi setelah Di Ajukan Ke BKD"></div>
+      <div class="fg"><label>Nomor SPP dari SIPD</label><input id="f-spp" placeholder="Masukkan nomor SPP dari SIPD..."></div>
       <div class="fg"><label>Jenis SPP</label><select id="f-jspp"><option>LS</option><option>UP</option><option>GU</option><option>TU</option></select></div>
     </div>
     <!-- SINGLE -->
@@ -2300,7 +2312,14 @@ const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 function calcTerb(){const v=Number(document.getElementById('f-jml').value)||0;document.getElementById('f-terb').value=v?cap(terbilang(v))+' Rupiah':'';}
 function calcTerbGU(){const v=Number(document.getElementById('fgu-jml').value)||0;document.getElementById('fgu-terb').value=v?cap(terbilang(v))+' Rupiah':'';}
 function toast(msg,t='info',dur=3500){const c=document.getElementById('toast-wrap');const el=document.createElement('div');el.className='toast-item '+(t==='ok'?'ok':t==='err'?'err':t==='warn'?'warn':'');el.innerHTML=(t==='ok'?'✅':t==='err'?'❌':t==='warn'?'⚠️':'ℹ️')+' '+msg;c.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300)},dur)}
-const tutupModal=id=>document.getElementById(id).classList.remove('open');
+const tutupModal=id=>{
+  if(id==='modal-cetak'){
+    activePreviewTagihanId=null;
+    const tabCont=document.getElementById('print-doc-tabs-container');
+    if(tabCont) tabCont.style.display='none';
+  }
+  document.getElementById(id).classList.remove('open');
+};
 const bukaModal=id=>{
   if(id==='modal-cetak'){
     const chk=document.getElementById('chk-show-rincian');
@@ -4171,7 +4190,34 @@ function renderTagihan(){
     </td>
   </tr>`).join('');
 }
-function prevTagihan(id){const t=TAGIHAN.find(x=>x.id===id);if(!t)return;let uraiVal = '';if(t.jenis==='GU'){const gu=TAGIHAN_GU.find(x=>x.id===id);if(gu){document.getElementById('modal-cetak-body').innerHTML=buildKuiGU(gu.data);uraiVal=gu.data?.urai;}}else{document.getElementById('modal-cetak-body').innerHTML=buildKuiLS({...t.data,no:t.no});uraiVal=t.data?.urai;}bukaModal('modal-cetak');checkAutoSigner(uraiVal);renderAllBarcodes();}
+function prevTagihan(id){
+  const t=TAGIHAN.find(x=>x.id===id);
+  if(!t)return;
+  activePreviewTagihanId = id;
+  const isLS = (t.jenis !== 'GU');
+  const isSubmitted = (t.status !== 'Draft' && t.status !== 'Lengkapi TTD & Berkas');
+  const tabCont = document.getElementById('print-doc-tabs-container');
+  if(isLS && isSubmitted){
+    if(tabCont) tabCont.style.display = 'block';
+    switchPrintDoc('kuitansi');
+  } else {
+    if(tabCont) tabCont.style.display = 'none';
+    let uraiVal = '';
+    if(t.jenis==='GU'){
+      const gu=TAGIHAN_GU.find(x=>x.id===id);
+      if(gu){
+        document.getElementById('modal-cetak-body').innerHTML=buildKuiGU(gu.data);
+        uraiVal=gu.data?.urai;
+      }
+    }else{
+      document.getElementById('modal-cetak-body').innerHTML=buildKuiLS({...t.data,no:t.no});
+      uraiVal=t.data?.urai;
+    }
+    bukaModal('modal-cetak');
+    checkAutoSigner(uraiVal);
+    renderAllBarcodes();
+  }
+}
 function editTagihan(id){
   const t = TAGIHAN.find(x => x.id === id);
   if(!t) return;
@@ -4312,11 +4358,447 @@ function buildTandaTerima(t){
   </div>`;
 }
 
-function printTandaTerima(id){
-  const t=TAGIHAN.find(x=>x.id===id);if(!t)return;
-  document.getElementById('modal-cetak-body').innerHTML=buildTandaTerima(t);
+function buildLembarKontrol(t) {
+  const progKode = t.data?.prog?.kode || '–';
+  const progNama = t.data?.prog?.nama || '–';
+  const kegKode = t.data?.keg?.kode || '–';
+  const kegNama = t.data?.keg?.nama || '–';
+  const skKode = t.data?.sk?.kode || '–';
+  const skNama = t.data?.sk?.nama || '–';
+  
+  const items = t.data?.items || [];
+  
+  const rowsHtml = items.map((item, idx) => {
+    const b = BEL.find(x => x.skId === t.skId && x.kode === item.kode) || {};
+    const pagu = b.pagu || 0;
+    
+    const spentLS = TAGIHAN.filter(x => x.skId === t.skId && x.jenis === 'LS' && x.id !== t.id && x.status !== 'Draft' && x.status !== 'Ditolak')
+      .reduce((sum, x) => {
+        const it = (x.data?.items || []).find(i => i.kode === item.kode);
+        return sum + (it ? it.jumlah : 0);
+      }, 0);
+    const spentGU = TAGIHAN.filter(x => x.skId === t.skId && x.jenis === 'GU' && x.id !== t.id && x.status !== 'Ditolak')
+      .reduce((sum, x) => {
+        const it = (x.data?.items || []).find(i => i.kode === item.kode);
+        return sum + (it ? it.jumlah : 0);
+      }, 0);
+    const realisasiLalu = spentLS + spentGU;
+    const realisasiSaatIni = realisasiLalu + item.jumlah;
+    const sisaAnggaran = pagu - realisasiSaatIni;
+    
+    return `
+      <tr style="height:26px;">
+        <td style="border:1px solid #000; padding:4px 6px; font-family:monospace; font-size:8.5pt; text-align:center; white-space:nowrap;">${item.kode}</td>
+        <td style="border:1px solid #000; padding:4px 6px; font-size:8.5pt;">${item.nama}</td>
+        <td style="border:1px solid #000; padding:4px 6px; font-size:8.5pt; text-align:right; white-space:nowrap;">Rp ${fmtRp(pagu)}</td>
+        <td style="border:1px solid #000; padding:4px 6px; font-size:8.5pt; text-align:right; white-space:nowrap;">Rp ${fmtRp(item.jumlah)}</td>
+        <td style="border:1px solid #000; padding:4px 6px; font-size:8.5pt; text-align:right; white-space:nowrap;">Rp ${fmtRp(realisasiSaatIni)}</td>
+        <td style="border:1px solid #000; padding:4px 6px; font-size:8.5pt; text-align:right; white-space:nowrap;">Rp ${fmtRp(sisaAnggaran)}</td>
+      </tr>
+    `;
+  }).join('');
+  
+  const totalPagu = items.reduce((sum, item) => {
+    const b = BEL.find(x => x.skId === t.skId && x.kode === item.kode) || {};
+    return sum + (b.pagu || 0);
+  }, 0);
+  const totalJumlah = items.reduce((sum, item) => sum + item.jumlah, 0);
+  const totalRealisasi = items.reduce((sum, item) => {
+    const spentLS = TAGIHAN.filter(x => x.skId === t.skId && x.jenis === 'LS' && x.id !== t.id && x.status !== 'Draft' && x.status !== 'Ditolak')
+      .reduce((s, x) => {
+        const it = (x.data?.items || []).find(i => i.kode === item.kode);
+        return s + (it ? it.jumlah : 0);
+      }, 0);
+    const spentGU = TAGIHAN.filter(x => x.skId === t.skId && x.jenis === 'GU' && x.id !== t.id && x.status !== 'Ditolak')
+      .reduce((s, x) => {
+        const it = (x.data?.items || []).find(i => i.kode === item.kode);
+        return s + (it ? it.jumlah : 0);
+      }, 0);
+    return sum + spentLS + spentGU + item.jumlah;
+  }, 0);
+  const totalSisa = totalPagu - totalRealisasi;
+
+  const totalRowHtml = `
+    <tr style="height:26px; font-weight:bold; background:#f2f2f2;">
+      <td colspan="2" style="border:1px solid #000; padding:4px 6px; font-size:8.5pt; text-align:center;">J U M L A H</td>
+      <td style="border:1px solid #000; padding:4px 6px; font-size:8.5pt; text-align:right; white-space:nowrap;">Rp ${fmtRp(totalPagu)}</td>
+      <td style="border:1px solid #000; padding:4px 6px; font-size:8.5pt; text-align:right; white-space:nowrap;">Rp ${fmtRp(totalJumlah)}</td>
+      <td style="border:1px solid #000; padding:4px 6px; font-size:8.5pt; text-align:right; white-space:nowrap;">Rp ${fmtRp(totalRealisasi)}</td>
+      <td style="border:1px solid #000; padding:4px 6px; font-size:8.5pt; text-align:right; white-space:nowrap;">Rp ${fmtRp(totalSisa)}</td>
+    </tr>
+  `;
+
+  return `<div class="sptb-page" style="font-family:'Plus Jakarta Sans', sans-serif; padding:25px; color:#000; background:#fff; max-width:800px; margin:0 auto; border:1px solid #e0e0e0; border-radius:8px; box-sizing:border-box;">
+    <!-- Title and Kop -->
+    <div style="text-align:center; border-bottom:2px double #000; padding-bottom:8px; margin-bottom:12px;">
+      <h3 style="margin:0; font-size:12pt; text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">LEMBAR KONTROL</h3>
+      <h4 style="margin:2px 0 0; font-size:10pt; font-weight:600; text-transform:uppercase;">TAHUN ANGGARAN 2026</h4>
+      <div style="font-size:9.5pt; font-weight:700; margin-top:4px;">PEMERINTAH PROVINSI GORONTALO</div>
+      <div style="font-size:8.5pt; color:#333; margin-top:2px;">Perangkat Daerah: <strong>SEKRETARIAT DAERAH</strong> | Sub Perangkat Daerah: <strong>BIRO UMUM</strong></div>
+    </div>
+    
+    <!-- Info Fields Table -->
+    <table style="width:100%; margin-bottom:12px; font-size:8.5pt; border-collapse:collapse;">
+      <tr style="height:20px;">
+        <td style="width:120px; font-weight:700; vertical-align:top; text-transform:uppercase;">Program</td>
+        <td style="width:10px; vertical-align:top;">:</td>
+        <td style="vertical-align:top;">${progKode} - ${progNama}</td>
+      </tr>
+      <tr style="height:20px;">
+        <td style="font-weight:700; vertical-align:top; text-transform:uppercase;">Kegiatan</td>
+        <td style="vertical-align:top;">:</td>
+        <td style="vertical-align:top;">${kegKode} - ${kegNama}</td>
+      </tr>
+      <tr style="height:20px;">
+        <td style="font-weight:700; vertical-align:top; text-transform:uppercase;">Sub Kegiatan</td>
+        <td style="vertical-align:top;">:</td>
+        <td style="vertical-align:top;">${skKode} - ${skNama}</td>
+      </tr>
+      <tr style="height:20px;">
+        <td style="font-weight:700; vertical-align:top; text-transform:uppercase;">Nomor SPP</td>
+        <td style="vertical-align:top;">:</td>
+        <td style="vertical-align:top;"><strong>${t.data?.spp || t.spp || '–'}</strong></td>
+      </tr>
+      <tr style="height:20px;">
+        <td style="font-weight:700; vertical-align:top; text-transform:uppercase;">Jenis SPP</td>
+        <td style="vertical-align:top;">:</td>
+        <td style="vertical-align:top;">${t.data?.jspp || 'LS'}</td>
+      </tr>
+    </table>
+    
+    <!-- Checklist Two Columns Layout -->
+    <table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:8pt; line-height:1.3;">
+      <tr>
+        <td style="width:50%; vertical-align:top; padding-right:6px;">
+          <div style="border:1px solid #000; padding:6px; min-height:150px;">
+            <div style="font-weight:bold; margin-bottom:4px;">1. SPT didukung dokumen :</div>
+            <div style="margin-left:10px; margin-bottom:6px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> Kwitansi</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> Pengantar SPP</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> SPP BT</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> Dokumen Pendukung Lainnya</div>
+            </div>
+            <div style="font-weight:bold; margin-bottom:4px;">2. Pengadaan Barang dan Jasa Konsultasi yang Nilainya > 1 Juta dilampiri dengan :</div>
+            <div style="margin-left:10px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> Faktur Pajak</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> SSP PPN</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> SSP PPH 22</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> Perhitungan PPN dan PPH 22 Sudah Benar</div>
+            </div>
+          </div>
+        </td>
+        <td style="width:50%; vertical-align:top; padding-left:6px;">
+          <div style="border:1px solid #000; padding:6px; min-height:150px;">
+            <div style="font-weight:bold; margin-bottom:4px;">1. SPT didukung dokumen :</div>
+            <div style="margin-left:10px; margin-bottom:12px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> SPJ Bulan Lalu</div>
+            </div>
+            <div style="font-weight:bold; margin-bottom:4px;">2. SPP didukung dokumen :</div>
+            <div style="margin-left:10px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> Kwitansi</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> Pengantar SPP</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> Perincian Penggunaan Anggaran dan Belanja</div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000; flex-shrink:0;"></span> Dokumen Pendukung Lainnya</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+    
+    <!-- Notes Area -->
+    <div style="border:1px solid #000; padding:6px; margin-bottom:12px; font-size:8.5pt;">
+      <div style="font-weight:bold; margin-bottom:10px;">CATATAN:</div>
+      <div style="height:35px; border-bottom:1px dashed #ccc;"></div>
+    </div>
+    
+    <!-- Budget Table Title -->
+    <div style="font-weight:bold; font-size:8.5pt; margin-bottom:4px; text-transform:uppercase;">Tabel Pengendalian Anggaran (Belanja):</div>
+    
+    <!-- Budget Table -->
+    <table style="width:100%; border-collapse:collapse; border:1px solid #000; font-size:8pt; margin-bottom:12px; text-align:left;">
+      <thead>
+        <tr style="background:#f2f2f2; text-align:center; font-weight:bold;">
+          <th style="border:1px solid #000; padding:4px; width:140px;">KD REKENING</th>
+          <th style="border:1px solid #000; padding:4px;">URAIAN</th>
+          <th style="border:1px solid #000; padding:4px; width:95px;">ANGGARAN</th>
+          <th style="border:1px solid #000; padding:4px; width:95px;">NILAI SPP SAAT INI</th>
+          <th style="border:1px solid #000; padding:4px; width:100px;">REALISASI s/d SAAT INI</th>
+          <th style="border:1px solid #000; padding:4px; width:95px;">SISA ANGGARAN</th>
+        </tr>
+        <tr style="background:#f9f9f9; text-align:center; font-size:7.5pt; font-style:italic;">
+          <td style="border:1px solid #000; padding:2px;">1</td>
+          <td style="border:1px solid #000; padding:2px;">2</td>
+          <td style="border:1px solid #000; padding:2px;">3</td>
+          <td style="border:1px solid #000; padding:2px;">4</td>
+          <td style="border:1px solid #000; padding:2px;">5</td>
+          <td style="border:1px solid #000; padding:2px;">6 = 3 - 5</td>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+        ${totalRowHtml}
+      </tbody>
+    </table>
+    
+    <!-- Process Control Tables -->
+    <table style="width:100%; border-collapse:collapse; font-size:8pt; line-height:1.2;">
+      <tr>
+        <td style="width:55%; vertical-align:top; padding-right:6px;">
+          <div style="font-weight:bold; margin-bottom:3px; text-transform:uppercase; font-size:8.5pt;">FUNGSI VERIFIKASI</div>
+          <table style="width:100%; border-collapse:collapse; border:1px solid #000; text-align:left;">
+            <thead>
+              <tr style="background:#f2f2f2; text-align:center; font-weight:bold; height:22px;">
+                <th style="border:1px solid #000; padding:3px;">URAIAN</th>
+                <th style="border:1px solid #000; padding:3px; width:65px;">TANGGAL</th>
+                <th style="border:1px solid #000; padding:3px; width:45px;">JAM</th>
+                <th style="border:1px solid #000; padding:3px; width:55px;">PARAF</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="height:24px;">
+                <td style="border:1px solid #000; padding:4px 3px;">* Diterima</td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+              </tr>
+              <tr style="height:24px;">
+                <td style="border:1px solid #000; padding:4px 3px;">* Dikembalikan ke unit yang bersangkutan</td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+              </tr>
+              <tr style="height:24px;">
+                <td style="border:1px solid #000; padding:4px 3px;">* Diterima Kembali</td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+              </tr>
+              <tr style="height:24px;">
+                <td style="border:1px solid #000; padding:4px 3px;">* Diteruskan ke BUD</td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td style="width:45%; vertical-align:top; padding-left:6px;">
+          <div style="font-weight:bold; margin-bottom:3px; text-transform:uppercase; font-size:8.5pt;">FUNGSI PERBENDAHARAAN</div>
+          <table style="width:100%; border-collapse:collapse; border:1px solid #000; text-align:left;">
+            <thead>
+              <tr style="background:#f2f2f2; text-align:center; font-weight:bold; height:22px;">
+                <th style="border:1px solid #000; padding:3px;">URAIAN</th>
+                <th style="border:1px solid #000; padding:3px; width:65px;">TANGGAL</th>
+                <th style="border:1px solid #000; padding:3px; width:45px;">JAM</th>
+                <th style="border:1px solid #000; padding:3px; width:55px;">PARAF</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="height:24px;">
+                <td style="border:1px solid #000; padding:4px 3px;">* Diterima</td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+              </tr>
+              <tr style="height:24px;">
+                <td style="border:1px solid #000; padding:4px 3px;">* Dibuat Konsep SPMU</td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+              </tr>
+              <tr style="height:24px;">
+                <td style="border:1px solid #000; padding:4px 3px;">* Diteruskan</td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+                <td style="border:1px solid #000; padding:4px 3px;"></td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </table>
+    
+    <!-- Footer Page Control -->
+    <div style="margin-top:15px; display:flex; justify-content:space-between; font-size:7.5pt; border-top:1px dashed #ccc; padding-top:4px; color:#555;">
+      <div>Lembar Kontrol</div>
+      <div>Halaman 1 dari 1</div>
+    </div>
+  </div>`;
+}
+
+function buildDaftarUji(t) {
+  const listItems = [
+    "Surat Permintaan Pembayaran",
+    "Kuitansi Penerimaan Uang",
+    "Surat Pernyataan Tentang Penggunaan Uang Persediaan / Tambahan Uang Persediaan",
+    "Surat Kuasa Tanggung jawab Mutlak",
+    "Lembar Kontrol Anggaran",
+    "Surat Pernyataan TanggungJawab Mutlak (SPTJM)",
+    "Surat Pernyataan Verivikasi Kelengkapan dan Keabsahan Dokumen dan Lampiran",
+    "Surat Pernyataan Tanggung Jawab (SPTB)",
+    "Berita Acara Pembayaran",
+    "Ringkasan Kontrak / SPK",
+    "Kontrak Induk Tahunan",
+    "Surat Perintah Kerja / Nota Pesanan",
+    "Berita Acara Penerimaan Barang / Jasa",
+    "Berita Acara Pemeriksaan Barang / Jasa",
+    "Bukti Penyampaian Laporan Kemajuan Fisik Pekerjaan ke Sekretariat Daerah",
+    "Berita Acara Serah Terima Pekerjaan",
+    "Jaminan Bank : Uang Muka / Pelaksanaan",
+    "Telaah / Surat - surat Pendukung Lainnya",
+    "Laporan Posisi Kas / Rekening Koran",
+    "Bukti Potongan Pajak",
+    "Faktur Pajak",
+    "Surat Setoran Pajak",
+    "Lain - lain Dokumen"
+  ];
+  
+  const checklistRows = listItems.map((item, idx) => `
+    <tr style="height:22px;">
+      <td style="border:1px solid #000; text-align:center; padding:2px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000;"></span></td>
+      <td style="border:1px solid #000; text-align:center; padding:2px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid #000;"></span></td>
+      <td style="border:1px solid #000; text-align:center; padding:2px; font-weight:bold;">${idx + 1}</td>
+      <td style="border:1px solid #000; padding:2px 6px;">${item}</td>
+      <td style="border:1px solid #000; padding:2px;"></td>
+    </tr>
+  `).join('');
+
+  const ppk = getPejabat('PPK');
+  const pptkPeg = PEG.find(p => p.id === t.pptkId || p.nama === t.pptkNama) || { nip: '' };
+
+  return `<div class="sptb-page" style="font-family:'Plus Jakarta Sans', sans-serif; padding:25px; color:#000; background:#fff; max-width:800px; margin:0 auto; border:1px solid #e0e0e0; border-radius:8px; box-sizing:border-box;">
+    <!-- Kop Header -->
+    <div style="text-align:center; border-bottom:2px double #000; padding-bottom:6px; margin-bottom:12px;">
+      <h3 style="margin:0; font-size:11pt; text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">DAFTAR UJI KELENGKAPAN LAMPIRAN DOKUMEN</h3>
+      <div style="font-size:8.5pt; color:#666; margin-top:2px;">SIPKeu Pro — Penatausahaan Keuangan SKPD</div>
+    </div>
+    
+    <!-- Meta Fields -->
+    <table style="width:100%; margin-bottom:10px; font-size:8.5pt; border-collapse:collapse;">
+      <tr style="height:20px;">
+        <td style="width:100px; font-weight:700; padding:2px 0;">Nomor SPP</td>
+        <td style="width:10px; padding:2px 0;">:</td>
+        <td style="padding:2px 0;"><strong>${t.data?.spp || t.spp || '–'}</strong></td>
+        <td style="width:100px; font-weight:700; padding:2px 0; padding-left:20px;">PPK SKPD</td>
+        <td style="width:10px; padding:2px 0;">:</td>
+        <td style="padding:2px 0;">${ppk.nama}</td>
+      </tr>
+      <tr style="height:20px;">
+        <td style="font-weight:700; padding:2px 0;">Tanggal SPP</td>
+        <td style="padding:2px 0;">:</td>
+        <td style="padding:2px 0;">${fmtTgl(t.tgl)}</td>
+        <td style="font-weight:700; padding:2px 0; padding-left:20px;">PPTK</td>
+        <td style="padding:2px 0;">:</td>
+        <td style="padding:2px 0;">${t.pptkNama || '–'}</td>
+      </tr>
+    </table>
+    
+    <!-- Table Checklist -->
+    <table style="width:100%; border-collapse:collapse; border:1px solid #000; font-size:8pt; margin-bottom:15px; text-align:left;">
+      <thead>
+        <tr style="background:#f2f2f2; font-weight:bold; text-align:center;">
+          <th colspan="2" style="border:1px solid #000; padding:4px; width:70px;">CEKLIS</th>
+          <th rowspan="2" style="border:1px solid #000; padding:4px; width:30px;">NO</th>
+          <th rowspan="2" style="border:1px solid #000; padding:4px; text-align:left;">DOKUMEN LAMPIRAN SPP</th>
+          <th rowspan="2" style="border:1px solid #000; padding:4px; width:130px;">KETERANGAN</th>
+        </tr>
+        <tr style="background:#f2f2f2; font-weight:bold; text-align:center;">
+          <th style="border:1px solid #000; padding:2px; width:35px; font-size:7.5pt;">PPTK</th>
+          <th style="border:1px solid #000; padding:2px; width:35px; font-size:7.5pt;">PPK</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${checklistRows}
+      </tbody>
+    </table>
+    
+    <!-- Footer Signatures -->
+    <table style="width:100%; margin-top:15px; font-size:8.5pt; text-align:center; border:none; border-collapse:collapse;">
+      <tr style="height:15px;">
+        <td style="width:50%; border:none; padding:0;">Mengetahui,</td>
+        <td style="width:50%; border:none; padding:0;"></td>
+      </tr>
+      <tr style="height:15px;">
+        <td style="border:none; font-weight:bold; text-transform:uppercase; padding:0;">PPK SKPD</td>
+        <td style="border:none; font-weight:bold; text-transform:uppercase; padding:0;">PPTK</td>
+      </tr>
+      <tr style="height:44px;">
+        <td style="border:none; padding:0;"></td>
+        <td style="border:none; padding:0;"></td>
+      </tr>
+      <tr style="height:15px;">
+        <td style="border:none; padding:0;"><span style="font-weight:bold; text-decoration:underline;">${ppk.nama}</span></td>
+        <td style="border:none; padding:0;"><span style="font-weight:bold; text-decoration:underline;">${t.pptkNama}</span></td>
+      </tr>
+      <tr style="height:15px;">
+        <td style="border:none; font-size:7.5pt; color:#444; padding:0;">NIP. ${ppk.nip || '–'}</td>
+        <td style="border:none; font-size:7.5pt; color:#444; padding:0;">NIP. ${pptkPeg.nip || '–'}</td>
+      </tr>
+    </table>
+  </div>`;
+}
+
+let activePreviewTagihanId = null;
+let activePrintDocType = 'kuitansi';
+
+function switchPrintDoc(docType) {
+  activePrintDocType = docType;
+  // Update active class on tab buttons
+  document.querySelectorAll('#print-doc-tabs-container .tab-btn').forEach(btn => btn.classList.remove('active'));
+  
+  const activeBtn = document.getElementById('tab-print-' + docType);
+  if(activeBtn) activeBtn.classList.add('active');
+  
+  if(!activePreviewTagihanId) return;
+  const t = TAGIHAN.find(x => x.id === activePreviewTagihanId);
+  if(!t) return;
+  
+  const container = document.getElementById('modal-cetak-body');
+  let uraiVal = '';
+  
+  if (docType === 'kuitansi') {
+    if (t.jenis === 'GU') {
+      const gu = TAGIHAN_GU.find(x => x.id === activePreviewTagihanId);
+      if (gu) {
+        container.innerHTML = buildKuiGU(gu.data);
+        uraiVal = gu.data?.urai;
+      }
+    } else {
+      container.innerHTML = buildKuiLS({...t.data, no: t.no});
+      uraiVal = t.data?.urai;
+    }
+  } else if (docType === 'tanda-terima') {
+    container.innerHTML = buildTandaTerima(t);
+    uraiVal = t.urai;
+  } else if (docType === 'lembar-kontrol') {
+    container.innerHTML = buildLembarKontrol(t);
+    uraiVal = t.urai;
+  } else if (docType === 'daftar-uji') {
+    container.innerHTML = buildDaftarUji(t);
+    uraiVal = t.urai;
+  }
+  
   bukaModal('modal-cetak');
+  checkAutoSigner(uraiVal);
   renderAllBarcodes();
+}
+
+function printTandaTerima(id){
+  const t=TAGIHAN.find(x=>x.id===id);
+  if(!t)return;
+  activePreviewTagihanId = id;
+  const isLS = (t.jenis !== 'GU');
+  const isSubmitted = (t.status !== 'Draft' && t.status !== 'Lengkapi TTD & Berkas');
+  const tabCont = document.getElementById('print-doc-tabs-container');
+  if(isLS && isSubmitted){
+    if(tabCont) tabCont.style.display = 'block';
+    switchPrintDoc('tanda-terima');
+  } else {
+    if(tabCont) tabCont.style.display = 'none';
+    document.getElementById('modal-cetak-body').innerHTML=buildTandaTerima(t);
+    bukaModal('modal-cetak');
+    renderAllBarcodes();
+  }
 }
 
 function showStatusModal(id){
@@ -4347,12 +4829,37 @@ function showStatusModal(id){
       <span>Proses ke SP2D Terbit harus melalui menu <strong>Rekonsiliasi SP2D</strong> (Input No. SP2D).</span>
     </div>`;
   }
+  
+  const hasBerkasDikirim = opts.some(o => o.s === 'Berkas Dikirim');
+  const sppBlock = document.getElementById('mst-spp-block');
+  if(sppBlock){
+    if(hasBerkasDikirim){
+      sppBlock.style.display = 'block';
+      document.getElementById('mst-spp-val').value = t.data?.spp || t.spp || '';
+    } else {
+      sppBlock.style.display = 'none';
+      document.getElementById('mst-spp-val').value = '';
+    }
+  }
+  
   document.getElementById('mst-opts').innerHTML=optsHtml;
   bukaModal('modal-status');
 }
 function doUbahStatus(id,newStatus){
   const t=TAGIHAN.find(x=>x.id===id);if(!t)return;
   if(newStatus==='SP2D Terbit'&&!t.nosp2d){toast('Ubah status ke SP2D Terbit harus melalui menu Rekonsiliasi SP2D','err');return;}
+  
+  if(newStatus==='Berkas Dikirim'){
+    const sppVal=document.getElementById('mst-spp-val').value.trim();
+    if(!sppVal){
+      toast('Nomor SPP dari SIPD harus diisi!','err');
+      return;
+    }
+    t.spp=sppVal;
+    if(!t.data) t.data={};
+    t.data.spp=sppVal;
+  }
+  
   const catatan=document.getElementById('mst-catatan').value||'';const oleh=USER?.nama||USER?.username||'–';
   if(!t.history)t.history=[];
   t.history.push({status:newStatus,ts:new Date().toISOString(),oleh,catatan});t.status=newStatus;
