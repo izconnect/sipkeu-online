@@ -1815,9 +1815,9 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     <!-- Kuitansi LS – hanya PPTK dan admin -->
     <div class="nav-item nav-pptk nav-admin" onclick="pg('kuitansi-ls')" style="display:none"><span class="ni">📝</span> Kuitansi LS</div>
     <!-- Kuitansi GU – BP/BPP dan admin -->
-    <div class="nav-item nav-bend nav-admin" onclick="pg('kuitansi-gu')" style="display:none"><span class="ni">💵</span> Kuitansi GU</div>
+    <div class="nav-item nav-gu-access" onclick="pg('kuitansi-gu')" style="display:none"><span class="ni">💵</span> Kuitansi GU</div>
     <!-- SPJ GU – BP/BPP dan admin -->
-    <div class="nav-item nav-bend nav-admin" onclick="pg('spj-gu')" style="display:none"><span class="ni">📑</span> SPJ GU</div>
+    <div class="nav-item nav-gu-access" onclick="pg('spj-gu')" style="display:none"><span class="ni">📑</span> SPJ GU</div>
     <div class="nav-item" onclick="pg('tagihan')"><span class="ni">📋</span> Daftar Tagihan</div>
     <div class="nav-item" onclick="pg('tracking')"><span class="ni">🔍</span> Tracking</div>
     <div class="nav-item nav-panjar" onclick="pg('panjar')" style="display:none"><span class="ni">💼</span> Uang Panjar</div>
@@ -1991,6 +1991,19 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
           <option value="">-- Pilih Bendahara --</option>
         </select>
       </div>
+    </div>
+    <div class="form-grid g3" style="margin-bottom:9px">
+      <div class="fg">
+        <label>Link Uang Panjar (NPD)</label>
+        <select id="fgu-npdId" onchange="onGuNpdSelect()">
+          <option value="">-- Bukan dari Uang Panjar --</option>
+        </select>
+      </div>
+      <div class="fg" id="fgu-npd-info-box" style="display:none; flex-direction:column; justify-content:center; background:#fff3e0; border-radius:6px; padding:5px 12px; font-size:11px; border:1px solid #ffe0b2; color:#e65100">
+        <span style="font-weight:600">Sisa Panjar NPD:</span>
+        <strong id="fgu-npd-sisa-lbl" style="font-size:13px;margin-top:2px">Rp 0</strong>
+      </div>
+      <div></div>
     </div>
     <div class="form-grid g3" style="margin-bottom:9px">
       <div class="fg"><label>Program <span class="req">*</span></label><select id="fgu-prog" onchange="guLoadKeg()"></select></div>
@@ -2954,6 +2967,7 @@ function applyRoleUI(){
   const isBend=jab==='BP'||jab==='BPP';
   const isAdmin_or_PPTK=isAdmin||isPPTK;
   const isAdmin_or_Bend=isAdmin||isBend;
+  const isGUAccess=isAdmin||isBend||isPPTK;
 
   // Show/hide nav items by class
   document.querySelectorAll('.nav-pptk').forEach(el=>el.style.display=isAdmin_or_PPTK?'flex':'none');
@@ -2963,12 +2977,13 @@ function applyRoleUI(){
   const isPAorKPA = jab === 'PA' || jab === 'KPA';
   const isAllPanjarRoles = isAdmin || isPPTK || isBend || isPAorKPA;
   document.querySelectorAll('.nav-panjar').forEach(el => el.style.display = isAllPanjarRoles ? 'flex' : 'none');
+  document.querySelectorAll('.nav-gu-access').forEach(el => el.style.display = isGUAccess ? 'flex' : 'none');
 
   // Setup section
   document.getElementById('nav-setup').style.display=isAdmin?'':'none';
   // Topbar buttons
   document.getElementById('btn-new-ls').style.display=isAdmin_or_PPTK?'':'none';
-  document.getElementById('btn-new-gu').style.display=isAdmin_or_Bend?'':'none';
+  document.getElementById('btn-new-gu').style.display=isGUAccess?'':'none';
 }
 
 function updateSidebar(){
@@ -3591,6 +3606,114 @@ function initKuiGU(){
   const fProg=document.getElementById('fgu-prog');fProg.innerHTML='<option value="">-- Pilih Program --</option>';PROG.sort((a,b)=>a.urut-b.urut).forEach(p=>fProg.innerHTML+=`<option value="${p.id}">${p.kode} – ${p.nama}</option>`);
   document.getElementById('fgu-no-lbl').textContent='No: KU-GU/'+CFG.ta+'/'+(String(noUrutGU).padStart(4,'0'));
   document.getElementById('fgu-tgl').value=document.getElementById('fgu-tgl').value||new Date().toISOString().split('T')[0];
+  
+  populateGuNpdDropdown();
+}
+
+function populateGuNpdDropdown(selectedNpdId = '') {
+  const selNpd = document.getElementById('fgu-npdId');
+  if (!selNpd) return;
+  
+  selNpd.innerHTML = '<option value="">-- Bukan dari Uang Panjar --</option>';
+  
+  const myPeg = getCurrentPegawai();
+  let list = PANJAR_NPD.filter(n => n.status === 'Dicairkan');
+  if (USER?.jab === 'PPTK' && myPeg) {
+    list = list.filter(n => n.pptkId === myPeg.id);
+  }
+  
+  list.forEach(n => {
+    selNpd.innerHTML += `<option value="${n.id}">${n.noNpd} (${n.pptkNama}) - Rp ${fmtRp(n.totalNpd)}</option>`;
+  });
+  
+  if (selectedNpdId) {
+    selNpd.value = selectedNpdId;
+  }
+}
+
+function onGuNpdSelect() {
+  const npdId = document.getElementById('fgu-npdId').value;
+  const infoBox = document.getElementById('fgu-npd-info-box');
+  const selProg = document.getElementById('fgu-prog');
+  const selKeg = document.getElementById('fgu-keg');
+  const selSk = document.getElementById('fgu-sk');
+  
+  if (!npdId) {
+    if (infoBox) infoBox.style.display = 'none';
+    selProg.disabled = false;
+    selKeg.disabled = false;
+    selSk.disabled = false;
+    resetFormGU();
+    initKuiGU();
+    return;
+  }
+  
+  const n = PANJAR_NPD.find(x => x.id === npdId);
+  if (!n) return;
+  
+  const skObj = SK.find(s => s.id === n.skId);
+  if (!skObj) return;
+  const kegObj = KEG.find(k => k.id === skObj.kegId);
+  if (!kegObj) return;
+  const progObj = PROG.find(p => p.id === kegObj.progId);
+  if (!progObj) return;
+  
+  selProg.value = progObj.id;
+  selProg.disabled = true;
+  
+  selKeg.innerHTML = `<option value="${kegObj.id}">${kegObj.kode} – ${kegObj.nama}</option>`;
+  selKeg.value = kegObj.id;
+  selKeg.disabled = true;
+  
+  selSk.innerHTML = `<option value="${skObj.id}">${skObj.kode} – ${skObj.nama} [Rp ${fmtShort(skObj.pagu)}]</option>`;
+  selSk.value = skObj.id;
+  selSk.disabled = true;
+  
+  curSkIdGU = skObj.id;
+  
+  const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id && g.id !== editTagihanId);
+  const totalSpent = linkedGUs.reduce((s, g) => s + g.jumlah, 0);
+  const sisaPanjar = n.totalNpd - totalSpent;
+  
+  if (infoBox) {
+    infoBox.style.display = 'flex';
+    document.getElementById('fgu-npd-sisa-lbl').textContent = 'Rp ' + fmtRp(sisaPanjar);
+  }
+  
+  renderNpdRekeningBelanja(n, linkedGUs);
+}
+
+function renderNpdRekeningBelanja(n, linkedGUs) {
+  const listEl = document.getElementById('list-gu');
+  if (!listEl) return;
+  
+  if (!n.items || !n.items.length) {
+    listEl.innerHTML = '<div class="empty-state" style="padding:14px"><p>NPD tidak memiliki rekening belanja</p></div>';
+    return;
+  }
+  
+  let h = '';
+  n.items.forEach((item, i) => {
+    const spentOnItem = linkedGUs.filter(g => g.bel?.kode === item.kode).reduce((s, g) => s + g.jumlah, 0);
+    const sisaItem = item.jumlah - spentOnItem;
+    const sisaColor = sisaItem <= 0 ? 'var(--red)' : 'var(--green)';
+    
+    h += `
+      <div class="bel-row" id="gsr-${i}" onclick="selGU(${i})">
+        <input type="radio" name="bel-gu" value="${i}" id="gr-${i}">
+        <div style="flex:1">
+          <div class="bel-kode">${item.kode}</div>
+          <div class="bel-nama">${item.nama}</div>
+          <div style="font-size:10px;color:${sisaColor};margin-top:2px;">
+            Sisa Panjar Rekening: <strong>Rp ${fmtRp(sisaItem)}</strong> (dari Panjar NPD Rp ${fmtRp(item.jumlah)})
+          </div>
+        </div>
+        <div class="bel-pagu">Pagu NPD: Rp ${fmtShort(item.jumlah)}</div>
+      </div>
+    `;
+  });
+  
+  listEl.innerHTML = h;
 }
 function guLoadKeg(){const pId=document.getElementById('fgu-prog').value;const sel=document.getElementById('fgu-keg');sel.innerHTML='<option value="">-- Pilih Kegiatan --</option>';KEG.filter(k=>k.progId===pId).sort((a,b)=>a.urut-b.urut).forEach(k=>sel.innerHTML+=`<option value="${k.id}">${k.kode} – ${k.nama}</option>`);document.getElementById('fgu-sk').innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';clearBelGU();}
 function guLoadSk(){const kId=document.getElementById('fgu-keg').value;const sel=document.getElementById('fgu-sk');sel.innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';SK.filter(s=>s.kegId===kId).forEach(s=>sel.innerHTML+=`<option value="${s.id}">${s.kode} – ${s.nama} [Rp ${fmtShort(s.pagu)}]</option>`);clearBelGU();}
@@ -3608,21 +3731,37 @@ function guLoadBel(){
 function clearBelGU(){document.getElementById('list-gu').innerHTML='<div class="empty-state" style="padding:14px"><p>Pilih Sub Kegiatan dahulu</p></div>';}
 function selGU(i){document.querySelectorAll('[id^="gsr-"]').forEach(r=>r.classList.remove('selected'));document.getElementById('gsr-'+i)?.classList.add('selected');document.getElementById('gr-'+i).checked=true;}
 function getFormDataGU(){
+  const npdId = document.getElementById('fgu-npdId')?.value || '';
   const bendId=document.getElementById('fgu-bend').value;const bend=PEG.find(p=>p.id===bendId);
   const tgl=document.getElementById('fgu-tgl').value;const penerima=document.getElementById('fgu-penerima').value.trim();
   const progId=document.getElementById('fgu-prog').value;const kegId=document.getElementById('fgu-keg').value;const skId=document.getElementById('fgu-sk').value;
   const sk=SK.find(s=>s.id===skId)||{};const keg=KEG.find(k=>k.id===kegId)||{};const prog=PROG.find(p=>p.id===progId)||{};
   const jml=Number(document.getElementById('fgu-jml').value)||0;const urai=document.getElementById('fgu-urai').value.trim();
   const nota=document.getElementById('fgu-nota').value.trim();const nobukti=document.getElementById('fgu-nobukti').value.trim();
-  const list=BEL.filter(b=>b.skId===skId).sort((a,b)=>a.kode.localeCompare(b.kode));
-  let idx=-1;document.querySelectorAll('input[name="bel-gu"]').forEach((r,i)=>{if(r.checked)idx=i;});
-  const b=idx>=0?list[idx]:null;
-  return{bendId,bend,tgl,penerima,progId,kegId,skId,sk,keg,prog,jml,terb:document.getElementById('fgu-terb').value,urai,nota,nobukti,bel:b};
+  
+  let b = null;
+  let idx = -1;
+  document.querySelectorAll('input[name="bel-gu"]').forEach((r, i) => { if (r.checked) idx = i; });
+  
+  if (idx >= 0) {
+    if (npdId) {
+      const n = PANJAR_NPD.find(x => x.id === npdId);
+      if (n && n.items && n.items[idx]) {
+        b = n.items[idx];
+      }
+    } else {
+      const list=BEL.filter(b=>b.skId===skId).sort((a,b)=>a.kode.localeCompare(b.kode));
+      b = list[idx];
+    }
+  }
+  
+  return {npdId,bendId,bend,tgl,penerima,progId,kegId,skId,sk,keg,prog,jml,terb:document.getElementById('fgu-terb').value,urai,nota,nobukti,bel:b};
 }
 function validateGU(d){if(!d.bendId){toast('Pilih Bendahara','err');return false;}if(!d.tgl){toast('Isi tanggal','err');return false;}if(!d.penerima){toast('Isi penerima','err');return false;}if(!d.skId){toast('Pilih Sub Kegiatan','err');return false;}if(!d.bel){toast('Pilih rekening belanja','err');return false;}if(!d.jml){toast('Masukkan jumlah','err');return false;}return true;}
 function previewKuiGU(){const d=getFormDataGU();if(!validateGU(d))return;const no='KU-GU/'+CFG.ta+'/'+String(noUrutGU).padStart(4,'0');document.getElementById('modal-cetak-body').innerHTML=buildKuiGU({...d,no});bukaModal('modal-cetak');checkAutoSigner(d.urai);renderAllBarcodes();}
 function simpanGU(){
   const d=getFormDataGU();if(!validateGU(d))return;
+  
   // Budget validation
   if(d.bel){
     const sisa = getSisaBel(d.skId, d.bel.kode, editTagihanId);
@@ -3631,6 +3770,26 @@ function simpanGU(){
       return;
     }
   }
+  
+  // Uang Panjar budget validation
+  if (d.npdId && d.bel) {
+    const n = PANJAR_NPD.find(x => x.id === d.npdId);
+    if (n) {
+      const item = n.items.find(it => it.kode === d.bel.kode);
+      if (!item) {
+        toast('Rekening belanja tidak terdaftar di NPD yang dipilih!', 'err');
+        return;
+      }
+      const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id && g.id !== editTagihanId);
+      const spentOnItem = linkedGUs.filter(g => g.bel?.kode === item.kode).reduce((s, g) => s + g.jumlah, 0);
+      const sisaItem = item.jumlah - spentOnItem;
+      if (d.jml > sisaItem) {
+        toast(`Nominal kuitansi melebihi sisa Uang Panjar pada rekening ${item.kode}! Sisa panjar: Rp ${fmtRp(sisaItem)}`, 'err', 5000);
+        return;
+      }
+    }
+  }
+
   if(editTagihanId){
     const tg=TAGIHAN_GU.find(x=>x.id===editTagihanId);
     if(tg){
@@ -3645,6 +3804,8 @@ function simpanGU(){
       tg.nobukti=d.nobukti;
       tg.bel=d.bel;
       tg.data=d;
+      tg.npdId=d.npdId;
+      tg.spjId=d.npdId ? 'PANJAR-LOCKED' : null;
     }
     const t=TAGIHAN.find(x=>x.id===editTagihanId);
     if(t){
@@ -3662,7 +3823,24 @@ function simpanGU(){
     toast('Kuitansi GU diperbarui','ok');
   } else {
     const no='KU-GU/'+CFG.ta+'/'+String(noUrutGU).padStart(4,'0');noUrutGU++;
-    TAGIHAN_GU.push({id:uid(),no,jenis:'GU',tgl:d.tgl,bendId:d.bendId,bendNama:d.bend?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai,jumlah:d.jml,nota:d.nota,nobukti:d.nobukti,bel:d.bel,data:d,spjId:null});
+    TAGIHAN_GU.push({
+      id:uid(),
+      no,
+      jenis:'GU',
+      tgl:d.tgl,
+      bendId:d.bendId,
+      bendNama:d.bend?.nama||'–',
+      skId:d.skId,
+      skNama:d.sk?.nama||'–',
+      urai:d.urai,
+      jumlah:d.jml,
+      nota:d.nota,
+      nobukti:d.nobukti,
+      bel:d.bel,
+      data:d,
+      npdId:d.npdId,
+      spjId:d.npdId ? 'PANJAR-LOCKED' : null
+    });
     TAGIHAN.unshift({id:TAGIHAN_GU[TAGIHAN_GU.length-1].id,no,jenis:'GU',tgl:d.tgl,pptkNama:d.bend?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai,jumlah:d.jml,status:'GU – Belum SPJ',history:[{status:'Dibuat',ts:new Date().toISOString(),oleh:d.bend?.jab||'BP',catatan:''}],data:{...d,items:[{kode:d.bel.kode,nama:d.bel.nama,jumlah:d.jml,penerima:d.penerima}],jspp:'GU'}});
     toast('Kuitansi GU '+no+' tersimpan','ok');
   }
@@ -3672,7 +3850,11 @@ function resetFormGU(){
   editTagihanId=null;
   const titleLbl=document.getElementById('fgu-title-lbl');
   if(titleLbl)titleLbl.textContent='💵 Kuitansi GU (Ganti Uang)';
-  ['fgu-bend','fgu-prog','fgu-keg','fgu-sk'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['fgu-penerima','fgu-jml','fgu-terb','fgu-urai','fgu-nota','fgu-nobukti'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});clearBelGU();curSkIdGU='';
+  ['fgu-bend','fgu-prog','fgu-keg','fgu-sk','fgu-npdId'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.disabled=false;}});
+  ['fgu-penerima','fgu-jml','fgu-terb','fgu-urai','fgu-nota','fgu-nobukti'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const infoBox = document.getElementById('fgu-npd-info-box');
+  if (infoBox) infoBox.style.display = 'none';
+  clearBelGU();curSkIdGU='';
 }
 
 // ================================================================
@@ -4678,6 +4860,11 @@ function editTagihan(id){
       editTagihanId = null;
       return;
     }
+    if(gu.spjId && gu.spjId !== 'PANJAR-LOCKED') {
+      toast('Kuitansi GU sedang diajukan atau sudah di-SPJ kan, tidak bisa diedit!', 'err');
+      editTagihanId = null;
+      return;
+    }
     pg('kuitansi-gu');
     const titleLbl = document.getElementById('fgu-title-lbl');
     if(titleLbl)titleLbl.textContent = '✏️ Edit Kuitansi GU';
@@ -4691,10 +4878,24 @@ function editTagihan(id){
     guLoadSk();
     document.getElementById('fgu-sk').value = gu.data.skId || '';
     guLoadBel();
-    if(gu.bel){
-      const list = BEL.filter(b => b.skId === gu.data.skId).sort((a,b) => a.kode.localeCompare(b.kode));
-      const idx = list.findIndex(b => b.id === gu.bel.id);
-      if(idx >= 0) selGU(idx);
+    populateGuNpdDropdown(gu.npdId || '');
+    if (gu.npdId) {
+      onGuNpdSelect();
+      const n = PANJAR_NPD.find(x => x.id === gu.npdId);
+      if (n && gu.bel) {
+        const idx = n.items.findIndex(it => it.kode === gu.bel.kode);
+        if (idx >= 0) selGU(idx);
+      }
+    } else {
+      document.getElementById('fgu-npd-info-box').style.display = 'none';
+      document.getElementById('fgu-prog').disabled = false;
+      document.getElementById('fgu-keg').disabled = false;
+      document.getElementById('fgu-sk').disabled = false;
+      if(gu.bel){
+        const list = BEL.filter(b => b.skId === gu.data.skId).sort((a,b) => a.kode.localeCompare(b.kode));
+        const idx = list.findIndex(b => b.id === gu.bel.id);
+        if(idx >= 0) selGU(idx);
+      }
     }
     document.getElementById('fgu-jml').value = gu.jumlah || 0;
     document.getElementById('fgu-terb').value = gu.data.terb || '';
@@ -4751,6 +4952,13 @@ function editTagihan(id){
 function hapusTagihan(id){
   const t = TAGIHAN.find(x => x.id === id);
   if(!t) return;
+  if(t.jenis === 'GU'){
+    const gu = TAGIHAN_GU.find(x => x.id === id);
+    if(gu && gu.spjId && gu.spjId !== 'PANJAR-LOCKED'){
+      toast('Kuitansi GU sedang diajukan atau sudah di-SPJ kan, tidak bisa dihapus!', 'err');
+      return;
+    }
+  }
   if(!confirm('Apakah Anda yakin ingin menghapus tagihan ' + t.no + '?')) return;
   TAGIHAN = TAGIHAN.filter(x => x.id !== id);
   TAGIHAN_GU = TAGIHAN_GU.filter(x => x.id !== id);
@@ -4758,6 +4966,230 @@ function hapusTagihan(id){
   updateDashboard();
   renderTagihan();
   toast('Tagihan ' + t.no + ' berhasil dihapus','ok');
+}
+
+function buildNpdPrint(n) {
+  const lb = logoBox();
+  const kpa = getPejabat('KPA');
+  const pa = getPejabat('PA');
+  const pptkPeg = PEG.find(p => p.nama === n.pptkNama || p.id === n.pptkId) || { nama: n.pptkNama || '.......................', nip: '' };
+  
+  const rows = (n.items || []).map((it, i) => `
+    <tr>
+      <td style="border:1px solid #000;padding:5px;text-align:center">${i+1}</td>
+      <td style="border:1px solid #000;padding:5px;font-family:monospace;font-size:9pt">${it.kode}</td>
+      <td style="border:1px solid #000;padding:5px">${it.nama}</td>
+      <td style="border:1px solid #000;padding:5px;text-align:right;font-weight:bold">Rp ${fmtRp(it.jumlah)}</td>
+    </tr>
+  `).join('');
+  
+  return `
+    <div class="ku-page" style="font-family:'Plus Jakarta Sans',sans-serif;padding:30px;color:#000;background:#fff;max-width:800px;margin:0 auto">
+      <div class="ku-kop" style="display:flex;align-items:center;border-bottom:3px solid #000;padding-bottom:10px;margin-bottom:15px">
+        ${lb}
+        <div class="ku-kop-text" style="flex:1;text-align:center;margin-left:15px">
+          <div style="font-size:12pt;font-weight:800;text-transform:uppercase">${CFG.pemda || 'PEMERINTAH DAERAH'}</div>
+          <div style="font-size:14pt;font-weight:900;text-transform:uppercase">${CFG.skpd || 'SKPD'}</div>
+          <div style="font-size:9pt;color:#555">${CFG.subskpd || ''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:15px">
+          <div style="font-size:11pt;font-weight:bold;color:var(--navy)">NOTA PENCAIRAN DANA</div>
+          <div style="font-family:monospace;font-size:9pt;margin-top:4px">${n.noNpd || 'DRAFT NPD'}</div>
+        </div>
+      </div>
+      
+      <div style="text-align:center;margin-bottom:20px">
+        <h3 style="text-transform:uppercase;margin:0;font-size:13pt;font-weight:800">NOTA PENCAIRAN DANA (NPD)</h3>
+        <div style="font-size:10pt;color:#333;margin-top:5px">Tahun Anggaran: ${CFG.ta || '2026'}</div>
+      </div>
+      
+      <table style="width:100%;border-collapse:collapse;font-size:10pt;margin-bottom:15px">
+        <tr>
+          <td style="width:150px;font-weight:bold;padding:4px 0">Kepada Yth.</td>
+          <td style="padding:4px 0">: Pengguna Anggaran / Kuasa Pengguna Anggaran</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;padding:4px 0">Dari</td>
+          <td style="padding:4px 0">: Pejabat Pelaksana Teknis Kegiatan (PPTK)</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;padding:4px 0">Sub Kegiatan</td>
+          <td style="padding:4px 0">: <strong>${n.skKode}</strong> - ${n.skNama}</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;padding:4px 0">Tanggal Pengajuan</td>
+          <td style="padding:4px 0">: ${fmtTgl(n.tglNpd)}</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;padding:4px 0;vertical-align:top">Uraian Kebutuhan</td>
+          <td style="padding:4px 0">: ${n.uraian}</td>
+        </tr>
+      </table>
+      
+      <p style="font-size:10pt;margin-bottom:10px">Dengan ini mengajukan pencairan uang panjar untuk pelaksanaan sub kegiatan tersebut di atas dengan rincian rekening belanja sebagai berikut:</p>
+      
+      <table style="width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:20px">
+        <thead>
+          <tr style="background:#f0f0f0">
+            <th style="border:1px solid #000;padding:6px;width:30px;text-align:center">No</th>
+            <th style="border:1px solid #000;padding:6px;width:150px;text-align:center">Kode Rekening</th>
+            <th style="border:1px solid #000;padding:6px;text-align:center">Nama Rekening Belanja</th>
+            <th style="border:1px solid #000;padding:6px;width:130px;text-align:center">Nominal Pengajuan</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr style="background:#f5f5f5">
+            <td colspan="3" style="border:1px solid #000;padding:6px;text-align:right;font-weight:bold">TOTAL PENGAJUAN:</td>
+            <td style="border:1px solid #000;padding:6px;text-align:right;font-weight:bold;font-size:10.5pt;color:var(--navy)">Rp ${fmtRp(n.totalNpd)}</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div style="display:flex;justify-content:space-between;margin-top:35px;font-size:10pt">
+        <div style="width:280px;text-align:center">
+          <div>Mengetahui/Menyetujui,</div>
+          <div style="font-weight:bold;margin-top:5px;text-transform:uppercase">${kpa.nip ? 'KUASA PENGGUNA ANGGARAN' : 'PENGGUNA ANGGARAN'}</div>
+          <div style="height:65px"></div>
+          <div style="font-weight:bold;text-decoration:underline">${kpa.nip ? kpa.nama : pa.nama}</div>
+          <div>NIP. ${kpa.nip ? kpa.nip : pa.nip}</div>
+        </div>
+        
+        <div style="width:280px;text-align:center">
+          <div>${CFG.kota || '–'}, ${fmtTgl(n.tglNpd)}</div>
+          <div style="font-weight:bold;margin-top:5px">PPTK</div>
+          <div style="height:65px"></div>
+          <div style="font-weight:bold;text-decoration:underline">${pptkPeg.nama}</div>
+          <div>NIP. ${pptkPeg.nip || ''}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildSpjPanjarPrint(n) {
+  const lb = logoBox();
+  const kpa = getPejabat('KPA');
+  const pa = getPejabat('PA');
+  const bp = getPejabat('BP');
+  const bpp = getPejabat('BPP');
+  const bend = n.disburseDetails ? (PEG.find(p => p.nama.includes(n.pptkNama)) || bpp || bp) : (bpp || bp);
+  const pptkPeg = PEG.find(p => p.nama === n.pptkNama || p.id === n.pptkId) || { nama: n.pptkNama || '.......................', nip: '' };
+  
+  const spjTot = n.spjDetails ? n.spjDetails.totalBelanja : 0;
+  const diff = n.totalNpd - spjTot;
+  let diffText = 'Pas';
+  if (diff > 0) diffText = `Surplus Rp ${fmtRp(diff)} (Sisa dikembalikan)`;
+  else if (diff < 0) diffText = `Defisit Rp ${fmtRp(Math.abs(diff))} (Kekurangan dibayar bendahara)`;
+  
+  const rows = (n.spjDetails?.items || []).map((it, i) => `
+    <tr>
+      <td style="border:1px solid #000;padding:4px;text-align:center">${i+1}</td>
+      <td style="border:1px solid #000;padding:4px;font-family:monospace;font-size:8.5pt">${it.noBuktiBelanja}</td>
+      <td style="border:1px solid #000;padding:4px;white-space:nowrap">${fmtTgl(it.tglBelanja)}</td>
+      <td style="border:1px solid #000;padding:4px;font-family:monospace;font-size:8.5pt">${it.kode}</td>
+      <td style="border:1px solid #000;padding:4px">${it.nama}</td>
+      <td style="border:1px solid #000;padding:4px;text-align:right;font-weight:bold">Rp ${fmtRp(it.jumlah)}</td>
+      <td style="border:1px solid #000;padding:4px;font-size:9pt">${it.penerima}</td>
+      <td style="border:1px solid #000;padding:4px;font-size:9pt">${it.uraian}</td>
+    </tr>
+  `).join('');
+  
+  return `
+    <div class="ku-page" style="font-family:'Plus Jakarta Sans',sans-serif;padding:30px;color:#000;background:#fff;max-width:800px;margin:0 auto">
+      <div class="ku-kop" style="display:flex;align-items:center;border-bottom:3px solid #000;padding-bottom:10px;margin-bottom:15px">
+        ${lb}
+        <div class="ku-kop-text" style="flex:1;text-align:center;margin-left:15px">
+          <div style="font-size:12pt;font-weight:800;text-transform:uppercase">${CFG.pemda || 'PEMERINTAH DAERAH'}</div>
+          <div style="font-size:14pt;font-weight:900;text-transform:uppercase">${CFG.skpd || 'SKPD'}</div>
+          <div style="font-size:9pt;color:#555">${CFG.subskpd || ''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:15px">
+          <div style="font-size:10pt;font-weight:bold;color:var(--navy)">PERTANGGUNGJAWABAN PANJAR</div>
+          <div style="font-family:monospace;font-size:9pt;margin-top:4px">NPD: ${n.noNpd}</div>
+        </div>
+      </div>
+      
+      <div style="text-align:center;margin-bottom:20px">
+        <h3 style="text-transform:uppercase;margin:0;font-size:12pt;font-weight:800">SPJ PERTANGGUNGJAWABAN PENGGUNAAN UANG PANJAR</h3>
+        <div style="font-size:9.5pt;color:#333;margin-top:5px">Tahun Anggaran: ${CFG.ta || '2026'}</div>
+      </div>
+      
+      <table style="width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:15px">
+        <tr>
+          <td style="width:130px;font-weight:bold;padding:3px 0">Sub Kegiatan</td>
+          <td style="padding:3px 0">: <strong>${n.skKode}</strong> - ${n.skNama}</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;padding:3px 0">Nama PPTK</td>
+          <td style="padding:3px 0">: ${pptkPeg.nama} (NIP. ${pptkPeg.nip || ''})</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;padding:3px 0">Uang Panjar Awal</td>
+          <td style="padding:3px 0">: <strong>Rp ${fmtRp(n.totalNpd)}</strong> (Cair Tgl: ${n.disburseDetails ? fmtTgl(n.disburseDetails.tglDisburse) : '–'})</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;padding:3px 0">Realisasi Belanja</td>
+          <td style="padding:3px 0">: <strong>Rp ${fmtRp(spjTot)}</strong></td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;padding:3px 0">Selisih Kas / Status</td>
+          <td style="padding:3px 0">: <strong>${diffText}</strong></td>
+        </tr>
+      </table>
+      
+      <p style="font-size:9.5pt;margin-bottom:10px">Rincian bukti pengeluaran riil kuitansi GU yang dibiayai dari uang panjar ini:</p>
+      
+      <table style="width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:25px">
+        <thead>
+          <tr style="background:#f0f0f0">
+            <th style="border:1px solid #000;padding:5px;width:25px;text-align:center">No</th>
+            <th style="border:1px solid #000;padding:5px;width:100px;text-align:center">No. Bukti</th>
+            <th style="border:1px solid #000;padding:5px;width:70px;text-align:center">Tanggal</th>
+            <th style="border:1px solid #000;padding:5px;width:110px;text-align:center">Kode Rekening</th>
+            <th style="border:1px solid #000;padding:5px;text-align:center">Nama Rekening Belanja</th>
+            <th style="border:1px solid #000;padding:5px;width:90px;text-align:center">Jumlah (Rp)</th>
+            <th style="border:1px solid #000;padding:5px;width:95px;text-align:center">Penerima</th>
+            <th style="border:1px solid #000;padding:5px;text-align:center">Uraian</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr style="background:#f5f5f5">
+            <td colspan="5" style="border:1px solid #000;padding:5px;text-align:right;font-weight:bold">TOTAL REALISASI BELANJA PANJAR:</td>
+            <td style="border:1px solid #000;padding:5px;text-align:right;font-weight:bold;color:var(--navy)">Rp ${fmtRp(spjTot)}</td>
+            <td colspan="2" style="border:1px solid #000"></td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div style="display:flex;justify-content:space-between;margin-top:25px;font-size:9.5pt">
+        <div style="width:230px;text-align:center">
+          <div>Mengetahui,</div>
+          <div style="font-weight:bold;margin-top:5px;text-transform:uppercase">${kpa.nip ? 'KUASA PENGGUNA ANGGARAN' : 'PENGGUNA ANGGARAN'}</div>
+          <div style="height:55px"></div>
+          <div style="font-weight:bold;text-decoration:underline">${kpa.nip ? kpa.nama : pa.nama}</div>
+          <div>NIP. ${kpa.nip ? kpa.nip : pa.nip}</div>
+        </div>
+        
+        <div style="width:230px;text-align:center">
+          <div>Telah Diverifikasi,</div>
+          <div style="font-weight:bold;margin-top:5px;text-transform:uppercase">BENDAHARA PENGELUARAN</div>
+          <div style="height:55px"></div>
+          <div style="font-weight:bold;text-decoration:underline">${bend.nama}</div>
+          <div>NIP. ${bend.nip || ''}</div>
+        </div>
+        
+        <div style="width:230px;text-align:center">
+          <div>${CFG.kota || '–'}, ${n.spjDetails ? fmtTgl(n.spjDetails.tglSpj) : '................'}</div>
+          <div style="font-weight:bold;margin-top:5px">PPTK</div>
+          <div style="height:55px"></div>
+          <div style="font-weight:bold;text-decoration:underline">${pptkPeg.nama}</div>
+          <div>NIP. ${pptkPeg.nip || ''}</div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function buildTandaTerima(t){
@@ -5325,37 +5757,136 @@ function doUbahStatus(id,newStatus){
 // TRACKING
 // ================================================================
 const TL_STEPS=[{key:'Draft',icon:'📝',label:'Dibuat PPTK'},{key:'Lengkapi TTD & Berkas',icon:'✍️',label:'TTD Basah'},{key:'Berkas Dikirim',icon:'🚚',label:'Ajukan Berkas'},{key:'Menunggu Verifikator',icon:'🔍',label:'Verifikator'},{key:'Dikirim ke PPK',icon:'🚚',label:'Ajukan ke PPK'},{key:'Menunggu PPK',icon:'📋',label:'PPK'},{key:'Dikirim ke BPP',icon:'🚚',label:'Ajukan ke BPP'},{key:'Menunggu BPP',icon:'💰',label:'BPP'},{key:'Di SIPD',icon:'🏢',label:'Di Ajukan Ke BKD'},{key:'SP2D Terbit',icon:'✅',label:'SP2D'}];
+
+const TL_STEPS_PANJAR = [
+  {key: 'Draft', icon: '📝', label: 'Draft NPD'},
+  {key: 'Diajukan', icon: '📩', label: 'NPD Diajukan'},
+  {key: 'Disetujui', icon: '🛡️', label: 'Disetujui KPA'},
+  {key: 'Dicairkan', icon: '💵', label: 'Uang Dicairkan'},
+  {key: 'SPJ Diajukan', icon: '📄', label: 'SPJ Diajukan'},
+  {key: 'Selesai', icon: '✅', label: 'Selesai & Settle'}
+];
+
+const PJ_EMOJI = {
+  Draft: '📝',
+  Diajukan: '📩',
+  Disetujui: '🛡️',
+  Dicairkan: '💵',
+  'SPJ Diajukan': '📄',
+  Selesai: '✅',
+  Ditolak: '✕'
+};
+
+const PJ_CLS = {
+  Draft: 'bg-dark',
+  Diajukan: 'bg-warning',
+  Disetujui: 'bg-info',
+  Dicairkan: 'bg-success',
+  'SPJ Diajukan': 'bg-primary',
+  Selesai: 'bg-success',
+  Ditolak: 'bg-danger'
+};
+
 function renderTracking(){
   const cari=(document.getElementById('trk-cari')?.value||'').toLowerCase();const fSt=document.getElementById('trk-st')?.value||'';
   let list=TAGIHAN.filter(t=>t.jenis!=='GU');
-  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id);}
+  
+  const mappedPanjar = PANJAR_NPD.map(n => ({
+    id: n.id,
+    no: n.noNpd || 'Draft NPD',
+    tgl: n.tglNpd,
+    pptkId: n.pptkId,
+    pptkNama: n.pptkNama,
+    skNama: n.skNama,
+    skKode: n.skKode,
+    urai: n.uraian,
+    jumlah: n.totalNpd,
+    status: n.status,
+    jenis: 'PANJAR',
+    history: n.history || [
+      { status: 'Draft', ts: n.tglNpd + 'T08:00:00Z', oleh: n.pptkNama, catatan: 'Dibuat PPTK' },
+      ...(n.status !== 'Draft' ? [{ status: 'Diajukan', ts: n.tglNpd + 'T09:00:00Z', oleh: n.pptkNama, catatan: 'Mengajukan NPD' }] : []),
+      ...(n.status === 'Disetujui' || n.status === 'Dicairkan' || n.status === 'SPJ Diajukan' || n.status === 'Selesai' ? [{ status: 'Disetujui', ts: (n.tglApproval || n.tglNpd) + 'T10:00:00Z', oleh: 'PA/KPA', catatan: n.catatanApproval }] : []),
+      ...(n.status === 'Ditolak' ? [{ status: 'Ditolak', ts: (n.tglApproval || n.tglNpd) + 'T10:00:00Z', oleh: 'PA/KPA', catatan: n.catatanApproval }] : []),
+      ...(n.disburseDetails ? [{ status: 'Dicairkan', ts: n.disburseDetails.tglDisburse + 'T11:00:00Z', oleh: 'Bendahara', catatan: `Transfer ref: ${n.disburseDetails.noBuktiDisburse}` }] : []),
+      ...(n.spjDetails ? [{ status: 'SPJ Diajukan', ts: n.spjDetails.tglSpj + 'T13:00:00Z', oleh: n.pptkNama, catatan: 'Mengajukan SPJ Panjar' }] : []),
+      ...(n.settleDetails ? [{ status: 'Selesai', ts: n.settleDetails.tglSettle + 'T15:00:00Z', oleh: 'Bendahara', catatan: `Settlement ref: ${n.settleDetails.noBuktiSettle}` }] : [])
+    ]
+  }));
+  
+  let panjarFiltered = mappedPanjar;
+  if(USER?.jab==='PPTK'){
+    const myPeg=getCurrentPegawai();
+    if(myPeg) panjarFiltered = panjarFiltered.filter(t=>t.pptkId===myPeg.id);
+  }
+  list = list.concat(panjarFiltered);
+  
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id || t.pptkId===undefined);}
   if(cari)list=list.filter(t=>t.no.toLowerCase().includes(cari)||t.pptkNama.toLowerCase().includes(cari)||t.urai.toLowerCase().includes(cari)||t.skNama.toLowerCase().includes(cari));
   if(fSt)list=list.filter(t=>t.status===fSt);
   const el=document.getElementById('tracking-list');
-  if(!list.length){el.innerHTML='<div class="empty-state"><div class="es-icon">🔍</div><p>Tidak ada tagihan ditemukan</p></div>';return;}
+  if(!list.length){el.innerHTML='<div class="empty-state"><div class="es-icon">🔍</div><p>Tidak ada tagihan/panjar ditemukan</p></div>';return;}
   el.innerHTML=list.map(t=>buildTLCard(t)).join('');
 }
+
 function buildTLCard(t){
-  const hist=t.history||[];const curIdx=TL_STEPS.findIndex(s=>s.key===t.status);const isDitolak=t.status==='Ditolak';
-  const steps=TL_STEPS.map((s,i)=>{
+  const hist=t.history||[];
+  const isPanjar = t.jenis === 'PANJAR';
+  const stepsList = isPanjar ? TL_STEPS_PANJAR : TL_STEPS;
+  const curIdx=stepsList.findIndex(s=>s.key===t.status);
+  const isDitolak=t.status==='Ditolak';
+  
+  const steps=stepsList.map((s,i)=>{
     const he=hist.find(h=>h.status===s.key);let cls='';
-    if(isDitolak&&i===curIdx)cls='rej';else if(i<curIdx||t.status==='SP2D Terbit')cls='done';else if(i===curIdx)cls='cur';
+    if(isDitolak&&i===curIdx)cls='rej';
+    else if(i<curIdx||t.status==='SP2D Terbit'||(isPanjar && t.status==='Selesai'))cls='done';
+    else if(i===curIdx)cls='cur';
     return`<div class="tl-step ${cls}"><div class="tl-dot">${cls==='done'?'✓':cls==='rej'?'✕':s.icon}</div><div class="tl-lbl">${s.label}</div><div class="tl-time">${he?fmtTS(he.ts):''}</div></div>`;
   }).join('');
-  const logHtml=hist.map((h,i)=>{const dur=i<hist.length-1?durasi(h.ts,hist[i+1].ts):(h.ts?durasi(h.ts,null):'');const dc=h.status==='Ditolak'?'var(--red)':h.status==='SP2D Terbit'?'var(--green)':'var(--navy)';return`<div class="tl-log-item"><div class="tl-log-dot" style="background:${dc}"></div><div class="tl-log-text"><strong>${stEmoji[h.status]||''} ${h.status==='Di SIPD'?'Di Ajukan Ke BKD':h.status==='Berkas Dikirim'?'Ajukan Berkas':h.status==='Dikirim ke PPK'?'Ajukan ke PPK':h.status==='Dikirim ke BPP'?'Ajukan ke BPP':h.status}</strong> — <em>${h.oleh}</em>${h.catatan?' · "'+h.catatan+'"':''}</div><div class="tl-log-time">${h.ts?fmtTS(h.ts):'–'}${dur?' ('+dur+')':''}</div></div>`;}).join('')||'<div style="font-size:11px;color:#aaa">Belum ada riwayat</div>';
-  const canAdv=canAdvance(t);const nextSt=ALUR[ALUR.indexOf(t.status)+1];
-  let actText = `Proses ke: ${nextSt}`;
-  if(nextSt==='Berkas Dikirim') actText = 'Ajukan Berkas Fisik';
-  else if(nextSt==='Menunggu Verifikator' && t.status==='Berkas Dikirim') actText = 'Terima Fisik Berkas';
-  else if(nextSt==='Dikirim ke PPK') actText = 'Ajukan Berkas ke PPK';
-  else if(nextSt==='Menunggu PPK' && t.status==='Dikirim ke PPK') actText = 'Terima Fisik PPK';
-  else if(nextSt==='Dikirim ke BPP') actText = 'Ajukan Berkas ke BPP';
-  else if(nextSt==='Menunggu BPP' && t.status==='Dikirim ke BPP') actText = 'Terima Fisik BPP';
-  else if(nextSt==='Di SIPD') actText = 'Di Ajukan Ke BKD';
-  const actBtn=t.status==='SP2D Terbit'?'<span style="font-size:11px;color:var(--green)">✅ Selesai</span>':isDitolak?`<button class="btn btn-sm btn-warning" onclick="showStatusModal('${t.id}')">🔄 Kembalikan</button>`:nextSt==='SP2D Terbit'?`<span style="font-size:11px;color:#0d9488;font-weight:600">⏳ Menunggu Input SP2D (Rekonsiliasi)</span>`:nextSt&&canAdv?`<button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')">${stEmoji[nextSt]||''} ${actText}</button>`:nextSt?`<span style="font-size:11px;color:#aaa">Menunggu ${stOleh[nextSt]||'pejabat terkait'}</span>`:'';
+  
+  const logHtml=hist.map((iHist,i)=>{
+    const dur=i<hist.length-1?durasi(iHist.ts,hist[i+1].ts):(iHist.ts?durasi(iHist.ts,null):'');
+    const dc=iHist.status==='Ditolak'?'var(--red)':(iHist.status==='SP2D Terbit'||iHist.status==='Selesai')?'var(--green)':'var(--navy)';
+    const emoji = isPanjar ? (PJ_EMOJI[iHist.status]||'📄') : (stEmoji[iHist.status]||'');
+    return`<div class="tl-log-item"><div class="tl-log-dot" style="background:${dc}"></div><div class="tl-log-text"><strong>${emoji} ${iHist.status==='Di SIPD'?'Di Ajukan Ke BKD':iHist.status==='Berkas Dikirim'?'Ajukan Berkas':iHist.status==='Dikirim ke PPK'?'Ajukan ke PPK':iHist.status==='Dikirim ke BPP'?'Ajukan ke BPP':iHist.status}</strong> — <em>${iHist.oleh}</em>${iHist.catatan?' · "'+iHist.catatan+'"':''}</div><div class="tl-log-time">${iHist.ts?fmtTS(iHist.ts):'–'}${dur?' ('+dur+')':''}</div></div>`;
+  }).join('')||'<div style="font-size:11px;color:#aaa">Belum ada riwayat</div>';
+  
+  let actBtn = '';
+  let detailBtns = '';
+  
+  if (isPanjar) {
+    if (t.status === 'Selesai') {
+      actBtn = `<span style="font-size:11px;color:var(--green)">✅ Selesai & Settle</span>`;
+    } else if (t.status === 'Ditolak') {
+      actBtn = `<span style="font-size:11px;color:var(--red)">✕ Ditolak KPA</span>`;
+    } else {
+      actBtn = `<span style="font-size:11px;color:#f57f17;font-weight:600">⏳ Proses di Menu Uang Panjar</span>`;
+    }
+    
+    detailBtns = `<button class="btn btn-sm" onclick="viewNpdDetail('${t.id}')" style="margin-left:3px">👁 NPD</button>`;
+    if (t.status === 'SPJ Diajukan' || t.status === 'Selesai') {
+      detailBtns += `<button class="btn btn-sm" onclick="viewSpjDetail('${t.id}')" style="margin-left:3px">👁 SPJ</button>`;
+    }
+  } else {
+    const canAdv=canAdvance(t);const nextSt=ALUR[ALUR.indexOf(t.status)+1];
+    let actText = `Proses ke: ${nextSt}`;
+    if(nextSt==='Berkas Dikirim') actText = 'Ajukan Berkas Fisik';
+    else if(nextSt==='Menunggu Verifikator' && t.status==='Berkas Dikirim') actText = 'Terima Fisik Berkas';
+    else if(nextSt==='Dikirim ke PPK') actText = 'Ajukan Berkas ke PPK';
+    else if(nextSt==='Menunggu PPK' && t.status==='Dikirim ke PPK') actText = 'Terima Fisik PPK';
+    else if(nextSt==='Dikirim ke BPP') actText = 'Ajukan Berkas ke BPP';
+    else if(nextSt==='Menunggu BPP' && t.status==='Dikirim ke BPP') actText = 'Terima Fisik BPP';
+    else if(nextSt==='Di SIPD') actText = 'Di Ajukan Ke BKD';
+    
+    actBtn=t.status==='SP2D Terbit'?'<span style="font-size:11px;color:var(--green)">✅ Selesai</span>':isDitolak?`<button class="btn btn-sm btn-warning" onclick="showStatusModal('${t.id}')">🔄 Kembalikan</button>`:nextSt==='SP2D Terbit'?`<span style="font-size:11px;color:#0d9488;font-weight:600">⏳ Menunggu Input SP2D (Rekonsiliasi)</span>`:nextSt&&canAdv?`<button class="btn btn-sm btn-primary" onclick="showStatusModal('${t.id}')">${stEmoji[nextSt]||''} ${actText}</button>`:nextSt?`<span style="font-size:11px;color:#aaa">Menunggu ${stOleh[nextSt]||'pejabat terkait'}</span>`:'';
+    detailBtns = `<button class="btn btn-sm" onclick="prevTagihan('${t.id}')">👁 Kuitansi</button>`;
+  }
+  
   const pptk=PEG.find(p=>p.id===t.pptkId);const verif=PEG.find(p=>p.jab==='Verifikator');
-  const durTotal=hist[0]?.ts?durasi(hist[0].ts,t.status==='SP2D Terbit'?hist[hist.length-1]?.ts:null):'–';
-  return`<div class="tl-card">
+  const durTotal=hist[0]?.ts?durasi(hist[0].ts,t.status==='SP2D Terbit'||(isPanjar && t.status==='Selesai')?hist[hist.length-1]?.ts:null):'–';
+  const displayBadge = isPanjar ? `<span class="badge ${PJ_CLS[t.status]||'bg-gray'}" style="margin-top:4px">${PJ_EMOJI[t.status]||''} ${t.status}</span>` : `<span class="badge ${stCls[t.status]||'bg-gray'}" style="margin-top:4px">${stEmoji[t.status]||''} ${t.status}</span>`;
+  
+  return `<div class="tl-card">
     <div class="tl-card-hdr">
       <div><div style="font-family:monospace;font-size:12px;color:var(--navy);font-weight:700">${t.no}</div>
         <div style="font-size:11px;color:#888;margin-top:2px">${t.tgl?fmtTgl(t.tgl)+' · ':''}<strong>${t.pptkNama}</strong> · ${t.skNama.substring(0,45)}</div>
@@ -5366,7 +5897,7 @@ function buildTLCard(t){
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0"><div style="font-size:15px;font-weight:700;color:var(--navy)">Rp ${fmtRp(t.jumlah)}</div>
-        <span class="badge ${stCls[t.status]||'bg-gray'}" style="margin-top:4px">${stEmoji[t.status]||''} ${t.status}</span>
+        ${displayBadge}
         <div style="font-size:10px;color:#bbb;margin-top:3px">Total waktu: ${durTotal}</div>
       </div>
     </div>
@@ -8989,9 +9520,13 @@ function saveNpd(isSubmit) {
     npdObj.uraian = uraian;
     npdObj.items = items;
     npdObj.totalNpd = totalNpd;
+    const oldStatus = npdObj.status;
     npdObj.status = isSubmit ? 'Diajukan' : 'Draft';
     if (isSubmit && !npdObj.noNpd) {
       npdObj.noNpd = `NPD/${CFG.ta}/${String(noUrutNPD++).padStart(4, '0')}`;
+    }
+    if (oldStatus !== npdObj.status) {
+      addPanjarHistory(npdObj, npdObj.status, isSubmit ? 'Mengajukan NPD' : 'Menyimpan draft NPD');
     }
   } else {
     const newId = uid();
@@ -9015,6 +9550,7 @@ function saveNpd(isSubmit) {
       spjDetails: null,
       settleDetails: null
     };
+    addPanjarHistory(npdObj, npdObj.status, isSubmit ? 'Mengajukan NPD' : 'Menyimpan draft NPD');
     PANJAR_NPD.push(npdObj);
   }
   
@@ -9028,71 +9564,7 @@ function viewNpdDetail(id) {
   const n = PANJAR_NPD.find(x => x.id === id);
   if (!n) return;
   
-  let rows = (n.items || []).map(it => `
-    <tr>
-      <td style="font-family:monospace;font-size:11px">${it.kode}</td>
-      <td>${it.nama}</td>
-      <td style="text-align:right;font-weight:700">Rp ${fmtRp(it.jumlah)}</td>
-    </tr>
-  `).join('');
-  
-  let disburseInfo = '';
-  if (n.disburseDetails) {
-    disburseInfo = `
-      <div style="background:#e0f2fe; border-radius:6px; padding:10px; margin-top:8px; font-size:11px">
-        <strong>Pencairan Bank (Transfer):</strong><br>
-        Tgl Transfer: ${fmtTgl(n.disburseDetails.tglDisburse)} · Bukti: ${n.disburseDetails.noBuktiDisburse}<br>
-        Bank Asal: ${n.disburseDetails.bankAsal} · Rekening PPTK: ${n.disburseDetails.bankTujuan}
-      </div>
-    `;
-  }
-  
-  let settleInfo = '';
-  if (n.settleDetails) {
-    settleInfo = `
-      <div style="background:#f0fdf4; border-radius:6px; padding:10px; margin-top:8px; font-size:11px">
-        <strong>Penyelesaian SPJ:</strong><br>
-        Status Settle: ${n.settleDetails.tipeSettle} (Rp ${fmtRp(n.settleDetails.jumlahSettle)})<br>
-        Tgl Finalisasi: ${fmtTgl(n.settleDetails.tglSettle)} · Bukti Settle: ${n.settleDetails.noBuktiSettle}
-      </div>
-    `;
-  }
-
-  const detailHtml = `
-    <div style="font-size:12px;line-height:1.5">
-      <div style="background:#f1f5f9; border-radius:6px; padding:10px; margin-bottom:10px">
-        <div><strong>No. NPD:</strong> ${n.noNpd || '–'}</div>
-        <div><strong>Tanggal:</strong> ${fmtTgl(n.tglNpd)}</div>
-        <div><strong>Sub Kegiatan:</strong> ${n.skKode} - ${n.skNama}</div>
-        <div><strong>Uraian:</strong> ${n.uraian}</div>
-        <div><strong>Status:</strong> <span class="badge bg-primary">${n.status}</span></div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Kode Rekening</th>
-              <th>Nama Rekening</th>
-              <th style="text-align:right">Nominal</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows}
-          </tbody>
-        </table>
-      </div>
-      <div style="text-align:right;margin-top:8px;font-weight:700">Total: Rp ${fmtRp(n.totalNpd)}</div>
-      ${disburseInfo}
-      ${settleInfo}
-    </div>
-  `;
-  
-  document.getElementById('modal-cetak-body').innerHTML = `
-    <div style="padding:15px">
-      <h3>Detail Pengajuan Uang Panjar (NPD)</h3>
-      ${detailHtml}
-    </div>
-  `;
+  document.getElementById('modal-cetak-body').innerHTML = buildNpdPrint(n);
   const tabs = document.getElementById('print-doc-tabs-container');
   if (tabs) tabs.style.display = 'none';
   bukaModal('modal-cetak');
@@ -9173,6 +9645,8 @@ function approveNpd(isApproved) {
   n.status = isApproved ? 'Disetujui' : 'Ditolak';
   n.catatanApproval = catatan;
   n.tglApproval = new Date().toISOString().split('T')[0];
+  
+  addPanjarHistory(n, n.status, catatan || (isApproved ? 'Persetujuan NPD' : 'Penolakan NPD'));
   
   tutupModal('modal-panjar-approval');
   renderPanjarApproval();
@@ -9260,6 +9734,8 @@ function disburseNpd() {
   };
   n.status = 'Dicairkan';
   
+  addPanjarHistory(n, n.status, `Transfer pencairan ref: ${noBuktiDisburse}`);
+  
   tutupModal('modal-panjar-disburse');
   renderPanjarDisburse();
   scheduleSave();
@@ -9325,6 +9801,17 @@ function renderPanjarSpj() {
   }).join('');
 }
 
+function addPanjarHistory(n, status, catatan = '') {
+  if (!n.history) n.history = [];
+  const oleh = USER?.nama || USER?.username || 'System';
+  n.history.push({
+    status,
+    ts: new Date().toISOString(),
+    oleh,
+    catatan
+  });
+}
+
 function bukaFormSpj(id) {
   const n = PANJAR_NPD.find(x => x.id === id);
   if (!n) return;
@@ -9333,20 +9820,48 @@ function bukaFormSpj(id) {
   document.getElementById('spj-npd-no').textContent = n.noNpd;
   document.getElementById('spj-npd-sk').textContent = `${n.skKode} - ${n.skNama}`;
   document.getElementById('spj-npd-panjar').textContent = 'Rp ' + fmtRp(n.totalNpd);
+  document.getElementById('spj-tgl').value = n.spjDetails?.tglSpj || new Date().toISOString().split('T')[0];
   
-  spjAccountsList = n.items.map(it => ({kode: it.kode, nama: it.nama}));
-  
+  // Find linked GUs
+  const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id);
   const tbody = document.getElementById('tbody-spj-receipts');
-  tbody.innerHTML = '';
   
-  if (n.spjDetails && n.spjDetails.items.length) {
-    document.getElementById('spj-tgl').value = n.spjDetails.tglSpj;
-    n.spjDetails.items.forEach(it => {
-      addSpjRow(it);
-    });
+  // Sembunyikan tombol manual add row karena kita memuat GU
+  const addBtn = document.querySelector('[onclick="addSpjRow()"]');
+  if (addBtn) addBtn.style.display = 'none';
+  
+  if (linkedGUs.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align:center;padding:25px;color:#ea580c;background:#fff3e0;font-weight:600;border:1px solid #ffe0b2;border-radius:6px">
+          ⚠️ Belum ada Kuitansi GU yang dibuat untuk Uang Panjar ini.<br>
+          <span style="font-weight:400;font-size:11px;color:#666;margin-top:5px;display:inline-block">
+            Silakan buat Kuitansi GU terlebih dahulu di menu <strong>Kuitansi GU</strong> dan hubungkan dengan NPD ini.
+          </span>
+        </td>
+      </tr>
+    `;
+    const subBtn = document.querySelector('[onclick="saveSpj(true)"]');
+    if (subBtn) subBtn.disabled = true;
+    const drfBtn = document.querySelector('[onclick="saveSpj(false)"]');
+    if (drfBtn) drfBtn.disabled = true;
   } else {
-    document.getElementById('spj-tgl').value = new Date().toISOString().split('T')[0];
-    addSpjRow();
+    const subBtn = document.querySelector('[onclick="saveSpj(true)"]');
+    if (subBtn) subBtn.disabled = false;
+    const drfBtn = document.querySelector('[onclick="saveSpj(false)"]');
+    if (drfBtn) drfBtn.disabled = false;
+    
+    tbody.innerHTML = linkedGUs.map(g => `
+      <tr style="background:#fff">
+        <td style="font-family:monospace;font-size:11px">${g.no}</td>
+        <td style="white-space:nowrap">${fmtTgl(g.tgl)}</td>
+        <td style="font-size:11px"><strong>${g.bel?.kode}</strong><br>${g.bel?.nama}</td>
+        <td style="text-align:right;font-weight:700">Rp ${fmtRp(g.jumlah)}</td>
+        <td>${g.data?.penerima || '–'}</td>
+        <td>${g.urai}</td>
+        <td style="text-align:center"><span style="color:var(--green)">✓</span></td>
+      </tr>
+    `).join('');
   }
   
   calcSpjTotal();
@@ -9354,38 +9869,11 @@ function bukaFormSpj(id) {
 }
 
 function addSpjRow(data = null) {
-  const tbody = document.getElementById('tbody-spj-receipts');
-  const rowId = uid();
-  
-  const tr = document.createElement('tr');
-  tr.id = `spj-row-${rowId}`;
-  
-  const optHtml = spjAccountsList.map(a => `<option value="${a.kode}">${a.kode} - ${a.nama}</option>`).join('');
-  
-  tr.innerHTML = `
-    <td><input type="text" class="spj-inp-bukti" placeholder="No. Bukti" value="${data ? data.noBuktiBelanja : ''}" style="width:100%"></td>
-    <td><input type="date" class="spj-inp-tgl" value="${data ? data.tglBelanja : new Date().toISOString().split('T')[0]}" style="width:100%"></td>
-    <td>
-      <select class="spj-inp-rekening" style="width:100%">
-        ${optHtml}
-      </select>
-    </td>
-    <td><input type="number" class="spj-inp-jumlah" placeholder="0" value="${data ? data.jumlah : ''}" oninput="calcSpjTotal()" style="text-align:right;width:100%"></td>
-    <td><input type="text" class="spj-inp-penerima" placeholder="Penerima" value="${data ? data.penerima : ''}" style="width:100%"></td>
-    <td><input type="text" class="spj-inp-uraian" placeholder="Uraian Belanja" value="${data ? data.uraian : ''}" style="width:100%"></td>
-    <td style="text-align:center"><button class="btn btn-xs btn-danger" onclick="deleteSpjRow('${rowId}')">✕</button></td>
-  `;
-  
-  tbody.appendChild(tr);
-  if (data) {
-    tr.querySelector('.spj-inp-rekening').value = data.kode;
-  }
+  // Kompatibilitas
 }
 
 function deleteSpjRow(rowId) {
-  const row = document.getElementById(`spj-row-${rowId}`);
-  if (row) row.remove();
-  calcSpjTotal();
+  // Kompatibilitas
 }
 
 function calcSpjTotal() {
@@ -9394,11 +9882,8 @@ function calcSpjTotal() {
   if (!n) return;
   
   const panjar = n.totalNpd;
-  let belanja = 0;
-  document.querySelectorAll('.spj-inp-jumlah').forEach(inp => {
-    belanja += Number(inp.value) || 0;
-  });
-  
+  const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id);
+  const belanja = linkedGUs.reduce((s, g) => s + g.jumlah, 0);
   const selisih = panjar - belanja;
   
   document.getElementById('spj-summary-panjar').textContent = 'Rp ' + fmtRp(panjar);
@@ -9435,44 +9920,21 @@ function saveSpj(isSubmit) {
   const n = PANJAR_NPD.find(x => x.id === npdId);
   if (!n) return;
   
-  const items = [];
-  let valid = true;
-  
-  const rows = document.querySelectorAll('#tbody-spj-receipts tr');
-  rows.forEach(tr => {
-    const noBukti = tr.querySelector('.spj-inp-bukti').value.trim();
-    const tgl = tr.querySelector('.spj-inp-tgl').value;
-    const kode = tr.querySelector('.spj-inp-rekening').value;
-    const jumlah = Number(tr.querySelector('.spj-inp-jumlah').value) || 0;
-    const penerima = tr.querySelector('.spj-inp-penerima').value.trim();
-    const uraian = tr.querySelector('.spj-inp-uraian').value.trim();
-    
-    if (!noBukti || !tgl || !kode || !jumlah || !penerima || !uraian) {
-      valid = false;
-    }
-    
-    const belObj = BEL.find(b => b.skId === n.skId && b.kode === kode);
-    
-    items.push({
-      noBuktiBelanja: noBukti,
-      tglBelanja: tgl,
-      kode,
-      nama: belObj ? belObj.nama : '',
-      jumlah,
-      penerima,
-      uraian
-    });
-  });
-  
-  if (!items.length) {
-    toast('Tambahkan minimal satu bukti kuitansi belanja!', 'err');
+  const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id);
+  if (!linkedGUs.length) {
+    toast('Belum ada kuitansi GU yang dibuat untuk Uang Panjar ini!', 'err');
     return;
   }
   
-  if (isSubmit && !valid) {
-    toast('Semua kolom di baris kuitansi wajib diisi jika diajukan!', 'err');
-    return;
-  }
+  const items = linkedGUs.map(g => ({
+    noBuktiBelanja: g.no,
+    tglBelanja: g.tgl,
+    kode: g.bel?.kode || '',
+    nama: g.bel?.nama || '',
+    jumlah: g.jumlah,
+    penerima: g.data?.penerima || '',
+    uraian: g.urai
+  }));
   
   const totalBelanja = items.reduce((s, it) => s + it.jumlah, 0);
   const selisih = n.totalNpd - totalBelanja;
@@ -9486,6 +9948,27 @@ function saveSpj(isSubmit) {
   
   if (isSubmit) {
     n.status = 'SPJ Diajukan';
+    addPanjarHistory(n, 'SPJ Diajukan', 'Pengajuan SPJ Panjar oleh PPTK');
+    
+    // Lock linked GUs so they cannot be edited or deleted while in review
+    linkedGUs.forEach(g => {
+      g.spjId = 'PANJAR-SUBMITTED';
+      
+      // Also update in the main TAGIHAN list
+      const t = TAGIHAN.find(x => x.id === g.id);
+      if (t) {
+        t.status = 'SPJ Panjar Diajukan';
+        if (!t.history) t.history = [];
+        t.history.push({
+          status: 'SPJ Panjar Diajukan',
+          ts: new Date().toISOString(),
+          oleh: USER?.nama || 'PPTK',
+          catatan: `Diajukan dalam SPJ Panjar ${n.noNpd}`
+        });
+      }
+    });
+  } else {
+    addPanjarHistory(n, 'Draft SPJ', 'Penyimpanan draft SPJ Panjar');
   }
   
   tutupModal('modal-panjar-spj');
@@ -9498,59 +9981,7 @@ function viewSpjDetail(id) {
   const n = PANJAR_NPD.find(x => x.id === id);
   if (!n) return;
   
-  let rows = (n.spjDetails?.items || []).map(it => `
-    <tr>
-      <td style="font-family:monospace;font-size:10px">${it.noBuktiBelanja}</td>
-      <td style="white-space:nowrap">${fmtTgl(it.tglBelanja)}</td>
-      <td style="font-family:monospace;font-size:10px">${it.kode}</td>
-      <td>${it.nama}</td>
-      <td style="text-align:right">Rp ${fmtRp(it.jumlah)}</td>
-      <td>${it.penerima}</td>
-      <td>${it.uraian}</td>
-    </tr>
-  `).join('');
-  
-  const detailHtml = `
-    <div style="font-size:12px;line-height:1.5">
-      <div style="background:#f1f5f9; border-radius:6px; padding:10px; margin-bottom:10px">
-        <div class="form-grid g2">
-          <div><strong>No. NPD:</strong> ${n.noNpd}</div>
-          <div><strong>Tanggal SPJ:</strong> ${fmtTgl(n.spjDetails.tglSpj)}</div>
-        </div>
-        <div><strong>Sub Kegiatan:</strong> ${n.skKode} - ${n.skNama}</div>
-        <div class="form-grid g3" style="font-weight:700;margin-top:5px">
-          <div>Panjar: Rp ${fmtRp(n.totalNpd)}</div>
-          <div>Belanja SPJ: Rp ${fmtRp(n.spjDetails.totalBelanja)}</div>
-          <div>Selisih: Rp ${fmtRp(Math.abs(n.spjDetails.selisih))} (${n.spjDetails.selisih >= 0 ? 'Surplus' : 'Defisit'})</div>
-        </div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>No. Bukti</th>
-              <th>Tgl</th>
-              <th>Rekening</th>
-              <th>Nama Rekening</th>
-              <th style="text-align:right">Jumlah</th>
-              <th>Penerima</th>
-              <th>Uraian</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-  
-  document.getElementById('modal-cetak-body').innerHTML = `
-    <div style="padding:15px">
-      <h3>Detail Rekapitulasi SPJ Uang Panjar</h3>
-      ${detailHtml}
-    </div>
-  `;
+  document.getElementById('modal-cetak-body').innerHTML = buildSpjPanjarPrint(n);
   const tabs = document.getElementById('print-doc-tabs-container');
   if (tabs) tabs.style.display = 'none';
   bukaModal('modal-cetak');
@@ -9695,6 +10126,27 @@ function settleSpj() {
     jumlahSettle
   };
   n.status = 'Selesai';
+  addPanjarHistory(n, 'Selesai', `Jurnal BKU Selesai ref: ${noBuktiSettle}`);
+  
+  // Release the lock on the GUs and set panjarSettleId
+  const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id);
+  linkedGUs.forEach(g => {
+    g.spjId = null; // Release lock so it can be picked for consolidated SPJ GU
+    g.panjarSettleId = n.id;
+    
+    // Also update in the main TAGIHAN list
+    const t = TAGIHAN.find(x => x.id === g.id);
+    if (t) {
+      t.status = 'GU – Belum SPJ';
+      if (!t.history) t.history = [];
+      t.history.push({
+        status: 'GU – Belum SPJ',
+        ts: new Date().toISOString(),
+        oleh: USER?.nama || 'Bendahara',
+        catatan: `Selesai settlement Panjar ${n.noNpd}`
+      });
+    }
+  });
   
   tutupModal('modal-panjar-settle');
   renderPanjarSettle();
