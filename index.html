@@ -8874,7 +8874,10 @@ function pushToSupabase(){
     method: 'GET',
     headers: {
       'apikey': key,
-      'Authorization': `Bearer ${key}`
+      'Authorization': `Bearer ${key}`,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     }
   })
   .then(res => {
@@ -8985,7 +8988,10 @@ function pullFromSupabase(isStartup = false, isBackground = false){
     method: 'GET',
     headers: {
       'apikey': key,
-      'Authorization': `Bearer ${key}`
+      'Authorization': `Bearer ${key}`,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     }
   };
   if (controller) fetchOpts.signal = controller.signal;
