@@ -1541,6 +1541,255 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
   </div>
 </div>
 
+<!-- Modal: Form Pengajuan NPD (PPTK) -->
+<div class="modal-bg" id="modal-panjar-npd">
+  <div class="modal-box" style="max-width:750px">
+    <div class="modal-hdr"><span id="npd-modal-title">Buat Pengajuan Uang Panjar (NPD)</span></div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+      <input type="hidden" id="npd-id">
+      <div class="form-grid g2" style="margin-bottom:9px">
+        <div class="fg">
+          <label>Sub Kegiatan <span class="req">*</span></label>
+          <select id="npd-skId" onchange="loadNpdSubActivities()"></select>
+        </div>
+        <div class="fg">
+          <label>Tanggal Pengajuan <span class="req">*</span></label>
+          <input type="date" id="npd-tgl">
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:12px">
+        <label>Uraian Kebutuhan Uang Panjar <span class="req">*</span></label>
+        <textarea id="npd-uraian" rows="2" placeholder="Uraikan tujuan pengajuan uang panjar..."></textarea>
+      </div>
+      <div class="sec-hdr">Rincian Anggaran Belanja Sub Kegiatan</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Kode Rekening</th>
+              <th>Nama Rekening</th>
+              <th style="text-align:right">Sisa Anggaran (Rp)</th>
+              <th style="text-align:right;width:160px">Nominal Pengajuan (Rp)</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-npd-items">
+            <!-- Dinamis via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;font-size:14px">
+        <strong>Total Pengajuan NPD: <span id="npd-total-display" style="color:var(--navy)">Rp 0</span></strong>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="tutupModal('modal-panjar-npd')">Batal</button>
+      <button class="btn btn-secondary" onclick="saveNpd(false)">Simpan Draft</button>
+      <button class="btn btn-primary" onclick="saveNpd(true)">🚀 Simpan & Ajukan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Persetujuan NPD (PA/KPA) -->
+<div class="modal-bg" id="modal-panjar-approval">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-hdr"><span>🛡️ Detail & Persetujuan NPD</span></div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+      <input type="hidden" id="app-npd-id">
+      <div style="background:#f1f5f9; border-radius:8px; padding:12px; margin-bottom:12px; font-size:12px; line-height:1.5">
+        <div class="form-grid g2">
+          <div><strong>No. NPD:</strong> <span id="app-npd-no"></span></div>
+          <div><strong>Tanggal:</strong> <span id="app-npd-tgl"></span></div>
+        </div>
+        <div><strong>PPTK Pengaju:</strong> <span id="app-npd-pptk"></span></div>
+        <div><strong>Sub Kegiatan:</strong> <span id="app-npd-sk"></span></div>
+        <div><strong>Uraian Kebutuhan:</strong> <span id="app-npd-uraian"></span></div>
+      </div>
+      <div class="sec-hdr">Rincian Belanja yang Diajukan</div>
+      <div class="tbl-wrap" style="margin-bottom:12px">
+        <table>
+          <thead>
+            <tr>
+              <th>Kode Rekening</th>
+              <th>Nama Rekening</th>
+              <th style="text-align:right">Jumlah Pengajuan</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-app-npd-items"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;font-size:13px">
+        <strong>Total NPD: <span id="app-npd-total" style="color:var(--navy)">Rp 0</span></strong>
+      </div>
+      <div class="fg">
+        <label>Catatan Persetujuan / Penolakan</label>
+        <textarea id="app-npd-catatan" rows="2" placeholder="Tulis catatan di sini (opsional)..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="tutupModal('modal-panjar-approval')">Batal</button>
+      <button class="btn btn-danger" onclick="approveNpd(false)">❌ Tolak NPD</button>
+      <button class="btn btn-success" onclick="approveNpd(true)">✅ Setujui NPD</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Pencairan Uang Panjar (Bendahara) -->
+<div class="modal-bg" id="modal-panjar-disburse">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-hdr"><span>💵 Catat Pencairan Uang Panjar (Transfer)</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="dsb-npd-id">
+      <div style="background:#e0f2fe; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:11.5px; border-left:4px solid #0284c7">
+        <div style="margin-bottom:3px"><strong>No. NPD:</strong> <span id="dsb-npd-no"></span></div>
+        <div style="margin-bottom:3px"><strong>PPTK Pengaju:</strong> <span id="dsb-npd-pptk"></span></div>
+        <div><strong>Jumlah Pencairan (Rp):</strong> <strong style="color:#0284c7" id="dsb-npd-total"></strong></div>
+      </div>
+      <div class="form-grid g2" style="margin-bottom:9px">
+        <div class="fg">
+          <label>Tanggal Transfer <span class="req">*</span></label>
+          <input type="date" id="dsb-tgl">
+        </div>
+        <div class="fg">
+          <label>No. Ref/Bukti Transfer <span class="req">*</span></label>
+          <input id="dsb-noBukti" placeholder="TRF/BP/2026/001">
+        </div>
+      </div>
+      <div class="form-grid g2">
+        <div class="fg">
+          <label>Bank Pengirim <span class="req">*</span></label>
+          <select id="dsb-bankAsal">
+            <option>Rek. Kas Daerah (SulutGo)</option>
+            <option>Rek. Bendahara Pengeluaran (SulutGo)</option>
+            <option>Buku Pembantu Kas Tunai</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Rekening Penerima (PPTK) <span class="req">*</span></label>
+          <input id="dsb-bankTujuan" placeholder="SulutGo - Rek. PPTK A.N. [Nama]">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="tutupModal('modal-panjar-disburse')">Batal</button>
+      <button class="btn btn-primary" onclick="disburseNpd()">✅ Konfirmasi Pencairan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Input SPJ / Rekapitulasi Belanja Riil (PPTK) -->
+<div class="modal-bg" id="modal-panjar-spj">
+  <div class="modal-box" style="max-width:850px">
+    <div class="modal-hdr"><span>📑 Pertanggungjawaban SPJ Uang Panjar</span></div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+      <input type="hidden" id="spj-npd-id">
+      <div style="background:#f1f5f9; border-radius:8px; padding:12px; margin-bottom:12px; font-size:12px; line-height:1.5">
+        <div class="form-grid g3">
+          <div><strong>No. NPD:</strong> <span id="spj-npd-no"></span></div>
+          <div><strong>Sub Kegiatan:</strong> <span id="spj-npd-sk"></span></div>
+          <div><strong>Uang Panjar:</strong> <strong id="spj-npd-panjar" style="color:var(--navy)"></strong></div>
+        </div>
+      </div>
+      <div class="form-grid g2" style="margin-bottom:9px">
+        <div class="fg">
+          <label>Tanggal SPJ <span class="req">*</span></label>
+          <input type="date" id="spj-tgl">
+        </div>
+        <div></div>
+      </div>
+      <div class="sec-hdr" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Rincian Kuitansi/Nota Belanja Riil</span>
+        <button class="btn btn-success btn-xs" onclick="addSpjRow()">+ Tambah Baris Belanja</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:120px">No. Bukti Belanja</th>
+              <th style="width:110px">Tgl Belanja</th>
+              <th style="width:180px">Pilih Rekening Belanja</th>
+              <th style="width:110px">Jumlah Belanja (Rp)</th>
+              <th style="width:130px">Penerima Uang</th>
+              <th>Uraian Belanja</th>
+              <th style="width:50px">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-spj-receipts">
+            <!-- Dinamis via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div style="background:#f8fafc;border-radius:6px;padding:12px;margin-top:12px;font-size:13px;line-height:1.6">
+        <div class="form-grid g3" style="font-weight:700">
+          <div>Total Panjar Awal: <span id="spj-summary-panjar">Rp 0</span></div>
+          <div>Total Belanja SPJ: <span id="spj-summary-belanja" style="color:var(--navy)">Rp 0</span></div>
+          <div>Selisih Kas: <span id="spj-summary-selisih">Rp 0</span></div>
+        </div>
+        <div id="spj-summary-status-alert" style="margin-top:6px;font-weight:500"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="tutupModal('modal-panjar-spj')">Batal</button>
+      <button class="btn btn-secondary" onclick="saveSpj(false)">Simpan Draft</button>
+      <button class="btn btn-primary" onclick="saveSpj(true)">🚀 Ajukan SPJ ke Bendahara</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Selesaikan / Settle (Bendahara) -->
+<div class="modal-bg" id="modal-panjar-settle">
+  <div class="modal-box" style="max-width:650px">
+    <div class="modal-hdr"><span>⚖️ Verifikasi & Selesaikan Uang Panjar</span></div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+      <input type="hidden" id="set-npd-id">
+      <div style="background:#f1f5f9; border-radius:8px; padding:12px; margin-bottom:12px; font-size:12px; line-height:1.5">
+        <div class="form-grid g2">
+          <div><strong>No. NPD:</strong> <span id="set-npd-no"></span></div>
+          <div><strong>PPTK Pengaju:</strong> <span id="set-npd-pptk"></span></div>
+        </div>
+        <div><strong>Sub Kegiatan:</strong> <span id="set-npd-sk"></span></div>
+        <div class="form-grid g3" style="margin-top:6px;font-weight:700;font-size:12.5px">
+          <div>Panjar: <span id="set-npd-panjar"></span></div>
+          <div>Belanja: <span id="set-npd-belanja" style="color:var(--navy)"></span></div>
+          <div>Selisih: <span id="set-npd-selisih"></span></div>
+        </div>
+      </div>
+      <div class="sec-hdr">Rincian Bukti Pengeluaran SPJ</div>
+      <div class="tbl-wrap" style="margin-bottom:12px">
+        <table>
+          <thead>
+            <tr>
+              <th>No. Bukti</th>
+              <th>Rekening</th>
+              <th style="text-align:right">Jumlah (Rp)</th>
+              <th>Penerima</th>
+              <th>Uraian</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-set-spj-items"></tbody>
+        </table>
+      </div>
+      <div id="set-settlement-instruction" style="background:#fffbeb;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#b45309;border-left:4px solid #f59e0b;line-height:1.5">
+        <!-- Dinamis via JS -->
+      </div>
+      <div class="form-grid g2">
+        <div class="fg">
+          <label>Tanggal Finalisasi <span class="req">*</span></label>
+          <input type="date" id="set-tgl">
+        </div>
+        <div class="fg">
+          <label id="set-bukti-label">No. Bukti Transaksi Penyelesaian <span class="req">*</span></label>
+          <input id="set-noBukti" placeholder="Nomor referensi bank / setoran">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="tutupModal('modal-panjar-settle')">Batal</button>
+      <button class="btn btn-primary" onclick="settleSpj()">✅ Finalisasi & Catat BKU</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- ============================================================ APP ============================================================ -->
 <div class="app">
 <div class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -1571,6 +1820,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     <div class="nav-item nav-bend nav-admin" onclick="pg('spj-gu')" style="display:none"><span class="ni">📑</span> SPJ GU</div>
     <div class="nav-item" onclick="pg('tagihan')"><span class="ni">📋</span> Daftar Tagihan</div>
     <div class="nav-item" onclick="pg('tracking')"><span class="ni">🔍</span> Tracking</div>
+    <div class="nav-item nav-panjar" onclick="pg('panjar')" style="display:none"><span class="ni">💼</span> Uang Panjar</div>
   </div>
   <div class="nav-sec">
     <div class="nav-lbl">Pengendalian</div>
@@ -1816,6 +2066,179 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
       <thead><tr><th>No.</th><th>Jenis</th><th>Tanggal</th><th>PPTK/BP</th><th>Sub Kegiatan</th><th>Uraian</th><th style="text-align:right">Nilai (Rp)</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody id="tbody-tagihan"></tbody>
     </table>
+  </div>
+</div>
+
+<!-- ==================== UANG PANJAR ==================== -->
+<div class="page" id="page-panjar">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="panjar-tab-npd" onclick="switchPanjarTab('npd')">📝 Pengajuan NPD</button>
+    <button class="tab-btn" id="panjar-tab-approval" onclick="switchPanjarTab('approval')">🛡️ Persetujuan PA/KPA</button>
+    <button class="tab-btn" id="panjar-tab-disburse" onclick="switchPanjarTab('disburse')">💵 Pencairan Bendahara</button>
+    <button class="tab-btn" id="panjar-tab-spj" onclick="switchPanjarTab('spj')">📑 SPJ Panjar (PPTK)</button>
+    <button class="tab-btn" id="panjar-tab-settle" onclick="switchPanjarTab('settle')">⚖️ Verifikasi & Settle</button>
+    <button class="tab-btn" id="panjar-tab-books" onclick="switchPanjarTab('books')">📖 Buku Pembantu</button>
+  </div>
+
+  <!-- Tab 1: Pengajuan NPD -->
+  <div id="panjar-panel-npd">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">📝 Daftar Nota Pencairan Dana (NPD)</div>
+        <button class="btn btn-primary btn-sm" id="btn-new-npd" onclick="bukaFormNpd()">+ Buat NPD Baru</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No. NPD</th>
+              <th>Tanggal</th>
+              <th>Sub Kegiatan</th>
+              <th>Uraian Kebutuhan</th>
+              <th style="text-align:right">Jumlah (Rp)</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-panjar-npd"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Persetujuan NPD -->
+  <div id="panjar-panel-approval" style="display:none">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">🛡️ Antrean Persetujuan NPD (PA/KPA)</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No. NPD</th>
+              <th>Tanggal</th>
+              <th>PPTK Pengaju</th>
+              <th>Sub Kegiatan</th>
+              <th>Uraian Kebutuhan</th>
+              <th style="text-align:right">Jumlah (Rp)</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-panjar-approval"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Pencairan Bendahara -->
+  <div id="panjar-panel-disburse" style="display:none">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">💵 Antrean Pencairan Uang Panjar (Transfer)</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No. NPD</th>
+              <th>Tanggal</th>
+              <th>PPTK Pengaju</th>
+              <th>Sub Kegiatan</th>
+              <th>Uraian Kebutuhan</th>
+              <th style="text-align:right">Jumlah (Rp)</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-panjar-disburse"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: SPJ Panjar (PPTK) -->
+  <div id="panjar-panel-spj" style="display:none">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">📑 Rekap Belanja / SPJ Uang Panjar</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No. NPD</th>
+              <th>Sub Kegiatan</th>
+              <th style="text-align:right">Uang Panjar (Rp)</th>
+              <th style="text-align:right">Total Belanja SPJ (Rp)</th>
+              <th style="text-align:right">Selisih (Rp)</th>
+              <th>Status SPJ</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-panjar-spj"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: Verifikasi & Settle -->
+  <div id="panjar-panel-settle" style="display:none">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">⚖️ Verifikasi & Selesaikan Uang Panjar</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No. NPD</th>
+              <th>PPTK Pengaju</th>
+              <th>Sub Kegiatan</th>
+              <th style="text-align:right">Panjar (Rp)</th>
+              <th style="text-align:right">Total Belanja (Rp)</th>
+              <th style="text-align:right">Selisih (Rp)</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-panjar-settle"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 6: Buku Pembantu -->
+  <div id="panjar-panel-books" style="display:none">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">📖 Register Buku Pembantu Panjar</div>
+      </div>
+      <div class="filter-bar">
+        <div class="fg" style="min-width: 250px">
+          <label>Pilih Sub Kegiatan</label>
+          <select id="panjar-book-sk" onchange="renderPanjarBooks()"></select>
+        </div>
+        <div class="fg" style="min-width: 180px">
+          <label>Jenis Buku</label>
+          <select id="panjar-book-type" onchange="renderPanjarBooks()">
+            <option value="bku">Buku Kas Umum (BKU)</option>
+            <option value="bank">Buku Pembantu Bank</option>
+            <option value="panjar">Buku Pembantu Panjar</option>
+            <option value="belanja">Buku Pembantu Rincian Belanja</option>
+          </select>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:flex-end">
+          <button class="btn btn-secondary btn-sm" onclick="printPanjarBook()">🖨️ Cetak Register</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="table-panjar-book">
+          <!-- Dinamis via JS -->
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2263,8 +2686,8 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // STATE
 // ================================================================
 let CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'Gorontalo',prov:'',logo:'',sshurl:''};
-let PROG=[],KEG=[],SK=[],BEL=[],PEG=[],TAGIHAN=[],TAGIHAN_GU=[],SPJGU=[],SP2D=[],NEWS=[];
-let noUrut=1,noUrutGU=1,noUrutSPJ=1;
+let PROG=[],KEG=[],SK=[],BEL=[],PEG=[],TAGIHAN=[],TAGIHAN_GU=[],SPJGU=[],SP2D=[],NEWS=[],PANJAR_NPD=[];
+let noUrut=1,noUrutGU=1,noUrutSPJ=1,noUrutNPD=1;
 let REAL_MODEL = 'sp2d';
 let lastPulledAt='';
 let hasUnsavedChanges=false;
@@ -2295,14 +2718,19 @@ function getSisaBel(skId, belKode, excludeId = null) {
   const spentLS = TAGIHAN.filter(t => t.skId === skId && t.jenis === 'LS' && t.id !== excludeId && t.status !== 'Draft' && t.status !== 'Ditolak')
     .reduce((sum, t) => {
       const item = (t.data?.items || []).find(it => it.kode === belKode);
-      return sum + (item ? item.jumlah : 0);
+      return sum + (item ? Number(item.jumlah || 0) : 0);
     }, 0);
   const spentGU = TAGIHAN.filter(t => t.skId === skId && t.jenis === 'GU' && t.id !== excludeId && t.status !== 'Ditolak')
     .reduce((sum, t) => {
       const item = (t.data?.items || []).find(it => it.kode === belKode);
-      return sum + (item ? item.jumlah : 0);
+      return sum + (item ? Number(item.jumlah || 0) : 0);
     }, 0);
-  return Math.max(0, pagu - (spentLS + spentGU));
+  const spentPanjarSelesai = (typeof PANJAR_NPD !== 'undefined' ? PANJAR_NPD : []).filter(n => n.skId === skId && n.status === 'Selesai')
+    .reduce((sum, n) => {
+      const item = (n.spjDetails?.items || []).find(it => it.kode === belKode);
+      return sum + (item ? Number(item.jumlah || 0) : 0);
+    }, 0);
+  return Math.max(0, pagu - (spentLS + spentGU + spentPanjarSelesai));
 }
 function fmtTgl(s){if(!s)return'';const[y,m,d]=s.split('-');const B=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];return parseInt(d)+' '+B[parseInt(m)-1]+' '+y}
 function fmtTS(ts){if(!ts)return'';const d=new Date(ts);return`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
@@ -2531,6 +2959,11 @@ function applyRoleUI(){
   document.querySelectorAll('.nav-pptk').forEach(el=>el.style.display=isAdmin_or_PPTK?'flex':'none');
   document.querySelectorAll('.nav-bend').forEach(el=>el.style.display=isAdmin_or_Bend?'flex':'none');
   document.querySelectorAll('.nav-admin').forEach(el=>el.style.display=isAdmin?'flex':'none');
+  
+  const isPAorKPA = jab === 'PA' || jab === 'KPA';
+  const isAllPanjarRoles = isAdmin || isPPTK || isBend || isPAorKPA;
+  document.querySelectorAll('.nav-panjar').forEach(el => el.style.display = isAllPanjarRoles ? 'flex' : 'none');
+
   // Setup section
   document.getElementById('nav-setup').style.display=isAdmin?'':'none';
   // Topbar buttons
@@ -2617,6 +3050,7 @@ const pgMeta={
   'spj-gu':['SPJ GU','Surat Pertanggungjawaban Ganti Uang'],
   tagihan:['Daftar Tagihan','Semua tagihan'],
   tracking:['Tracking Tagihan','Timeline & posisi proses'],
+  panjar:['Pemberian Uang Panjar','Alur pengajuan panjar PPTK dan pencatatan BKU oleh Bendahara'],
   kendali:['Kartu Kendali','Per sub kegiatan'],
   infografis:['Infografis PPTK','Visualisasi serapan'],
   rekon:['Rekonsiliasi SP2D','Cocokkan dengan SIPD'],
@@ -2705,6 +3139,7 @@ function pg(id){
   if(id==='spj-gu')renderSPJGU();
   if(id==='tagihan')renderTagihan();
   if(id==='tracking')renderTracking();
+  if(id==='panjar')initPanjarPage();
   if(id==='kendali'){popFilter('kk-prog');renderKendali();}
   if(id==='infografis')renderInfografis();
   if(id==='rekon'){initRekonDrop();renderRekon();}
@@ -4063,6 +4498,13 @@ function getRealSP2D(tagList) {
     if (t.jenis === 'GU') return;
     real[t.skId] = (real[t.skId] || 0) + t.jumlah;
   });
+  if (typeof PANJAR_NPD !== 'undefined') {
+    PANJAR_NPD.forEach(n => {
+      if (n.status === 'Selesai' && n.spjDetails) {
+        real[n.skId] = (real[n.skId] || 0) + n.spjDetails.totalBelanja;
+      }
+    });
+  }
   return real;
 }
 
@@ -4076,6 +4518,13 @@ function getRealEstimasi(tagList) {
     if (t.jenis === 'SPJ-GU' && !['SP2D Terbit', 'SPJ GU Dibuat'].includes(t.status)) return;
     real[t.skId] = (real[t.skId] || 0) + t.jumlah;
   });
+  if (typeof PANJAR_NPD !== 'undefined') {
+    PANJAR_NPD.forEach(n => {
+      if (n.status === 'Ditolak' || n.status === 'Draft') return;
+      const amt = (n.status === 'SPJ Diajukan' || n.status === 'Selesai') ? (n.spjDetails?.totalBelanja || 0) : n.totalNpd;
+      real[n.skId] = (real[n.skId] || 0) + amt;
+    });
+  }
   return real;
 }
 
@@ -7226,8 +7675,9 @@ function saveData(localOnly = false, force = false){
     const payload={
       CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
       TAGIHAN,TAGIHAN_GU,SPJGU,SP2D,
-      noUrut,noUrutGU,noUrutSPJ,
+      noUrut,noUrutGU,noUrutSPJ,noUrutNPD,
       NEWS,
+      PANJAR_NPD,
       savedAt: new Date().toISOString()
     };
     const isHardcoded = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') && (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '');
@@ -7268,6 +7718,8 @@ function loadData(cloudState = null){
     if(d.noUrut)    noUrut=d.noUrut;
     if(d.noUrutGU)  noUrutGU=d.noUrutGU;
     if(d.noUrutSPJ) noUrutSPJ=d.noUrutSPJ;
+    if(d.PANJAR_NPD) PANJAR_NPD=d.PANJAR_NPD; else PANJAR_NPD=[];
+    if(d.noUrutNPD) noUrutNPD=d.noUrutNPD; else noUrutNPD=1;
     if(d.NEWS) {
       NEWS=d.NEWS;
     } else {
@@ -7284,10 +7736,10 @@ function clearData(){
   if(!confirm('⚠️ Hapus SEMUA data aplikasi?\n\nTindakan ini tidak dapat dibatalkan.\nSemua tagihan, anggaran, dan pegawai akan dihapus.')) return;
   localStorage.removeItem(STORAGE_KEY);
   CFG={pemda:'',ta:'2026',skpd:'',subskpd:'',kodeskpd:'',kota:'',prov:'',logo:'',sshurl:''};
-  PROG=[];KEG=[];SK=[];BEL=[];PEG=[];NEWS=[];
+  PROG=[];KEG=[];SK=[];BEL=[];PEG=[];NEWS=[];PANJAR_NPD=[];
   ACCOUNTS=[{id:'acc-admin',username:'admin',password:'admin123',jab:'Admin',nama:'Administrator',nip:'',skIds:[]}];
   TAGIHAN=[];TAGIHAN_GU=[];SPJGU=[];SP2D=[];
-  noUrut=1;noUrutGU=1;noUrutSPJ=1;
+  noUrut=1;noUrutGU=1;noUrutSPJ=1;noUrutNPD=1;
   toast('Semua data dihapus. Silakan setup ulang.','warn',4000);
   doLogout();
 }
@@ -7297,7 +7749,9 @@ function exportData(){
     const payload={
       CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
       TAGIHAN,TAGIHAN_GU,SPJGU,SP2D,
-      noUrut,noUrutGU,noUrutSPJ,
+      noUrut,noUrutGU,noUrutSPJ,noUrutNPD,
+      NEWS,
+      PANJAR_NPD,
       exportedAt:new Date().toISOString(),
       version:'SIPKeu Pro v2'
     };
@@ -7335,6 +7789,8 @@ function importDataJSON(file){
       if(d.noUrut)    noUrut=d.noUrut;
       if(d.noUrutGU)  noUrutGU=d.noUrutGU;
       if(d.noUrutSPJ) noUrutSPJ=d.noUrutSPJ;
+      if(d.PANJAR_NPD) PANJAR_NPD=d.PANJAR_NPD; else PANJAR_NPD=[];
+      if(d.noUrutNPD) noUrutNPD=d.noUrutNPD; else noUrutNPD=1;
       saveData();
       updateSidebar();
       updateDashboard();
@@ -8225,6 +8681,1367 @@ function renderAllBarcodes() {
       }
     });
   });
+}
+
+// ================================================================
+// MODUL UANG PANJAR (CASH ADVANCE)
+// ================================================================
+let activePanjarTab = 'npd';
+
+function initPanjarPage() {
+  if (!USER) return;
+  const jab = USER.jab;
+  // Set default tab based on role
+  if (jab === 'PPTK') {
+    activePanjarTab = 'npd';
+  } else if (jab === 'PA' || jab === 'KPA') {
+    activePanjarTab = 'approval';
+  } else if (jab === 'BP' || jab === 'BPP') {
+    activePanjarTab = 'disburse';
+  } else {
+    activePanjarTab = 'npd';
+  }
+  
+  switchPanjarTab(activePanjarTab);
+}
+
+function switchPanjarTab(tabId) {
+  activePanjarTab = tabId;
+  
+  // Update tab buttons
+  document.querySelectorAll('#page-panjar .tab-bar .tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const activeBtn = document.getElementById(`panjar-tab-${tabId}`);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  // Hide all panels
+  document.getElementById('panjar-panel-npd').style.display = 'none';
+  document.getElementById('panjar-panel-approval').style.display = 'none';
+  document.getElementById('panjar-panel-disburse').style.display = 'none';
+  document.getElementById('panjar-panel-spj').style.display = 'none';
+  document.getElementById('panjar-panel-settle').style.display = 'none';
+  document.getElementById('panjar-panel-books').style.display = 'none';
+  
+  // Show selected panel
+  const activePanel = document.getElementById(`panjar-panel-${tabId}`);
+  if (activePanel) activePanel.style.display = 'block';
+  
+  // Call renderer
+  if (tabId === 'npd') renderPanjarNpd();
+  if (tabId === 'approval') renderPanjarApproval();
+  if (tabId === 'disburse') renderPanjarDisburse();
+  if (tabId === 'spj') renderPanjarSpj();
+  if (tabId === 'settle') renderPanjarSettle();
+  if (tabId === 'books') {
+    popPanjarBookSubActivities();
+    renderPanjarBooks();
+  }
+}
+
+// 1. NPD PPTK Tab
+function renderPanjarNpd() {
+  const tbody = document.getElementById('tbody-panjar-npd');
+  if (!tbody) return;
+  
+  const myPeg = getCurrentPegawai();
+  const isAdmin = USER.jab === 'Admin';
+  
+  let list = PANJAR_NPD;
+  if (USER.jab === 'PPTK') {
+    list = PANJAR_NPD.filter(n => n.pptkId === myPeg?.id);
+  }
+  
+  // Sort by date descending
+  list.sort((a,b) => b.tglNpd.localeCompare(a.tglNpd));
+  
+  // Show/hide Create Button based on role (PPTK and Admin only)
+  const btnNewNpd = document.getElementById('btn-new-npd');
+  if (btnNewNpd) btnNewNpd.style.display = (USER.jab === 'PPTK' || isAdmin) ? '' : 'none';
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada data pengajuan NPD</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = list.map(n => {
+    let actionBtn = '';
+    if (n.status === 'Draft' && (USER.jab === 'PPTK' || isAdmin)) {
+      actionBtn = `
+        <button class="btn btn-xs btn-primary" onclick="bukaFormNpd('${n.id}')">✏️ Edit</button>
+        <button class="btn btn-xs btn-danger" onclick="hapusNpd('${n.id}')">🗑️ Hapus</button>
+      `;
+    } else {
+      actionBtn = `<button class="btn btn-xs btn-secondary" onclick="viewNpdDetail('${n.id}')">👁️ Lihat</button>`;
+    }
+    
+    let badgeClass = 'bg-secondary';
+    if (n.status === 'Draft') badgeClass = 'bg-dark';
+    if (n.status === 'Diajukan') badgeClass = 'bg-warning';
+    if (n.status === 'Disetujui') badgeClass = 'bg-info';
+    if (n.status === 'Dicairkan') badgeClass = 'bg-success';
+    if (n.status === 'SPJ Diajukan') badgeClass = 'bg-primary';
+    if (n.status === 'Selesai') badgeClass = 'bg-success';
+    if (n.status === 'Ditolak') badgeClass = 'bg-danger';
+
+    const statusBadge = `<span class="badge ${badgeClass}">${n.status}</span>`;
+    
+    return `
+      <tr>
+        <td style="font-family:monospace;font-size:11px">${n.noNpd || '–'}</td>
+        <td style="white-space:nowrap">${fmtTgl(n.tglNpd)}</td>
+        <td style="font-size:11px"><strong>${n.skKode}</strong><br>${n.skNama}</td>
+        <td>${n.uraian}</td>
+        <td style="text-align:right;font-weight:700">Rp ${fmtRp(n.totalNpd)}</td>
+        <td>${statusBadge}</td>
+        <td style="white-space:nowrap">${actionBtn}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function hapusNpd(id) {
+  if (!confirm('Hapus pengajuan NPD ini?')) return;
+  PANJAR_NPD = PANJAR_NPD.filter(n => n.id !== id);
+  renderPanjarNpd();
+  scheduleSave();
+  toast('NPD berhasil dihapus', 'warn');
+}
+
+// Form NPD
+function bukaFormNpd(id = null) {
+  editIds.npd = id;
+  const myPeg = getCurrentPegawai();
+  
+  // Populate Sub Kegiatan select dropdown
+  const selSk = document.getElementById('npd-skId');
+  selSk.innerHTML = '<option value="">-- Pilih Sub Kegiatan --</option>';
+  
+  let listSk = SK;
+  if (USER.jab === 'PPTK' && myPeg) {
+    listSk = SK.filter(s => s.pptkId === myPeg.id);
+  }
+  listSk.forEach(s => {
+    selSk.innerHTML += `<option value="${s.id}">${s.kode} – ${s.nama}</option>`;
+  });
+  
+  const npdObj = id ? PANJAR_NPD.find(n => n.id === id) : null;
+  
+  if (npdObj) {
+    document.getElementById('npd-modal-title').textContent = 'Edit Pengajuan Uang Panjar (NPD)';
+    document.getElementById('npd-id').value = npdObj.id;
+    document.getElementById('npd-skId').value = npdObj.skId;
+    document.getElementById('npd-tgl').value = npdObj.tglNpd;
+    document.getElementById('npd-uraian').value = npdObj.uraian;
+    loadNpdSubActivities(npdObj);
+  } else {
+    document.getElementById('npd-modal-title').textContent = 'Buat Pengajuan Uang Panjar (NPD)';
+    document.getElementById('npd-id').value = '';
+    document.getElementById('npd-skId').value = '';
+    document.getElementById('npd-tgl').value = new Date().toISOString().split('T')[0];
+    document.getElementById('npd-uraian').value = '';
+    document.getElementById('tbody-npd-items').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:15px">Pilih Sub Kegiatan terlebih dahulu</td></tr>';
+    document.getElementById('npd-total-display').textContent = 'Rp 0';
+  }
+  
+  bukaModal('modal-panjar-npd');
+}
+
+function loadNpdSubActivities(existingNpd = null) {
+  const skId = document.getElementById('npd-skId').value;
+  const tbody = document.getElementById('tbody-npd-items');
+  if (!skId) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:15px">Pilih Sub Kegiatan terlebih dahulu</td></tr>';
+    document.getElementById('npd-total-display').textContent = 'Rp 0';
+    return;
+  }
+  
+  // Get all accounts (BEL) of the sub kegiatan
+  const skBel = BEL.filter(b => b.skId === skId);
+  if (!skBel.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:15px">Belum ada rekening belanja di Sub Kegiatan ini</td></tr>';
+    document.getElementById('npd-total-display').textContent = 'Rp 0';
+    return;
+  }
+  
+  tbody.innerHTML = skBel.map(b => {
+    const sisa = getSisaBelPanjar(skId, b.kode, existingNpd ? existingNpd.id : null);
+    
+    let val = 0;
+    if (existingNpd) {
+      const it = (existingNpd.items || []).find(x => x.kode === b.kode);
+      if (it) val = it.jumlah;
+    }
+    
+    return `
+      <tr>
+        <td style="font-family:monospace;font-size:11px">${b.kode}</td>
+        <td>${b.nama}</td>
+        <td style="text-align:right;font-weight:700" data-sisa="${sisa}">Rp ${fmtRp(sisa)}</td>
+        <td>
+          <input type="number" class="npd-input-item" data-kode="${b.kode}" data-nama="${b.nama}" data-pagu="${b.pagu}" data-sisa="${sisa}" value="${val || ''}" placeholder="0" oninput="calcNpdTotal()" style="text-align:right;width:100%">
+        </td>
+      </tr>
+    `;
+  }).join('');
+  
+  calcNpdTotal();
+}
+
+function calcNpdTotal() {
+  let total = 0;
+  document.querySelectorAll('.npd-input-item').forEach(inp => {
+    total += Number(inp.value) || 0;
+  });
+  document.getElementById('npd-total-display').textContent = 'Rp ' + fmtRp(total);
+}
+
+function getSisaBelPanjar(skId, belKode, excludeNpdId = null) {
+  const b = BEL.find(x => x.skId === skId && x.kode === belKode);
+  if (!b) return 0;
+  const pagu = b.pagu || 0;
+  
+  const spentLS = TAGIHAN.filter(t => t.skId === skId && t.jenis === 'LS' && t.status !== 'Draft' && t.status !== 'Ditolak')
+    .reduce((sum, t) => {
+      const item = (t.data?.items || []).find(it => it.kode === belKode);
+      return sum + (item ? Number(item.jumlah || 0) : 0);
+    }, 0);
+    
+  const spentGU = TAGIHAN.filter(t => t.skId === skId && t.jenis === 'GU' && t.status !== 'Ditolak')
+    .reduce((sum, t) => {
+      const item = (t.data?.items || []).find(it => it.kode === belKode);
+      return sum + (item ? Number(item.jumlah || 0) : 0);
+    }, 0);
+    
+  const spentPanjarSelesai = PANJAR_NPD.filter(n => n.skId === skId && n.status === 'Selesai')
+    .reduce((sum, n) => {
+      const item = (n.spjDetails?.items || []).find(it => it.kode === belKode);
+      return sum + (item ? Number(item.jumlah || 0) : 0);
+    }, 0);
+    
+  const spentPanjarActive = PANJAR_NPD.filter(n => n.skId === skId && n.id !== excludeNpdId && n.status !== 'Ditolak' && n.status !== 'Selesai')
+    .reduce((sum, n) => {
+      const item = (n.items || []).find(it => it.kode === belKode);
+      return sum + (item ? Number(item.jumlah || 0) : 0);
+    }, 0);
+    
+  return Math.max(0, pagu - (spentLS + spentGU + spentPanjarSelesai + spentPanjarActive));
+}
+
+function saveNpd(isSubmit) {
+  const skId = document.getElementById('npd-skId').value;
+  const tglNpd = document.getElementById('npd-tgl').value;
+  const uraian = document.getElementById('npd-uraian').value.trim();
+  const npdId = document.getElementById('npd-id').value;
+  
+  if (!skId || !tglNpd || !uraian) {
+    toast('Semua kolom wajib diisi!', 'err');
+    return;
+  }
+  
+  const skObj = SK.find(s => s.id === skId);
+  if (!skObj) return;
+  
+  // Gather items
+  const items = [];
+  let budgetExceeded = false;
+  let exceededAccount = '';
+  
+  document.querySelectorAll('.npd-input-item').forEach(inp => {
+    const val = Number(inp.value) || 0;
+    if (val > 0) {
+      const sisa = Number(inp.getAttribute('data-sisa')) || 0;
+      if (val > sisa) {
+        budgetExceeded = true;
+        exceededAccount = inp.getAttribute('data-kode');
+      }
+      items.push({
+        kode: inp.getAttribute('data-kode'),
+        nama: inp.getAttribute('data-nama'),
+        pagu: Number(inp.getAttribute('data-pagu')) || 0,
+        jumlah: val
+      });
+    }
+  });
+  
+  if (!items.length) {
+    toast('Masukkan minimal satu nominal belanja!', 'err');
+    return;
+  }
+  
+  if (budgetExceeded) {
+    toast(`Pengajuan melebihi sisa anggaran pada rekening ${exceededAccount}!`, 'err');
+    return;
+  }
+  
+  const totalNpd = items.reduce((s, it) => s + it.jumlah, 0);
+  const myPeg = getCurrentPegawai();
+  const pptkId = myPeg ? myPeg.id : (skObj.pptkId || '');
+  const pptkNama = myPeg ? myPeg.nama : (PEG.find(p => p.id === skObj.pptkId)?.nama || 'Admin');
+  
+  let npdObj = PANJAR_NPD.find(n => n.id === npdId);
+  
+  if (npdObj) {
+    npdObj.skId = skId;
+    npdObj.skKode = skObj.kode;
+    npdObj.skNama = skObj.nama;
+    npdObj.tglNpd = tglNpd;
+    npdObj.uraian = uraian;
+    npdObj.items = items;
+    npdObj.totalNpd = totalNpd;
+    npdObj.status = isSubmit ? 'Diajukan' : 'Draft';
+    if (isSubmit && !npdObj.noNpd) {
+      npdObj.noNpd = `NPD/${CFG.ta}/${String(noUrutNPD++).padStart(4, '0')}`;
+    }
+  } else {
+    const newId = uid();
+    const noNpd = isSubmit ? `NPD/${CFG.ta}/${String(noUrutNPD++).padStart(4, '0')}` : '';
+    npdObj = {
+      id: newId,
+      noNpd,
+      tglNpd,
+      skId,
+      skKode: skObj.kode,
+      skNama: skObj.nama,
+      pptkId,
+      pptkNama,
+      uraian,
+      items,
+      totalNpd,
+      status: isSubmit ? 'Diajukan' : 'Draft',
+      catatanApproval: '',
+      tglApproval: '',
+      disburseDetails: null,
+      spjDetails: null,
+      settleDetails: null
+    };
+    PANJAR_NPD.push(npdObj);
+  }
+  
+  tutupModal('modal-panjar-npd');
+  renderPanjarNpd();
+  scheduleSave();
+  toast(isSubmit ? 'NPD berhasil diajukan!' : 'Draft NPD disimpan.', 'ok');
+}
+
+function viewNpdDetail(id) {
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  
+  let rows = (n.items || []).map(it => `
+    <tr>
+      <td style="font-family:monospace;font-size:11px">${it.kode}</td>
+      <td>${it.nama}</td>
+      <td style="text-align:right;font-weight:700">Rp ${fmtRp(it.jumlah)}</td>
+    </tr>
+  `).join('');
+  
+  let disburseInfo = '';
+  if (n.disburseDetails) {
+    disburseInfo = `
+      <div style="background:#e0f2fe; border-radius:6px; padding:10px; margin-top:8px; font-size:11px">
+        <strong>Pencairan Bank (Transfer):</strong><br>
+        Tgl Transfer: ${fmtTgl(n.disburseDetails.tglDisburse)} · Bukti: ${n.disburseDetails.noBuktiDisburse}<br>
+        Bank Asal: ${n.disburseDetails.bankAsal} · Rekening PPTK: ${n.disburseDetails.bankTujuan}
+      </div>
+    `;
+  }
+  
+  let settleInfo = '';
+  if (n.settleDetails) {
+    settleInfo = `
+      <div style="background:#f0fdf4; border-radius:6px; padding:10px; margin-top:8px; font-size:11px">
+        <strong>Penyelesaian SPJ:</strong><br>
+        Status Settle: ${n.settleDetails.tipeSettle} (Rp ${fmtRp(n.settleDetails.jumlahSettle)})<br>
+        Tgl Finalisasi: ${fmtTgl(n.settleDetails.tglSettle)} · Bukti Settle: ${n.settleDetails.noBuktiSettle}
+      </div>
+    `;
+  }
+
+  const detailHtml = `
+    <div style="font-size:12px;line-height:1.5">
+      <div style="background:#f1f5f9; border-radius:6px; padding:10px; margin-bottom:10px">
+        <div><strong>No. NPD:</strong> ${n.noNpd || '–'}</div>
+        <div><strong>Tanggal:</strong> ${fmtTgl(n.tglNpd)}</div>
+        <div><strong>Sub Kegiatan:</strong> ${n.skKode} - ${n.skNama}</div>
+        <div><strong>Uraian:</strong> ${n.uraian}</div>
+        <div><strong>Status:</strong> <span class="badge bg-primary">${n.status}</span></div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Kode Rekening</th>
+              <th>Nama Rekening</th>
+              <th style="text-align:right">Nominal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      </div>
+      <div style="text-align:right;margin-top:8px;font-weight:700">Total: Rp ${fmtRp(n.totalNpd)}</div>
+      ${disburseInfo}
+      ${settleInfo}
+    </div>
+  `;
+  
+  document.getElementById('modal-cetak-body').innerHTML = `
+    <div style="padding:15px">
+      <h3>Detail Pengajuan Uang Panjar (NPD)</h3>
+      ${detailHtml}
+    </div>
+  `;
+  const tabs = document.getElementById('print-doc-tabs-container');
+  if (tabs) tabs.style.display = 'none';
+  bukaModal('modal-cetak');
+}
+
+// 2. PA/KPA Approval Tab
+function renderPanjarApproval() {
+  const tbody = document.getElementById('tbody-panjar-approval');
+  if (!tbody) return;
+  
+  const jab = USER.jab;
+  const isPAorKPA = jab === 'PA' || jab === 'KPA';
+  const isAdmin = jab === 'Admin';
+  
+  let list = PANJAR_NPD.filter(n => n.status === 'Diajukan');
+  
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:#aaa">Belum ada NPD yang menunggu persetujuan</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = list.map(n => {
+    let actBtn = '';
+    if (isPAorKPA || isAdmin) {
+      actBtn = `<button class="btn btn-xs btn-success" onclick="bukaApprovalNpd('${n.id}')">🛡️ Tinjau</button>`;
+    } else {
+      actBtn = `<span class="badge bg-warning">Menunggu</span>`;
+    }
+    
+    return `
+      <tr>
+        <td style="font-family:monospace;font-size:11px">${n.noNpd}</td>
+        <td style="white-space:nowrap">${fmtTgl(n.tglNpd)}</td>
+        <td>${n.pptkNama}</td>
+        <td style="font-size:11px"><strong>${n.skKode}</strong><br>${n.skNama}</td>
+        <td>${n.uraian}</td>
+        <td style="text-align:right;font-weight:700">Rp ${fmtRp(n.totalNpd)}</td>
+        <td><span class="badge bg-warning">${n.status}</span></td>
+        <td>${actBtn}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function bukaApprovalNpd(id) {
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  
+  document.getElementById('app-npd-id').value = n.id;
+  document.getElementById('app-npd-no').textContent = n.noNpd;
+  document.getElementById('app-npd-tgl').textContent = fmtTgl(n.tglNpd);
+  document.getElementById('app-npd-pptk').textContent = n.pptkNama;
+  document.getElementById('app-npd-sk').textContent = `${n.skKode} – ${n.skNama}`;
+  document.getElementById('app-npd-uraian').textContent = n.uraian;
+  document.getElementById('app-npd-catatan').value = '';
+  
+  const tbody = document.getElementById('tbody-app-npd-items');
+  tbody.innerHTML = (n.items || []).map(it => `
+    <tr>
+      <td style="font-family:monospace;font-size:11px">${it.kode}</td>
+      <td>${it.nama}</td>
+      <td style="text-align:right;font-weight:700">Rp ${fmtRp(it.jumlah)}</td>
+    </tr>
+  `).join('');
+  
+  document.getElementById('app-npd-total').textContent = 'Rp ' + fmtRp(n.totalNpd);
+  
+  bukaModal('modal-panjar-approval');
+}
+
+function approveNpd(isApproved) {
+  const id = document.getElementById('app-npd-id').value;
+  const catatan = document.getElementById('app-npd-catatan').value.trim();
+  
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  
+  n.status = isApproved ? 'Disetujui' : 'Ditolak';
+  n.catatanApproval = catatan;
+  n.tglApproval = new Date().toISOString().split('T')[0];
+  
+  tutupModal('modal-panjar-approval');
+  renderPanjarApproval();
+  scheduleSave();
+  
+  toast(isApproved ? 'NPD berhasil disetujui!' : 'NPD telah ditolak.', isApproved ? 'ok' : 'warn');
+}
+
+// 3. Pencairan Bendahara Tab
+function renderPanjarDisburse() {
+  const tbody = document.getElementById('tbody-panjar-disburse');
+  if (!tbody) return;
+  
+  const isBend = USER.jab === 'BP' || USER.jab === 'BPP';
+  const isAdmin = USER.jab === 'Admin';
+  
+  let list = PANJAR_NPD.filter(n => n.status === 'Disetujui');
+  
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:#aaa">Belum ada NPD yang disetujui untuk dicairkan</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = list.map(n => {
+    let actBtn = '';
+    if (isBend || isAdmin) {
+      actBtn = `<button class="btn btn-xs btn-primary" onclick="bukaDisburseNpd('${n.id}')">💵 Cairkan</button>`;
+    } else {
+      actBtn = `<span class="badge bg-info">Disetujui</span>`;
+    }
+    
+    return `
+      <tr>
+        <td style="font-family:monospace;font-size:11px">${n.noNpd}</td>
+        <td style="white-space:nowrap">${fmtTgl(n.tglNpd)}</td>
+        <td>${n.pptkNama}</td>
+        <td style="font-size:11px"><strong>${n.skKode}</strong><br>${n.skNama}</td>
+        <td>${n.uraian}</td>
+        <td style="text-align:right;font-weight:700">Rp ${fmtRp(n.totalNpd)}</td>
+        <td><span class="badge bg-info">${n.status}</span></td>
+        <td>${actBtn}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function bukaDisburseNpd(id) {
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  
+  document.getElementById('dsb-npd-id').value = n.id;
+  document.getElementById('dsb-npd-no').textContent = n.noNpd;
+  document.getElementById('dsb-npd-pptk').textContent = n.pptkNama;
+  document.getElementById('dsb-npd-total').textContent = fmtRp(n.totalNpd);
+  document.getElementById('dsb-tgl').value = new Date().toISOString().split('T')[0];
+  document.getElementById('dsb-noBukti').value = `TRF/BP/${CFG.ta}/${String(PANJAR_NPD.filter(x => x.disburseDetails).length + 1).padStart(4, '0')}`;
+  
+  const pptkPeg = PEG.find(p => p.nama === n.pptkNama || p.id === n.pptkId);
+  document.getElementById('dsb-bankTujuan').value = pptkPeg ? `Bank SulutGo A.N. ${pptkPeg.nama}` : '';
+  
+  bukaModal('modal-panjar-disburse');
+}
+
+function disburseNpd() {
+  const id = document.getElementById('dsb-npd-id').value;
+  const tglDisburse = document.getElementById('dsb-tgl').value;
+  const noBuktiDisburse = document.getElementById('dsb-noBukti').value.trim();
+  const bankAsal = document.getElementById('dsb-bankAsal').value;
+  const bankTujuan = document.getElementById('dsb-bankTujuan').value.trim();
+  
+  if (!tglDisburse || !noBuktiDisburse || !bankTujuan) {
+    toast('Semua kolom wajib diisi!', 'err');
+    return;
+  }
+  
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  
+  n.disburseDetails = {
+    tglDisburse,
+    noBuktiDisburse,
+    bankAsal,
+    bankTujuan,
+    jumlahCair: n.totalNpd
+  };
+  n.status = 'Dicairkan';
+  
+  tutupModal('modal-panjar-disburse');
+  renderPanjarDisburse();
+  scheduleSave();
+  toast('Pencairan uang panjar berhasil dicatat!', 'ok');
+}
+
+// 4. SPJ PPTK Tab
+function renderPanjarSpj() {
+  const tbody = document.getElementById('tbody-panjar-spj');
+  if (!tbody) return;
+  
+  const myPeg = getCurrentPegawai();
+  const isAdmin = USER.jab === 'Admin';
+  
+  let list = PANJAR_NPD.filter(n => n.status === 'Dicairkan' || n.status === 'SPJ Diajukan' || n.status === 'Selesai');
+  
+  if (USER.jab === 'PPTK') {
+    list = list.filter(n => n.pptkId === myPeg?.id);
+  }
+  
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada uang panjar aktif yang dicairkan</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = list.map(n => {
+    let actBtn = '';
+    const spjTot = n.spjDetails ? n.spjDetails.totalBelanja : 0;
+    const diff = n.totalNpd - spjTot;
+    
+    let diffStr = '';
+    if (n.status === 'Dicairkan') {
+      diffStr = '–';
+    } else {
+      if (diff > 0) diffStr = `<span style="color:green;font-weight:700">Surplus Rp ${fmtRp(diff)}</span>`;
+      else if (diff < 0) diffStr = `<span style="color:red;font-weight:700">Defisit Rp ${fmtRp(Math.abs(diff))}</span>`;
+      else diffStr = `<span style="color:blue">Pas</span>`;
+    }
+    
+    if (n.status === 'Dicairkan' && (USER.jab === 'PPTK' || isAdmin)) {
+      actBtn = `<button class="btn btn-xs btn-primary" onclick="bukaFormSpj('${n.id}')">✏️ Buat SPJ</button>`;
+    } else {
+      actBtn = `<button class="btn btn-xs btn-secondary" onclick="viewSpjDetail('${n.id}')">👁️ Lihat SPJ</button>`;
+    }
+    
+    let badgeClass = 'bg-info';
+    if (n.status === 'SPJ Diajukan') badgeClass = 'bg-warning';
+    if (n.status === 'Selesai') badgeClass = 'bg-success';
+    
+    const spjStatus = `<span class="badge ${badgeClass}">${n.status === 'Dicairkan' ? 'Belum SPJ' : n.status}</span>`;
+    
+    return `
+      <tr>
+        <td style="font-family:monospace;font-size:11px">${n.noNpd}</td>
+        <td style="font-size:11px"><strong>${n.skKode}</strong><br>${n.skNama}</td>
+        <td style="text-align:right;font-weight:700">Rp ${fmtRp(n.totalNpd)}</td>
+        <td style="text-align:right">Rp ${fmtRp(spjTot)}</td>
+        <td style="text-align:right">${diffStr}</td>
+        <td>${spjStatus}</td>
+        <td>${actBtn}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function bukaFormSpj(id) {
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  
+  document.getElementById('spj-npd-id').value = n.id;
+  document.getElementById('spj-npd-no').textContent = n.noNpd;
+  document.getElementById('spj-npd-sk').textContent = `${n.skKode} - ${n.skNama}`;
+  document.getElementById('spj-npd-panjar').textContent = 'Rp ' + fmtRp(n.totalNpd);
+  
+  spjAccountsList = n.items.map(it => ({kode: it.kode, nama: it.nama}));
+  
+  const tbody = document.getElementById('tbody-spj-receipts');
+  tbody.innerHTML = '';
+  
+  if (n.spjDetails && n.spjDetails.items.length) {
+    document.getElementById('spj-tgl').value = n.spjDetails.tglSpj;
+    n.spjDetails.items.forEach(it => {
+      addSpjRow(it);
+    });
+  } else {
+    document.getElementById('spj-tgl').value = new Date().toISOString().split('T')[0];
+    addSpjRow();
+  }
+  
+  calcSpjTotal();
+  bukaModal('modal-panjar-spj');
+}
+
+function addSpjRow(data = null) {
+  const tbody = document.getElementById('tbody-spj-receipts');
+  const rowId = uid();
+  
+  const tr = document.createElement('tr');
+  tr.id = `spj-row-${rowId}`;
+  
+  const optHtml = spjAccountsList.map(a => `<option value="${a.kode}">${a.kode} - ${a.nama}</option>`).join('');
+  
+  tr.innerHTML = `
+    <td><input type="text" class="spj-inp-bukti" placeholder="No. Bukti" value="${data ? data.noBuktiBelanja : ''}" style="width:100%"></td>
+    <td><input type="date" class="spj-inp-tgl" value="${data ? data.tglBelanja : new Date().toISOString().split('T')[0]}" style="width:100%"></td>
+    <td>
+      <select class="spj-inp-rekening" style="width:100%">
+        ${optHtml}
+      </select>
+    </td>
+    <td><input type="number" class="spj-inp-jumlah" placeholder="0" value="${data ? data.jumlah : ''}" oninput="calcSpjTotal()" style="text-align:right;width:100%"></td>
+    <td><input type="text" class="spj-inp-penerima" placeholder="Penerima" value="${data ? data.penerima : ''}" style="width:100%"></td>
+    <td><input type="text" class="spj-inp-uraian" placeholder="Uraian Belanja" value="${data ? data.uraian : ''}" style="width:100%"></td>
+    <td style="text-align:center"><button class="btn btn-xs btn-danger" onclick="deleteSpjRow('${rowId}')">✕</button></td>
+  `;
+  
+  tbody.appendChild(tr);
+  if (data) {
+    tr.querySelector('.spj-inp-rekening').value = data.kode;
+  }
+}
+
+function deleteSpjRow(rowId) {
+  const row = document.getElementById(`spj-row-${rowId}`);
+  if (row) row.remove();
+  calcSpjTotal();
+}
+
+function calcSpjTotal() {
+  const npdId = document.getElementById('spj-npd-id').value;
+  const n = PANJAR_NPD.find(x => x.id === npdId);
+  if (!n) return;
+  
+  const panjar = n.totalNpd;
+  let belanja = 0;
+  document.querySelectorAll('.spj-inp-jumlah').forEach(inp => {
+    belanja += Number(inp.value) || 0;
+  });
+  
+  const selisih = panjar - belanja;
+  
+  document.getElementById('spj-summary-panjar').textContent = 'Rp ' + fmtRp(panjar);
+  document.getElementById('spj-summary-belanja').textContent = 'Rp ' + fmtRp(belanja);
+  
+  const selisihEl = document.getElementById('spj-summary-selisih');
+  const alertEl = document.getElementById('spj-summary-status-alert');
+  
+  if (selisih > 0) {
+    selisihEl.textContent = `Surplus Rp ${fmtRp(selisih)}`;
+    selisihEl.style.color = 'green';
+    alertEl.innerHTML = `<span style="color:green">⚠️ Surplus: PPTK harus mengembalikan sisa uang sebesar <strong>Rp ${fmtRp(selisih)}</strong> ke kas Bendahara saat settlement.</span>`;
+  } else if (selisih < 0) {
+    const deficit = Math.abs(selisih);
+    selisihEl.textContent = `Defisit Rp ${fmtRp(deficit)}`;
+    selisihEl.style.color = 'red';
+    alertEl.innerHTML = `<span style="color:red">⚠️ Defisit: Bendahara akan mentransfer kekurangan uang belanja sebesar <strong>Rp ${fmtRp(deficit)}</strong> ke PPTK saat settlement.</span>`;
+  } else {
+    selisihEl.textContent = `Sesuai Rp 0`;
+    selisihEl.style.color = 'blue';
+    alertEl.innerHTML = `<span style="color:blue">✅ Sesuai: Jumlah pengeluaran persis sama dengan uang panjar awal.</span>`;
+  }
+}
+
+function saveSpj(isSubmit) {
+  const npdId = document.getElementById('spj-npd-id').value;
+  const tglSpj = document.getElementById('spj-tgl').value;
+  
+  if (!tglSpj) {
+    toast('Tanggal SPJ wajib diisi!', 'err');
+    return;
+  }
+  
+  const n = PANJAR_NPD.find(x => x.id === npdId);
+  if (!n) return;
+  
+  const items = [];
+  let valid = true;
+  
+  const rows = document.querySelectorAll('#tbody-spj-receipts tr');
+  rows.forEach(tr => {
+    const noBukti = tr.querySelector('.spj-inp-bukti').value.trim();
+    const tgl = tr.querySelector('.spj-inp-tgl').value;
+    const kode = tr.querySelector('.spj-inp-rekening').value;
+    const jumlah = Number(tr.querySelector('.spj-inp-jumlah').value) || 0;
+    const penerima = tr.querySelector('.spj-inp-penerima').value.trim();
+    const uraian = tr.querySelector('.spj-inp-uraian').value.trim();
+    
+    if (!noBukti || !tgl || !kode || !jumlah || !penerima || !uraian) {
+      valid = false;
+    }
+    
+    const belObj = BEL.find(b => b.skId === n.skId && b.kode === kode);
+    
+    items.push({
+      noBuktiBelanja: noBukti,
+      tglBelanja: tgl,
+      kode,
+      nama: belObj ? belObj.nama : '',
+      jumlah,
+      penerima,
+      uraian
+    });
+  });
+  
+  if (!items.length) {
+    toast('Tambahkan minimal satu bukti kuitansi belanja!', 'err');
+    return;
+  }
+  
+  if (isSubmit && !valid) {
+    toast('Semua kolom di baris kuitansi wajib diisi jika diajukan!', 'err');
+    return;
+  }
+  
+  const totalBelanja = items.reduce((s, it) => s + it.jumlah, 0);
+  const selisih = n.totalNpd - totalBelanja;
+  
+  n.spjDetails = {
+    tglSpj,
+    items,
+    totalBelanja,
+    selisih
+  };
+  
+  if (isSubmit) {
+    n.status = 'SPJ Diajukan';
+  }
+  
+  tutupModal('modal-panjar-spj');
+  renderPanjarSpj();
+  scheduleSave();
+  toast(isSubmit ? 'Laporan SPJ Panjar diajukan ke Bendahara!' : 'Draft SPJ disimpan.', 'ok');
+}
+
+function viewSpjDetail(id) {
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  
+  let rows = (n.spjDetails?.items || []).map(it => `
+    <tr>
+      <td style="font-family:monospace;font-size:10px">${it.noBuktiBelanja}</td>
+      <td style="white-space:nowrap">${fmtTgl(it.tglBelanja)}</td>
+      <td style="font-family:monospace;font-size:10px">${it.kode}</td>
+      <td>${it.nama}</td>
+      <td style="text-align:right">Rp ${fmtRp(it.jumlah)}</td>
+      <td>${it.penerima}</td>
+      <td>${it.uraian}</td>
+    </tr>
+  `).join('');
+  
+  const detailHtml = `
+    <div style="font-size:12px;line-height:1.5">
+      <div style="background:#f1f5f9; border-radius:6px; padding:10px; margin-bottom:10px">
+        <div class="form-grid g2">
+          <div><strong>No. NPD:</strong> ${n.noNpd}</div>
+          <div><strong>Tanggal SPJ:</strong> ${fmtTgl(n.spjDetails.tglSpj)}</div>
+        </div>
+        <div><strong>Sub Kegiatan:</strong> ${n.skKode} - ${n.skNama}</div>
+        <div class="form-grid g3" style="font-weight:700;margin-top:5px">
+          <div>Panjar: Rp ${fmtRp(n.totalNpd)}</div>
+          <div>Belanja SPJ: Rp ${fmtRp(n.spjDetails.totalBelanja)}</div>
+          <div>Selisih: Rp ${fmtRp(Math.abs(n.spjDetails.selisih))} (${n.spjDetails.selisih >= 0 ? 'Surplus' : 'Defisit'})</div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No. Bukti</th>
+              <th>Tgl</th>
+              <th>Rekening</th>
+              <th>Nama Rekening</th>
+              <th style="text-align:right">Jumlah</th>
+              <th>Penerima</th>
+              <th>Uraian</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('modal-cetak-body').innerHTML = `
+    <div style="padding:15px">
+      <h3>Detail Rekapitulasi SPJ Uang Panjar</h3>
+      ${detailHtml}
+    </div>
+  `;
+  const tabs = document.getElementById('print-doc-tabs-container');
+  if (tabs) tabs.style.display = 'none';
+  bukaModal('modal-cetak');
+}
+
+// 5. Verifikasi & Settle (Bendahara) Tab
+function renderPanjarSettle() {
+  const tbody = document.getElementById('tbody-panjar-settle');
+  if (!tbody) return;
+  
+  const isBend = USER.jab === 'BP' || USER.jab === 'BPP';
+  const isAdmin = USER.jab === 'Admin';
+  
+  let list = PANJAR_NPD.filter(n => n.status === 'SPJ Diajukan');
+  
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:#aaa">Belum ada SPJ Panjar masuk yang perlu diverifikasi</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = list.map(n => {
+    let actBtn = '';
+    if (isBend || isAdmin) {
+      actBtn = `<button class="btn btn-xs btn-success" onclick="bukaSettleNpd('${n.id}')">⚖️ Verifikasi & Settle</button>`;
+    } else {
+      actBtn = `<span class="badge bg-warning">Menunggu Verifikasi</span>`;
+    }
+    
+    const spjTot = n.spjDetails ? n.spjDetails.totalBelanja : 0;
+    const diff = n.totalNpd - spjTot;
+    
+    let diffStr = '';
+    if (diff > 0) diffStr = `<span style="color:green;font-weight:700">Surplus Rp ${fmtRp(diff)}</span>`;
+    else if (diff < 0) diffStr = `<span style="color:red;font-weight:700">Defisit Rp ${fmtRp(Math.abs(diff))}</span>`;
+    else diffStr = `<span>Pas</span>`;
+
+    return `
+      <tr>
+        <td style="font-family:monospace;font-size:11px">${n.noNpd}</td>
+        <td>${n.pptkNama}</td>
+        <td style="font-size:11px"><strong>${n.skKode}</strong><br>${n.skNama}</td>
+        <td style="text-align:right;font-weight:700">Rp ${fmtRp(n.totalNpd)}</td>
+        <td style="text-align:right">Rp ${fmtRp(spjTot)}</td>
+        <td style="text-align:right">${diffStr}</td>
+        <td><span class="badge bg-warning">${n.status}</span></td>
+        <td>${actBtn}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function bukaSettleNpd(id) {
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  
+  document.getElementById('set-npd-id').value = n.id;
+  document.getElementById('set-npd-no').textContent = n.noNpd;
+  document.getElementById('set-npd-pptk').textContent = n.pptkNama;
+  document.getElementById('set-npd-sk').textContent = `${n.skKode} - ${n.skNama}`;
+  
+  const panjar = n.totalNpd;
+  const belanja = n.spjDetails.totalBelanja;
+  const selisih = panjar - belanja;
+  
+  document.getElementById('set-npd-panjar').textContent = 'Rp ' + fmtRp(panjar);
+  document.getElementById('set-npd-belanja').textContent = 'Rp ' + fmtRp(belanja);
+  
+  const diffEl = document.getElementById('set-npd-selisih');
+  const instEl = document.getElementById('set-settlement-instruction');
+  const labelEl = document.getElementById('set-bukti-label');
+  
+  if (selisih > 0) {
+    diffEl.textContent = `Surplus Rp ${fmtRp(selisih)}`;
+    diffEl.style.color = 'green';
+    instEl.innerHTML = `<strong>PPTK Uang Panjar LEBIH (Surplus):</strong> PPTK harus menyetorkan kembali sisa uang sebesar <strong>Rp ${fmtRp(selisih)}</strong> ke kas bendahara. Silakan masukkan nomor bukti setoran pengembalian di bawah.`;
+    labelEl.innerHTML = `No. Bukti Setoran Pengembalian <span class="req">*</span>`;
+    document.getElementById('set-noBukti').placeholder = "STS/PANJAR/2026/001";
+  } else if (selisih < 0) {
+    const deficit = Math.abs(selisih);
+    diffEl.textContent = `Defisit Rp ${fmtRp(deficit)}`;
+    diffEl.style.color = 'red';
+    instEl.innerHTML = `<strong>PPTK Uang Panjar KURANG (Defisit):</strong> Bendahara harus mentransfer kekurangan uang belanja sebesar <strong>Rp ${fmtRp(deficit)}</strong> ke PPTK. Silakan masukkan nomor referensi transfer bank kekurangan di bawah.`;
+    labelEl.innerHTML = `No. Bukti Transfer Kekurangan <span class="req">*</span>`;
+    document.getElementById('set-noBukti').placeholder = "TRF/KEK-PANJAR/2026/001";
+  } else {
+    diffEl.textContent = `Pas Rp 0`;
+    diffEl.style.color = 'blue';
+    instEl.innerHTML = `<strong>Uang Panjar PAS:</strong> Jumlah belanja kuitansi persis sama dengan uang panjar awal. Tidak ada pengembalian maupun transfer tambahan. Masukkan nomor berita acara penyelesaian di bawah.`;
+    labelEl.innerHTML = `No. Berita Acara Penyelesaian <span class="req">*</span>`;
+    document.getElementById('set-noBukti').placeholder = "BAP/PANJAR/2026/001";
+  }
+  
+  const tbody = document.getElementById('tbody-set-spj-items');
+  tbody.innerHTML = (n.spjDetails.items || []).map(it => `
+    <tr>
+      <td style="font-family:monospace;font-size:10px">${it.noBuktiBelanja}</td>
+      <td style="font-family:monospace;font-size:10px">${it.kode}</td>
+      <td style="text-align:right;font-weight:700">Rp ${fmtRp(it.jumlah)}</td>
+      <td>${it.penerima}</td>
+      <td>${it.uraian}</td>
+    </tr>
+  `).join('');
+  
+  document.getElementById('set-tgl').value = new Date().toISOString().split('T')[0];
+  document.getElementById('set-noBukti').value = '';
+  
+  bukaModal('modal-panjar-settle');
+}
+
+function settleSpj() {
+  const id = document.getElementById('set-npd-id').value;
+  const tglSettle = document.getElementById('set-tgl').value;
+  const noBuktiSettle = document.getElementById('set-noBukti').value.trim();
+  
+  if (!tglSettle || !noBuktiSettle) {
+    toast('Semua kolom wajib diisi!', 'err');
+    return;
+  }
+  
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  
+  const panjar = n.totalNpd;
+  const belanja = n.spjDetails.totalBelanja;
+  const selisih = panjar - belanja;
+  
+  let tipeSettle = 'Sesuai';
+  let jumlahSettle = 0;
+  
+  if (selisih > 0) {
+    tipeSettle = 'Lebih';
+    jumlahSettle = selisih;
+  } else if (selisih < 0) {
+    tipeSettle = 'Kurang';
+    jumlahSettle = Math.abs(selisih);
+  }
+  
+  n.settleDetails = {
+    tglSettle,
+    noBuktiSettle,
+    tipeSettle,
+    jumlahSettle
+  };
+  n.status = 'Selesai';
+  
+  tutupModal('modal-panjar-settle');
+  renderPanjarSettle();
+  scheduleSave();
+  
+  updateDashboard();
+  
+  toast('Uang panjar berhasil diselesaikan dan dicatat jurnal!', 'ok');
+}
+
+// 6. Buku Pembantu Tab
+function popPanjarBookSubActivities() {
+  const selSk = document.getElementById('panjar-book-sk');
+  const cur = selSk.value;
+  selSk.innerHTML = '';
+  
+  const myPeg = getCurrentPegawai();
+  let listSk = SK;
+  if (USER.jab === 'PPTK' && myPeg) {
+    listSk = SK.filter(s => s.pptkId === myPeg.id);
+  }
+  
+  listSk.forEach(s => {
+    selSk.innerHTML += `<option value="${s.id}">${s.kode} – ${s.nama}</option>`;
+  });
+  
+  if (cur && listSk.find(s => s.id === cur)) {
+    selSk.value = cur;
+  }
+}
+
+function getPanjarJurnals(skId) {
+  const list = PANJAR_NPD.filter(n => n.skId === skId && n.disburseDetails);
+  const entries = [];
+  
+  list.forEach(n => {
+    entries.push({
+      date: n.disburseDetails.tglDisburse,
+      bukti: n.disburseDetails.noBuktiDisburse,
+      npdNo: n.noNpd,
+      type: 'DISBURSE',
+      desc: `Pemberian Uang Panjar ke PPTK (${n.pptkNama}) - ${n.uraian}`,
+      bankDebit: 0,
+      bankKredit: n.totalNpd,
+      panjarDebit: n.totalNpd,
+      panjarKredit: 0,
+      bkuDebit: 0,
+      bkuKredit: n.totalNpd,
+      items: []
+    });
+    
+    if (n.status === 'Selesai' && n.settleDetails && n.spjDetails) {
+      entries.push({
+        date: n.settleDetails.tglSettle,
+        bukti: `SPJ-${n.noNpd}`,
+        npdNo: n.noNpd,
+        type: 'REVERSAL',
+        desc: `Pertanggungjawaban Panjar (Reversal) - ${n.uraian}`,
+        bankDebit: 0,
+        bankKredit: 0,
+        panjarDebit: 0,
+        panjarKredit: n.totalNpd,
+        bkuDebit: n.totalNpd,
+        bkuKredit: 0,
+        items: []
+      });
+      
+      entries.push({
+        date: n.settleDetails.tglSettle,
+        bukti: `SPJ-${n.noNpd}`,
+        npdNo: n.noNpd,
+        type: 'BELANJA_RIIL',
+        desc: `Realisasi Belanja Riil SPJ Panjar - ${n.uraian}`,
+        bankDebit: 0,
+        bankKredit: 0,
+        panjarDebit: 0,
+        panjarKredit: n.spjDetails.totalBelanja,
+        bkuDebit: 0,
+        bkuKredit: n.spjDetails.totalBelanja,
+        items: n.spjDetails.items
+      });
+      
+      if (n.settleDetails.tipeSettle === 'Lebih') {
+        entries.push({
+          date: n.settleDetails.tglSettle,
+          bukti: n.settleDetails.noBuktiSettle,
+          npdNo: n.noNpd,
+          type: 'SETTLE_SURPLUS',
+          desc: `Setoran Pengembalian Sisa Uang Panjar - ${n.uraian}`,
+          bankDebit: n.settleDetails.jumlahSettle,
+          bankKredit: 0,
+          panjarDebit: 0,
+          panjarKredit: 0,
+          bkuDebit: 0,
+          bkuKredit: 0,
+          items: []
+        });
+      } else if (n.settleDetails.tipeSettle === 'Kurang') {
+        entries.push({
+          date: n.settleDetails.tglSettle,
+          bukti: n.settleDetails.noBuktiSettle,
+          npdNo: n.noNpd,
+          type: 'SETTLE_DEFICIT',
+          desc: `Transfer Pembayaran Kekurangan Uang Panjar - ${n.uraian}`,
+          bankDebit: 0,
+          bankKredit: n.settleDetails.jumlahSettle,
+          panjarDebit: n.settleDetails.jumlahSettle,
+          panjarKredit: 0,
+          bkuDebit: 0,
+          bkuKredit: 0,
+          items: []
+        });
+      }
+    }
+  });
+  
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+  return entries;
+}
+
+function renderPanjarBooks() {
+  const skId = document.getElementById('panjar-book-sk')?.value || '';
+  const type = document.getElementById('panjar-book-type')?.value || 'bku';
+  const table = document.getElementById('table-panjar-book');
+  
+  if (!table) return;
+  if (!skId) {
+    table.innerHTML = '<thead><tr><th>Data</th></tr></thead><tbody><tr><td style="text-align:center;padding:20px;color:#aaa">Pilih Sub Kegiatan terlebih dahulu</td></tr></tbody>';
+    return;
+  }
+  
+  const jurnals = getPanjarJurnals(skId);
+  
+  if (type === 'bku') {
+    let saldo = 0;
+    let rowsHtml = jurnals.filter(j => j.bkuDebit > 0 || j.bkuKredit > 0).map(j => {
+      saldo = saldo + j.bkuDebit - j.bkuKredit;
+      return `
+        <tr>
+          <td style="white-space:nowrap">${fmtTgl(j.date)}</td>
+          <td style="font-family:monospace;font-size:11px">${j.bukti}</td>
+          <td>${j.desc}</td>
+          <td style="text-align:right">Rp ${fmtRp(j.bkuDebit)}</td>
+          <td style="text-align:right">Rp ${fmtRp(j.bkuKredit)}</td>
+          <td style="text-align:right;font-weight:700">Rp ${fmtRp(saldo)}</td>
+        </tr>
+      `;
+    }).join('');
+    
+    if (!rowsHtml) {
+      rowsHtml = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada transaksi BKU Uang Panjar</td></tr>`;
+    }
+    
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>No. Bukti</th>
+          <th>Uraian Transaksi</th>
+          <th style="text-align:right">Penerimaan (Debit)</th>
+          <th style="text-align:right">Pengeluaran (Kredit)</th>
+          <th style="text-align:right">Saldo Kas</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    `;
+  } else if (type === 'bank') {
+    let saldo = 0;
+    let rowsHtml = jurnals.filter(j => j.bankDebit > 0 || j.bankKredit > 0).map(j => {
+      saldo = saldo + j.bankDebit - j.bankKredit;
+      return `
+        <tr>
+          <td style="white-space:nowrap">${fmtTgl(j.date)}</td>
+          <td style="font-family:monospace;font-size:11px">${j.bukti}</td>
+          <td>${j.desc}</td>
+          <td style="text-align:right">Rp ${fmtRp(j.bankDebit)}</td>
+          <td style="text-align:right">Rp ${fmtRp(j.bankKredit)}</td>
+          <td style="text-align:right;font-weight:700">Rp ${fmtRp(saldo)}</td>
+        </tr>
+      `;
+    }).join('');
+    
+    if (!rowsHtml) {
+      rowsHtml = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada transaksi bank untuk Uang Panjar</td></tr>`;
+    }
+    
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>No. Bukti</th>
+          <th>Uraian Transaksi</th>
+          <th style="text-align:right">Setoran Kasda (Debit)</th>
+          <th style="text-align:right">Transfer Keluar (Kredit)</th>
+          <th style="text-align:right">Saldo Kas Bank</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    `;
+  } else if (type === 'panjar') {
+    let saldo = 0;
+    let rowsHtml = jurnals.filter(j => j.panjarDebit > 0 || j.panjarKredit > 0).map(j => {
+      saldo = saldo + j.panjarDebit - j.panjarKredit;
+      return `
+        <tr>
+          <td style="white-space:nowrap">${fmtTgl(j.date)}</td>
+          <td style="font-family:monospace;font-size:11px">${j.bukti}</td>
+          <td>${j.desc}</td>
+          <td style="text-align:right">Rp ${fmtRp(j.panjarDebit)}</td>
+          <td style="text-align:right">Rp ${fmtRp(j.panjarKredit)}</td>
+          <td style="text-align:right;font-weight:700">Rp ${fmtRp(saldo)}</td>
+        </tr>
+      `;
+    }).join('');
+    
+    if (!rowsHtml) {
+      rowsHtml = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada mutasi Buku Pembantu Panjar</td></tr>`;
+    }
+    
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>No. Bukti</th>
+          <th>Uraian Mutasi</th>
+          <th style="text-align:right">Penerimaan Panjar (Debit)</th>
+          <th style="text-align:right">Pertanggungjawaban (Kredit)</th>
+          <th style="text-align:right">Sisa Panjar di PPTK</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    `;
+  } else if (type === 'belanja') {
+    const listSelesai = PANJAR_NPD.filter(n => n.skId === skId && n.status === 'Selesai' && n.spjDetails);
+    let rowsHtml = '';
+    let tot = 0;
+    
+    listSelesai.forEach(n => {
+      (n.spjDetails.items || []).forEach(it => {
+        tot += it.jumlah;
+        rowsHtml += `
+          <tr>
+            <td style="white-space:nowrap">${fmtTgl(it.tglBelanja)}</td>
+            <td style="font-family:monospace;font-size:11px">${it.noBuktiBelanja}</td>
+            <td style="font-family:monospace;font-size:11px">${it.kode}</td>
+            <td>${it.nama}</td>
+            <td>${it.uraian} (Penerima: ${it.penerima})</td>
+            <td style="text-align:right;font-weight:700">Rp ${fmtRp(it.jumlah)}</td>
+          </tr>
+        `;
+      });
+    });
+    
+    if (!rowsHtml) {
+      rowsHtml = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Belum ada realisasi pengeluaran belanja riil</td></tr>`;
+    } else {
+      rowsHtml += `
+        <tr style="background:#f1f5f9;font-weight:bold">
+          <td colspan="5" style="text-align:right">TOTAL REALISASI BELANJA PANJAR:</td>
+          <td style="text-align:right;color:var(--navy)">Rp ${fmtRp(tot)}</td>
+        </tr>
+      `;
+    }
+    
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Tanggal Belanja</th>
+          <th>No. Kuitansi</th>
+          <th>Kode Rekening</th>
+          <th>Nama Rekening Belanja</th>
+          <th>Uraian Pengeluaran</th>
+          <th style="text-align:right">Jumlah Belanja</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    `;
+  }
+}
+
+function printPanjarBook() {
+  const skId = document.getElementById('panjar-book-sk')?.value || '';
+  const type = document.getElementById('panjar-book-type')?.value || 'bku';
+  
+  if (!skId) {
+    toast('Pilih Sub Kegiatan terlebih dahulu', 'err');
+    return;
+  }
+  
+  const skObj = SK.find(s => s.id === skId);
+  const typeNames = {
+    bku: 'BUKU KAS UMUM (BKU) - MODUL PANJAR',
+    bank: 'BUKU PEMBANTU BANK - MODUL PANJAR',
+    panjar: 'BUKU PEMBANTU PANJAR - UANG MUKA PPTK',
+    belanja: 'BUKU RINCIAN REALISASI BELANJA PANJAR'
+  };
+  
+  const tableContent = document.getElementById('table-panjar-book').outerHTML;
+  
+  const printHtml = `
+    <div style="padding:20px;font-family:'Plus Jakarta Sans',sans-serif;color:#1e293b;line-height:1.5">
+      <div style="text-align:center;margin-bottom:20px">
+        <h2 style="margin:0;font-size:16px;text-transform:uppercase">${CFG.pemda || 'PEMERINTAH DAERAH'}</h2>
+        <h3 style="margin:2px 0 0;font-size:14px;text-transform:uppercase">${CFG.skpd || 'SKPD'}</h3>
+        <h4 style="margin:4px 0 0;font-size:13px;font-weight:700;text-transform:uppercase">${typeNames[type]}</h4>
+        <div style="margin-top:5px;font-size:11px;color:#64748b">TAHUN ANGGARAN: ${CFG.ta || '2026'}</div>
+      </div>
+      <div style="font-size:11px;margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0">
+        <div><strong>Sub Kegiatan:</strong> ${skObj ? skObj.kode : ''} - ${skObj ? skObj.nama : ''}</div>
+        <div><strong>Bendahara Pengeluaran:</strong> ${PEG.find(p => p.jab === 'BP')?.nama || '–'}</div>
+      </div>
+      <div class="tbl-wrap" style="width:100%;overflow:visible">
+        ${tableContent}
+      </div>
+      <div style="margin-top:30px;display:flex;justify-content:space-between;font-size:11px">
+        <div style="text-align:center;width:200px">
+          Mengetahui,<br>
+          <strong>Pengguna Anggaran (PA)</strong>
+          <div style="height:60px"></div>
+          <u>${PEG.find(p => p.jab === 'PA')?.nama || '–'}</u><br>
+          NIP. ${PEG.find(p => p.jab === 'PA')?.nip || '–'}
+        </div>
+        <div style="text-align:center;width:200px">
+          Gorontalo, ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}<br>
+          <strong>Bendahara Pengeluaran</strong>
+          <div style="height:60px"></div>
+          <u>${PEG.find(p => p.jab === 'BP')?.nama || '–'}</u><br>
+          NIP. ${PEG.find(p => p.jab === 'BP')?.nip || '–'}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('modal-cetak-body').innerHTML = printHtml;
+  
+  const tabs = document.getElementById('print-doc-tabs-container');
+  if (tabs) tabs.style.display = 'none';
+  
+  bukaModal('modal-cetak');
 }
 
 // Trigger loading JsBarcode immediately on startup
