@@ -8901,8 +8901,9 @@ function pushToSupabase(){
     const payload={
       CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
       TAGIHAN,TAGIHAN_GU,SPJGU,SP2D,
-      noUrut,noUrutGU,noUrutSPJ,
+      noUrut,noUrutGU,noUrutSPJ,noUrutNPD,
       NEWS,
+      PANJAR_NPD,
       savedAt: newSavedAt
     };
 
@@ -9047,6 +9048,7 @@ function pullFromSupabase(isStartup = false, isBackground = false){
         else if (activePageId === 'setup-anggaran') { renderProg(); renderKeg(); renderSK(); renderBel(); }
         else if (activePageId === 'setup-pegawai') renderPegawai();
         else if (activePageId === 'setup-berita') renderSetupBerita();
+        else if (activePageId === 'panjar') switchPanjarTab(activePanjarTab);
       }
     } else {
       // Jika startup awal, auto-bypass login screen jika session masih aktif
@@ -9116,8 +9118,9 @@ function testAndSyncSupabase(){
   const payload={
     CFG,PROG,KEG,SK,BEL,PEG,ACCOUNTS,
     TAGIHAN,TAGIHAN_GU,SPJGU,SP2D,
-    noUrut,noUrutGU,noUrutSPJ,
+    noUrut,noUrutGU,noUrutSPJ,noUrutNPD,
     NEWS,
+    PANJAR_NPD,
     savedAt: new Date().toISOString()
   };
 
