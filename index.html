@@ -9381,8 +9381,12 @@ function renderPanjarNpd() {
     list = PANJAR_NPD.filter(n => n.pptkId === myPeg?.id);
   }
   
-  // Sort by date descending
-  list.sort((a,b) => b.tglNpd.localeCompare(a.tglNpd));
+  // Sort by date descending safely
+  list.sort((a,b) => {
+    const tglA = a.tglNpd || '';
+    const tglB = b.tglNpd || '';
+    return tglB.localeCompare(tglA);
+  });
   
   // Show/hide Create Button based on role (PPTK and Admin only)
   const btnNewNpd = document.getElementById('btn-new-npd');
@@ -10384,7 +10388,11 @@ function getPanjarJurnals(skId) {
     }
   });
   
-  entries.sort((a,b) => a.date.localeCompare(b.date));
+  entries.sort((a,b) => {
+    const dA = a.date || '';
+    const dB = b.date || '';
+    return dA.localeCompare(dB);
+  });
   return entries;
 }
 
