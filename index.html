@@ -2688,6 +2688,19 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
 </div><!-- end app -->
 
 <script>
+window.onerror = function(message, source, lineno, colno, error) {
+  const errorBox = document.createElement('div');
+  errorBox.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;z-index:999999;background:#fee2e2;border:2px solid #ef4444;color:#b91c1c;padding:12px;font-family:monospace;font-size:12px;border-radius:6px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);max-height:50vh;overflow-y:auto';
+  errorBox.innerHTML = `<strong>⚠️ Global JS Error:</strong><br>${message}<br><br>Source: ${source}<br>Line: ${lineno}:${colno}<br><pre style="margin-top:8px;white-space:pre-wrap">${error ? error.stack : ''}</pre>`;
+  document.body.appendChild(errorBox);
+  return false;
+};
+window.addEventListener('unhandledrejection', function(event) {
+  const errorBox = document.createElement('div');
+  errorBox.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;z-index:999999;background:#fee2e2;border:2px solid #ef4444;color:#b91c1c;padding:12px;font-family:monospace;font-size:12px;border-radius:6px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);max-height:50vh;overflow-y:auto';
+  errorBox.innerHTML = `<strong>⚠️ Global Promise Rejection:</strong><br>${event.reason}`;
+  document.body.appendChild(errorBox);
+});
 // ================================================================
 // CONFIG DATABASE CLOUD (SUPABASE)
 // Isi variabel di bawah ini agar semua operator otomatis tersinkronisasi ke satu database yang sama!
