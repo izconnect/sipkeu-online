@@ -2094,11 +2094,11 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
   </div>
 
   <!-- Tab 1: Pengajuan NPD -->
-  <div id="panjar-panel-npd">
+  <div id="panjar-panel-npd" style="display:none">
     <div class="card">
       <div class="card-hdr">
         <div class="card-title">📝 Daftar Nota Pencairan Dana (NPD)</div>
-        <button class="btn btn-primary btn-sm" id="btn-new-npd" onclick="bukaFormNpd()">+ Buat NPD Baru</button>
+        <button class="btn btn-primary btn-sm" id="btn-new-npd" onclick="bukaFormNpd()" style="display:none">+ Buat NPD Baru</button>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -9034,7 +9034,7 @@ function pullFromSupabase(isStartup = false, isBackground = false){
   if(ind) ind.innerHTML = '<span style="color:var(--purple)">📥 Loading...</span>';
 
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), 15000) : null;
   const fetchOpts = {
     method: 'GET',
     headers: {
@@ -9107,7 +9107,7 @@ function pullFromSupabase(isStartup = false, isBackground = false){
         else if (activePageId === 'setup-anggaran') { renderProg(); renderKeg(); renderSK(); renderBel(); }
         else if (activePageId === 'setup-pegawai') renderPegawai();
         else if (activePageId === 'setup-berita') renderSetupBerita();
-        else if (activePageId === 'panjar') switchPanjarTab(activePanjarTab);
+        else if (activePageId === 'panjar') refreshPanjarUI();
       }
     } else {
       // Jika startup awal, auto-bypass login screen jika session masih aktif
@@ -9303,6 +9303,12 @@ function initPanjarPage() {
   document.getElementById('panjar-tab-settle').style.display = (jab === 'BP' || jab === 'BPP' || isAdmin) ? '' : 'none';
   document.getElementById('panjar-tab-books').style.display = (jab === 'PPTK' || jab === 'BP' || jab === 'BPP' || jab === 'PA' || jab === 'KPA' || isAdmin) ? '' : 'none';
   
+  // Show/hide Create Button based on role (PPTK and Admin only)
+  const btnNewNpd = document.getElementById('btn-new-npd');
+  if (btnNewNpd) {
+    btnNewNpd.style.display = (jab === 'PPTK' || isAdmin) ? '' : 'none';
+  }
+
   // Set default tab based on role
   if (jab === 'PPTK') {
     activePanjarTab = 'npd';
@@ -9315,6 +9321,17 @@ function initPanjarPage() {
   }
   
   switchPanjarTab(activePanjarTab);
+}
+
+function refreshPanjarUI() {
+  updateDashboard();
+  if (typeof renderPanjarNpd === 'function') renderPanjarNpd();
+  if (typeof renderPanjarApproval === 'function') renderPanjarApproval();
+  if (typeof renderPanjarDisburse === 'function') renderPanjarDisburse();
+  if (typeof renderPanjarSpj === 'function') renderPanjarSpj();
+  if (typeof renderPanjarSettle === 'function') renderPanjarSettle();
+  if (typeof renderPanjarBooks === 'function') renderPanjarBooks();
+  if (typeof renderTracking === 'function') renderTracking();
 }
 
 function switchPanjarTab(tabId) {
@@ -9416,7 +9433,7 @@ function renderPanjarNpd() {
 function hapusNpd(id) {
   if (!confirm('Hapus pengajuan NPD ini?')) return;
   PANJAR_NPD = PANJAR_NPD.filter(n => n.id !== id);
-  renderPanjarNpd();
+  refreshPanjarUI();
   scheduleSave();
   toast('NPD berhasil dihapus', 'warn');
 }
@@ -9432,7 +9449,7 @@ function ajukanNpdDirect(id) {
   }
   addPanjarHistory(n, 'Diajukan', 'Mengajukan NPD');
   
-  renderPanjarNpd();
+  refreshPanjarUI();
   saveData(false, true);
   toast('NPD berhasil diajukan!', 'ok');
 }
@@ -9653,7 +9670,7 @@ function saveNpd(isSubmit) {
   }
   
   tutupModal('modal-panjar-npd');
-  renderPanjarNpd();
+  refreshPanjarUI();
   if (isSubmit) {
     saveData(false, true);
   } else {
@@ -9751,7 +9768,7 @@ function approveNpd(isApproved) {
   addPanjarHistory(n, n.status, catatan || (isApproved ? 'Persetujuan NPD' : 'Penolakan NPD'));
   
   tutupModal('modal-panjar-approval');
-  renderPanjarApproval();
+  refreshPanjarUI();
   saveData(false, true);
   
   toast(isApproved ? 'NPD berhasil disetujui!' : 'NPD telah ditolak.', isApproved ? 'ok' : 'warn');
@@ -9839,7 +9856,7 @@ function disburseNpd() {
   addPanjarHistory(n, n.status, `Transfer pencairan ref: ${noBuktiDisburse}`);
   
   tutupModal('modal-panjar-disburse');
-  renderPanjarDisburse();
+  refreshPanjarUI();
   saveData(false, true);
   toast('Pencairan uang panjar berhasil dicatat!', 'ok');
 }
@@ -10074,7 +10091,7 @@ function saveSpj(isSubmit) {
   }
   
   tutupModal('modal-panjar-spj');
-  renderPanjarSpj();
+  refreshPanjarUI();
   if (isSubmit) {
     saveData(false, true);
   } else {
@@ -10255,10 +10272,8 @@ function settleSpj() {
   });
   
   tutupModal('modal-panjar-settle');
-  renderPanjarSettle();
+  refreshPanjarUI();
   saveData(false, true);
-  
-  updateDashboard();
   
   toast('Uang panjar berhasil diselesaikan dan dicatat jurnal!', 'ok');
 }
