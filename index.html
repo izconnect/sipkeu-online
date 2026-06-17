@@ -8748,11 +8748,11 @@ if (storedUser) {
 const loadedAt=loadData();
 pullFromSupabase(true, false);
 
-// 2. Set default tanggal
-document.getElementById('f-tgl').value=new Date().toISOString().split('T')[0];
-document.getElementById('fgu-tgl').value=new Date().toISOString().split('T')[0];
-document.getElementById('r-tgl').value=new Date().toISOString().split('T')[0];
-document.getElementById('fil-bln').value=new Date().toISOString().slice(0,7);
+// 2. Set default tanggal safely
+const fTgl = document.getElementById('f-tgl'); if (fTgl) fTgl.value = new Date().toISOString().split('T')[0];
+const fguTgl = document.getElementById('fgu-tgl'); if (fguTgl) fguTgl.value = new Date().toISOString().split('T')[0];
+const rTgl = document.getElementById('r-tgl'); if (rTgl) rTgl.value = new Date().toISOString().split('T')[0];
+const filBln = document.getElementById('fil-bln'); if (filBln) filBln.value = new Date().toISOString().slice(0,7);
 
 // 3. Tampilkan info jika data tersedia
 if(loadedAt && CFG.skpd){
