@@ -5838,8 +5838,9 @@ function buildTLCard(t){
   const hist=t.history||[];
   const isPanjar = t.jenis === 'PANJAR';
   const stepsList = isPanjar ? TL_STEPS_PANJAR : TL_STEPS;
-  const curIdx=stepsList.findIndex(s=>s.key===t.status);
   const isDitolak=t.status==='Ditolak';
+  let curIdx=stepsList.findIndex(s=>s.key===t.status);
+  if (isPanjar && isDitolak) curIdx = 1;
   
   const steps=stepsList.map((s,i)=>{
     const he=hist.find(h=>h.status===s.key);let cls='';
@@ -5860,12 +5861,51 @@ function buildTLCard(t){
   let detailBtns = '';
   
   if (isPanjar) {
-    if (t.status === 'Selesai') {
-      actBtn = `<span style="font-size:11px;color:var(--green)">✅ Selesai & Settle</span>`;
+    const jab = USER?.jab;
+    const isAdmin = jab === 'Admin';
+    const isPPTK = jab === 'PPTK';
+    const isBend = jab === 'BP' || jab === 'BPP';
+    const isPAorKPA = jab === 'PA' || jab === 'KPA';
+    
+    if (t.status === 'Draft') {
+      if (isPPTK || isAdmin) {
+        actBtn = `<button class="btn btn-sm btn-success" onclick="ajukanNpdDirect('${t.id}')">🚀 Ajukan NPD</button>
+                  <button class="btn btn-sm btn-primary" onclick="pg('panjar'); bukaFormNpd('${t.id}')">✏️ Edit</button>`;
+      } else {
+        actBtn = `<span style="font-size:11px;color:#888">📝 Draft NPD</span>`;
+      }
+    } else if (t.status === 'Diajukan') {
+      if (isPAorKPA || isAdmin) {
+        actBtn = `<button class="btn btn-sm btn-success" onclick="bukaApprovalNpd('${t.id}')">🛡️ Tinjau & Setujui</button>`;
+      } else {
+        actBtn = `<span style="font-size:11px;color:#ea580c">⏳ Menunggu Persetujuan PA/KPA</span>`;
+      }
+    } else if (t.status === 'Disetujui') {
+      if (isBend || isAdmin) {
+        actBtn = `<button class="btn btn-sm btn-primary" onclick="bukaDisburseNpd('${t.id}')">💵 Cairkan Uang</button>`;
+      } else {
+        actBtn = `<span style="font-size:11px;color:#0284c7">⏳ Menunggu Pencairan Bendahara</span>`;
+      }
+    } else if (t.status === 'Dicairkan') {
+      if (isPPTK || isAdmin) {
+        actBtn = `<button class="btn btn-sm btn-primary" onclick="pg('panjar'); bukaFormSpj('${t.id}')">📑 Buat SPJ</button>`;
+      } else {
+        actBtn = `<span style="font-size:11px;color:#16a34a">⏳ Menunggu Pertanggungjawaban PPTK</span>`;
+      }
+    } else if (t.status === 'SPJ Diajukan') {
+      if (isBend || isAdmin) {
+        actBtn = `<button class="btn btn-sm btn-success" onclick="bukaSettleNpd('${t.id}')">⚖️ Verifikasi & Settle</button>`;
+      } else {
+        actBtn = `<span style="font-size:11px;color:#2563eb">⏳ Menunggu Verifikasi & Settle Bendahara</span>`;
+      }
+    } else if (t.status === 'Selesai') {
+      actBtn = `<span style="font-size:11px;color:var(--green);font-weight:700">✅ Selesai & Settle</span>`;
     } else if (t.status === 'Ditolak') {
-      actBtn = `<span style="font-size:11px;color:var(--red)">✕ Ditolak KPA</span>`;
-    } else {
-      actBtn = `<span style="font-size:11px;color:#f57f17;font-weight:600">⏳ Proses di Menu Uang Panjar</span>`;
+      if (isPPTK || isAdmin) {
+        actBtn = `<button class="btn btn-sm btn-warning" onclick="pg('panjar'); bukaFormNpd('${t.id}')">🔄 Edit & Ajukan Ulang</button>`;
+      } else {
+        actBtn = `<span style="font-size:11px;color:var(--red);font-weight:700">✕ Ditolak KPA</span>`;
+      }
     }
     
     detailBtns = `<button class="btn btn-sm" onclick="viewNpdDetail('${t.id}')" style="margin-left:3px">👁 NPD</button>`;
@@ -5908,7 +5948,7 @@ function buildTLCard(t){
     </div>
     <div class="tl-steps">${steps}</div>
     <div style="border-top:1px solid #f0f0f0;padding-top:7px;margin-top:4px">${logHtml}</div>
-    <div class="tl-act-btn">${actBtn}<button class="btn btn-sm" onclick="prevTagihan('${t.id}')">👁 Kuitansi</button></div>
+    <div class="tl-act-btn">${isPanjar ? `${actBtn}${detailBtns}` : `${actBtn}<button class="btn btn-sm" onclick="prevTagihan('${t.id}')">👁 Kuitansi</button>`}</div>
   </div>`;
 }
 
@@ -9327,7 +9367,7 @@ function renderPanjarNpd() {
   
   tbody.innerHTML = list.map(n => {
     let actionBtn = '';
-    if (n.status === 'Draft' && (USER.jab === 'PPTK' || isAdmin)) {
+    if ((n.status === 'Draft' || n.status === 'Ditolak') && (USER.jab === 'PPTK' || isAdmin)) {
       actionBtn = `
         <button class="btn btn-xs btn-primary" onclick="bukaFormNpd('${n.id}')">✏️ Edit</button>
         <button class="btn btn-xs btn-success" onclick="ajukanNpdDirect('${n.id}')">🚀 Ajukan</button>
