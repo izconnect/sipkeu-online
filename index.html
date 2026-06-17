@@ -2957,6 +2957,7 @@ function initApp(){
   applyRoleUI();
   updateDashboard();
   pg('dashboard');
+  pullFromSupabase(false);
 }
 
 function applyRoleUI(){
@@ -3093,6 +3094,10 @@ function closeSidebar(){
 }
 function pg(id){
   closeSidebar();
+  
+  if (USER) {
+    pullFromSupabase(false, true);
+  }
   
   // Sync admin segment buttons
   const btnSp2dAdm = document.getElementById('adm-model-sp2d');
@@ -8368,6 +8373,13 @@ function scheduleSave(){
 // Auto-save juga saat unload (tutup browser/tab)
 window.addEventListener('beforeunload',()=>saveData());
 
+// Auto-pull ketika tab browser aktif kembali (visibilityState === 'visible')
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && USER) {
+    pullFromSupabase(false, true);
+  }
+});
+
 // Auto-save setiap 2 menit sebagai safety net
 setInterval(()=>saveData(), 120000);
 
@@ -9066,7 +9078,16 @@ function pullFromSupabase(isStartup = false, isBackground = false){
         }
         document.getElementById('login-screen').classList.add('hide');
         document.getElementById('landing-page').classList.add('hide');
-        initApp();
+        if (isStartup) {
+          initApp();
+        } else {
+          updateSidebar();
+          applyRoleUI();
+          updateDashboard();
+          const activePageEl = document.querySelector('.page.active');
+          const activePageId = activePageEl ? activePageEl.id.replace('page-', '') : 'dashboard';
+          pg(activePageId);
+        }
       } else {
         document.getElementById('login-screen').classList.add('hide');
         document.getElementById('landing-page').classList.remove('hide');
@@ -9565,7 +9586,11 @@ function saveNpd(isSubmit) {
   
   tutupModal('modal-panjar-npd');
   renderPanjarNpd();
-  scheduleSave();
+  if (isSubmit) {
+    saveData(false, true);
+  } else {
+    scheduleSave();
+  }
   toast(isSubmit ? 'NPD berhasil diajukan!' : 'Draft NPD disimpan.', 'ok');
 }
 
@@ -9659,7 +9684,7 @@ function approveNpd(isApproved) {
   
   tutupModal('modal-panjar-approval');
   renderPanjarApproval();
-  scheduleSave();
+  saveData(false, true);
   
   toast(isApproved ? 'NPD berhasil disetujui!' : 'NPD telah ditolak.', isApproved ? 'ok' : 'warn');
 }
@@ -9747,7 +9772,7 @@ function disburseNpd() {
   
   tutupModal('modal-panjar-disburse');
   renderPanjarDisburse();
-  scheduleSave();
+  saveData(false, true);
   toast('Pencairan uang panjar berhasil dicatat!', 'ok');
 }
 
@@ -9982,7 +10007,11 @@ function saveSpj(isSubmit) {
   
   tutupModal('modal-panjar-spj');
   renderPanjarSpj();
-  scheduleSave();
+  if (isSubmit) {
+    saveData(false, true);
+  } else {
+    scheduleSave();
+  }
   toast(isSubmit ? 'Laporan SPJ Panjar diajukan ke Bendahara!' : 'Draft SPJ disimpan.', 'ok');
 }
 
@@ -10159,7 +10188,7 @@ function settleSpj() {
   
   tutupModal('modal-panjar-settle');
   renderPanjarSettle();
-  scheduleSave();
+  saveData(false, true);
   
   updateDashboard();
   
