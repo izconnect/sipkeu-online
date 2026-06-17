@@ -2723,7 +2723,7 @@ let ACCOUNTS=[
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const fmtRp=n=>{if(n===undefined||n===null||n==='')return'0';const num=Number(n);return isNaN(num)?'0':num.toLocaleString('id-ID',{maximumFractionDigits:20});};
 const fmtShort=fmtRp;
-function getCurrentPegawai(){if(!USER)return null;return PEG.find(x=>x.user&&x.user.toLowerCase()===USER.username.toLowerCase());}
+function getCurrentPegawai(){if(!USER)return null;return PEG.find(x=>x.user&&x.user.trim().toLowerCase()===USER.username.trim().toLowerCase());}
 function getSisaBel(skId, belKode, excludeId = null) {
   const b = BEL.find(x => x.skId === skId && x.kode === belKode);
   if (!b) return 0;
@@ -8256,14 +8256,16 @@ function saveData(localOnly = false, force = false){
       PANJAR_NPD,
       savedAt: new Date().toISOString()
     };
+    
+    // Selalu simpan ke localStorage sebagai backup lokal / cache instan
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    hasUnsavedChanges = false;
+    
     const isHardcoded = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') && (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '');
     const syncUrl = isHardcoded ? SUPABASE_URL : (localStorage.getItem('sipkeu_sync_url') || '');
     const syncKey = isHardcoded ? SUPABASE_KEY : (localStorage.getItem('sipkeu_sync_key') || '');
     if(syncUrl && syncKey && !localOnly) {
       pushToSupabase();
-    } else {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      hasUnsavedChanges = false;
     }
     return true;
   }catch(e){
@@ -8983,10 +8985,7 @@ function pushToSupabase(){
       lastPulledAt = newSavedAt;
       hasUnsavedChanges = false;
       
-      const isHardcoded = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.trim() !== '') && (typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.trim() !== '');
-      if(!isHardcoded) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 
       if(ind) {
         ind.innerHTML = '<span style="color:var(--green)">✅ Synced</span>';
@@ -9081,8 +9080,10 @@ function pullFromSupabase(isStartup = false, isBackground = false){
     const cloudState = rows[0].data;
     const cloudSavedAt = cloudState.savedAt || '';
 
-    // Load cloudState langsung ke memory variables (tanpa menyimpannya ke local storage)
+    // Load cloudState langsung ke memory variables
     loadData(cloudState);
+    // Selalu simpan ke localStorage sebagai cache instan agar reload berikutnya cepat
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudState));
     lastPulledAt = cloudSavedAt;
     
     if (isBackground) {
@@ -9292,6 +9293,16 @@ let activePanjarTab = 'npd';
 function initPanjarPage() {
   if (!USER) return;
   const jab = USER.jab;
+  const isAdmin = jab === 'Admin';
+  
+  // Show/hide tab buttons based on role
+  document.getElementById('panjar-tab-npd').style.display = (jab === 'PPTK' || isAdmin) ? '' : 'none';
+  document.getElementById('panjar-tab-approval').style.display = (jab === 'PA' || jab === 'KPA' || isAdmin) ? '' : 'none';
+  document.getElementById('panjar-tab-disburse').style.display = (jab === 'BP' || jab === 'BPP' || isAdmin) ? '' : 'none';
+  document.getElementById('panjar-tab-spj').style.display = (jab === 'PPTK' || isAdmin) ? '' : 'none';
+  document.getElementById('panjar-tab-settle').style.display = (jab === 'BP' || jab === 'BPP' || isAdmin) ? '' : 'none';
+  document.getElementById('panjar-tab-books').style.display = (jab === 'PPTK' || jab === 'BP' || jab === 'BPP' || jab === 'PA' || jab === 'KPA' || isAdmin) ? '' : 'none';
+  
   // Set default tab based on role
   if (jab === 'PPTK') {
     activePanjarTab = 'npd';
