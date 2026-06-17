@@ -9330,6 +9330,7 @@ function renderPanjarNpd() {
     if (n.status === 'Draft' && (USER.jab === 'PPTK' || isAdmin)) {
       actionBtn = `
         <button class="btn btn-xs btn-primary" onclick="bukaFormNpd('${n.id}')">✏️ Edit</button>
+        <button class="btn btn-xs btn-success" onclick="ajukanNpdDirect('${n.id}')">🚀 Ajukan</button>
         <button class="btn btn-xs btn-danger" onclick="hapusNpd('${n.id}')">🗑️ Hapus</button>
       `;
     } else {
@@ -9367,6 +9368,22 @@ function hapusNpd(id) {
   renderPanjarNpd();
   scheduleSave();
   toast('NPD berhasil dihapus', 'warn');
+}
+
+function ajukanNpdDirect(id) {
+  const n = PANJAR_NPD.find(x => x.id === id);
+  if (!n) return;
+  if (!confirm('Ajukan Nota Pencairan Dana (NPD) ini ke PA/KPA?')) return;
+  
+  n.status = 'Diajukan';
+  if (!n.noNpd) {
+    n.noNpd = `NPD/${CFG.ta}/${String(noUrutNPD++).padStart(4, '0')}`;
+  }
+  addPanjarHistory(n, 'Diajukan', 'Mengajukan NPD');
+  
+  renderPanjarNpd();
+  saveData(false, true);
+  toast('NPD berhasil diajukan!', 'ok');
 }
 
 // Form NPD
