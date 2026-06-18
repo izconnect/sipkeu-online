@@ -2736,7 +2736,14 @@ let ACCOUNTS=[
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const fmtRp=n=>{if(n===undefined||n===null||n==='')return'0';const num=Number(n);return isNaN(num)?'0':num.toLocaleString('id-ID',{maximumFractionDigits:20});};
 const fmtShort=fmtRp;
-function getCurrentPegawai(){if(!USER)return null;return PEG.find(x=>x.user&&x.user.trim().toLowerCase()===USER.username.trim().toLowerCase());}
+function getCurrentPegawai(){
+  if(!USER)return null;
+  let p = PEG.find(x=>x.user&&x.user.trim().toLowerCase()===USER.username.trim().toLowerCase());
+  if(!p && USER.nama) {
+    p = PEG.find(x=>x.nama&&x.nama.trim().toLowerCase()===USER.nama.trim().toLowerCase());
+  }
+  return p;
+}
 function getSisaBel(skId, belKode, excludeId = null) {
   const b = BEL.find(x => x.skId === skId && x.kode === belKode);
   if (!b) return 0;
@@ -3519,7 +3526,7 @@ function fLoadSk(){
   sel.innerHTML='<option value="">-- Pilih Sub Kegiatan --</option>';
   let sks=SK.filter(s=>s.kegId===kId);
   // PPTK: only own SK
-  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)sks=sks.filter(s=>s.pptkId===myPeg.id);}
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)sks=sks.filter(s=>s.pptkId===myPeg.id||s.pptkId===myPeg.nama);}
   sks.forEach(s=>{const pptk=PEG.find(p=>p.id===s.pptkId);const tag=pptk?` ⚙️${pptk.nama}`:'';sel.innerHTML+=`<option value="${s.id}">${s.kode} – ${s.nama}${tag} [Rp ${fmtShort(s.pagu)}]</option>`;});
   clearBelLS();
   document.getElementById('f-pptk-tag').style.display='none';
@@ -3527,7 +3534,13 @@ function fLoadSk(){
 function fLoadBel(){
   const skId=document.getElementById('f-sk').value;curSkId=skId;
   const sk=SK.find(s=>s.id===skId);const tagEl=document.getElementById('f-pptk-tag');
-  if(sk?.pptkId){const pptk=PEG.find(p=>p.id===sk.pptkId);if(pptk){document.getElementById('f-pptk').value=sk.pptkId;if(tagEl){tagEl.textContent='⚙️ PPTK otomatis: '+pptk.nama;tagEl.style.display='inline-flex';}}}else{if(tagEl)tagEl.style.display='none';}
+  if(sk?.pptkId){
+    const pptk=PEG.find(p=>p.id===sk.pptkId||p.nama===sk.pptkId);
+    if(pptk){
+      document.getElementById('f-pptk').value=pptk.id;
+      if(tagEl){tagEl.textContent='⚙️ PPTK otomatis: '+pptk.nama;tagEl.style.display='inline-flex';}
+    }
+  }else{if(tagEl)tagEl.style.display='none';}
   const list=BEL.filter(b=>b.skId===skId).sort((a,b)=>a.kode.localeCompare(b.kode));
   if(!skId||!list.length){clearBelLS();return;}
   let hs='';list.forEach((b,i)=>{
@@ -3549,7 +3562,12 @@ function togMulti(i){const chk=document.getElementById('chk-'+i);const amt=docum
 function calcMulti(){const list=BEL.filter(b=>b.skId===curSkId);let t=0;list.forEach((_,i)=>{const chk=document.getElementById('chk-'+i);const amt=document.getElementById('amt-'+i);if(chk?.checked&&amt?.value)t+=Number(amt.value);});document.getElementById('multi-total').textContent='Rp '+fmtRp(t);}
 
 function getFormDataLS(){
-  const pptkId=document.getElementById('f-pptk').value;const pptk=PEG.find(p=>p.id===pptkId);
+  let pptkId=document.getElementById('f-pptk').value;
+  if(USER?.jab==='PPTK'){
+    const myPeg=getCurrentPegawai();
+    if(myPeg) pptkId=myPeg.id;
+  }
+  const pptk=PEG.find(p=>p.id===pptkId);
   const tgl=document.getElementById('f-tgl').value;const penerima=document.getElementById('f-penerima').value.trim();
   const progId=document.getElementById('f-prog').value;const kegId=document.getElementById('f-keg').value;const skId=document.getElementById('f-sk').value;
   const sk=SK.find(s=>s.id===skId)||{};const keg=KEG.find(k=>k.id===kegId)||{};const prog=PROG.find(p=>p.id===progId)||{};
@@ -3637,7 +3655,7 @@ function populateGuNpdDropdown(selectedNpdId = '') {
   const myPeg = getCurrentPegawai();
   let list = PANJAR_NPD.filter(n => n.status === 'Dicairkan');
   if (USER?.jab === 'PPTK' && myPeg) {
-    list = list.filter(n => n.pptkId === myPeg.id);
+    list = list.filter(n => n.pptkId === myPeg.id || n.pptkNama === myPeg.nama || n.pptkId === myPeg.nama);
   }
   
   list.forEach(n => {
@@ -4779,8 +4797,8 @@ function getTagihanAktif(tagList){
 function canAdvance(t){
   if(!USER)return false;
   const jab=USER.jab;if(jab==='Admin')return true;
-  if(t.status==='Draft'&&jab==='PPTK'){const myPeg=getCurrentPegawai();return myPeg&&t.pptkId===myPeg.id;}
-  if(t.status==='Lengkapi TTD & Berkas'&&jab==='PPTK'){const myPeg=getCurrentPegawai();return myPeg&&t.pptkId===myPeg.id;}
+  if(t.status==='Draft'&&jab==='PPTK'){const myPeg=getCurrentPegawai();return myPeg&&(t.pptkId===myPeg.id||t.pptkNama===myPeg.nama||t.pptkId===myPeg.nama);}
+  if(t.status==='Lengkapi TTD & Berkas'&&jab==='PPTK'){const myPeg=getCurrentPegawai();return myPeg&&(t.pptkId===myPeg.id||t.pptkNama===myPeg.nama||t.pptkId===myPeg.nama);}
   if(t.status==='Berkas Dikirim'&&jab==='Verifikator')return true;
   if(t.status==='Menunggu Verifikator'&&jab==='Verifikator')return true;
   if(t.status==='Dikirim ke PPK'&&jab==='PPK')return true;
@@ -4793,7 +4811,7 @@ function canAdvance(t){
 function renderTagihan(){
   const fSt=document.getElementById('fil-st')?.value||'';const fBln=document.getElementById('fil-bln')?.value||'';const fJenis=document.getElementById('fil-jenis')?.value||'';
   let list=TAGIHAN;
-  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id||t.jenis==='GU');}
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id||t.pptkNama===myPeg.nama||t.pptkId===myPeg.nama||t.jenis==='GU');}
   if(fSt)list=list.filter(t=>t.status===fSt);if(fBln)list=list.filter(t=>t.tgl?.startsWith(fBln));if(fJenis)list=list.filter(t=>t.jenis===fJenis);
   const tbody=document.getElementById('tbody-tagihan');
   if(!list.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:28px;color:#aaa">Tidak ada tagihan</td></tr>';return;}
@@ -5854,11 +5872,11 @@ function renderTracking(){
   let panjarFiltered = mappedPanjar;
   if(USER?.jab==='PPTK'){
     const myPeg=getCurrentPegawai();
-    if(myPeg) panjarFiltered = panjarFiltered.filter(t=>t.pptkId===myPeg.id);
+    if(myPeg) panjarFiltered = panjarFiltered.filter(t=>t.pptkId===myPeg.id||t.pptkNama===myPeg.nama||t.pptkId===myPeg.nama);
   }
   list = list.concat(panjarFiltered);
   
-  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id || t.pptkId===undefined);}
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(t=>t.pptkId===myPeg.id||t.pptkNama===myPeg.nama||t.pptkId===myPeg.nama || t.pptkId===undefined);}
   if(cari)list=list.filter(t=>t.no.toLowerCase().includes(cari)||t.pptkNama.toLowerCase().includes(cari)||t.urai.toLowerCase().includes(cari)||t.skNama.toLowerCase().includes(cari));
   if(fSt)list=list.filter(t=>t.status===fSt);
   const el=document.getElementById('tracking-list');
@@ -5959,7 +5977,7 @@ function buildTLCard(t){
     detailBtns = `<button class="btn btn-sm" onclick="prevTagihan('${t.id}')">👁 Kuitansi</button>`;
   }
   
-  const pptk=PEG.find(p=>p.id===t.pptkId);const verif=PEG.find(p=>p.jab==='Verifikator');
+  const pptk=PEG.find(p=>p.id===t.pptkId||p.nama===t.pptkNama);const verif=PEG.find(p=>p.jab==='Verifikator');
   const durTotal=hist[0]?.ts?durasi(hist[0].ts,t.status==='SP2D Terbit'||(isPanjar && t.status==='Selesai')?hist[hist.length-1]?.ts:null):'–';
   const displayBadge = isPanjar ? `<span class="badge ${PJ_CLS[t.status]||'bg-gray'}" style="margin-top:4px">${PJ_EMOJI[t.status]||''} ${t.status}</span>` : `<span class="badge ${stCls[t.status]||'bg-gray'}" style="margin-top:4px">${stEmoji[t.status]||''} ${t.status}</span>`;
   
@@ -6028,7 +6046,7 @@ function renderKendali(){
   const isEstimasi = (REAL_MODEL === 'estimasi');
 
   let list=SK;
-  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(s=>s.pptkId===myPeg.id);}
+  if(USER?.jab==='PPTK'){const myPeg=getCurrentPegawai();if(myPeg)list=list.filter(s=>s.pptkId===myPeg.id||s.pptkId===myPeg.nama);}
   if(fS) list=list.filter(s=>s.id===fS);
   else if(fK) list=list.filter(s=>s.kegId===fK);
   else if(fP){const kIds=KEG.filter(k=>k.progId===fP).map(k=>k.id);list=list.filter(s=>kIds.includes(s.kegId));}
@@ -6762,7 +6780,10 @@ function renderRealBel(){
   if(USER?.jab==='PPTK'){
     const myPeg=getCurrentPegawai();
     if(myPeg) {
-      list=list.filter(b=>SK.find(s=>s.id===b.skId)?.pptkId===myPeg.id);
+      list=list.filter(b=>{
+        const sk=SK.find(s=>s.id===b.skId);
+        return sk&&(sk.pptkId===myPeg.id||sk.pptkId===myPeg.nama);
+      });
     }
   }
   
@@ -7107,7 +7128,7 @@ function renderInfografis(){
   
   if(USER?.jab==='PPTK'){
     const myPeg=getCurrentPegawai();
-    if(myPeg)rows=rows.filter(s=>s.pptkId===myPeg.id);
+    if(myPeg)rows=rows.filter(s=>s.pptkId===myPeg.id||s.pptkId===myPeg.nama);
   }
   
   if(searchVal){
@@ -7170,7 +7191,7 @@ function renderRankings(){
   
   if(USER?.jab==='PPTK'){
     const myPeg=getCurrentPegawai();
-    if(myPeg)rows=rows.filter(s=>s.pptkId===myPeg.id);
+    if(myPeg)rows=rows.filter(s=>s.pptkId===myPeg.id||s.pptkId===myPeg.nama);
   }
   
   if(!rows.length){
@@ -7430,7 +7451,7 @@ function popBukuFilters(){
   if(USER?.jab==='PPTK'){
     const myPeg = getCurrentPegawai();
     if(myPeg){
-      sks = SK.filter(s=>s.pptkId===myPeg.id);
+      sks = SK.filter(s=>s.pptkId===myPeg.id||s.pptkId===myPeg.nama);
     }
   }
   
@@ -7667,14 +7688,14 @@ function renderEvaluasi(){
 
   // Hitung per PPTK
   const pptkData=pptkList.map(p=>{
-    const skList=SK.filter(s=>s.pptkId===p.id);
+    const skList=SK.filter(s=>s.pptkId===p.id||s.pptkId===p.nama);
     const pagu=skList.reduce((s,sk)=>s+sk.pagu,0);
     const sp2d=skList.reduce((s,sk)=>s+(real[sk.id]||0),0);
     const proses=skList.reduce((s,sk)=>s+(aktif[sk.id]||0),0);
     const pctSP2D=pagu?Math.min(100,sp2d/pagu*100):0;
     const pctProses=pagu?Math.min(100,(sp2d+proses)/pagu*100):0;
-    const countTag=TAGIHAN.filter(t=>t.pptkId===p.id&&t.jenis!=='GU').length;
-    const countSP2D=TAGIHAN.filter(t=>t.pptkId===p.id&&t.status==='SP2D Terbit'&&t.nosp2d).length;
+    const countTag=TAGIHAN.filter(t=>(t.pptkId===p.id||t.pptkNama===p.nama||t.pptkId===p.nama)&&t.jenis!=='GU').length;
+    const countSP2D=TAGIHAN.filter(t=>(t.pptkId===p.id||t.pptkNama===p.nama||t.pptkId===p.nama)&&t.status==='SP2D Terbit'&&t.nosp2d).length;
     return{peg:p,skList,pagu,sp2d,proses,pctSP2D,pctProses,countTag,countSP2D};
   }).filter(d=>d.pagu>0);
 
@@ -7904,7 +7925,7 @@ function updateDashboard(){
   const myPeg=jab==='PPTK'?getCurrentPegawai():null;
   // PPTK: filter tagihan per sub kegiatan miliknya
   let tagList=TAGIHAN;
-  if(myPeg)tagList=tagList.filter(t=>t.pptkId===myPeg.id||t.spjRef);
+  if(myPeg)tagList=tagList.filter(t=>t.pptkId===myPeg.id||t.pptkNama===myPeg.nama||t.pptkId===myPeg.nama||t.spjRef);
 
   // Realisasi & Stat Cards
   let displayPagu = totalPagu;
@@ -7916,13 +7937,13 @@ function updateDashboard(){
   let displayPct = totalPagu ? Math.min(100, Object.values(getReal()).reduce((a,b)=>a+b,0)/totalPagu*100) : 0;
   
   if (myPeg) {
-    const mySks = SK.filter(s => s.pptkId === myPeg.id);
+    const mySks = SK.filter(s => s.pptkId === myPeg.id || s.pptkId === myPeg.nama);
     const mySkIds = mySks.map(s => s.id);
     
     displayPagu = mySks.reduce((sum, s) => sum + s.pagu, 0);
     displayTaSub = mySks.length + ' Sub Kegiatan';
     
-    const myTags = TAGIHAN.filter(t => t.pptkId === myPeg.id && t.jenis !== 'GU');
+    const myTags = TAGIHAN.filter(t => (t.pptkId === myPeg.id || t.pptkNama === myPeg.nama || t.pptkId === myPeg.nama) && t.jenis !== 'GU');
     displayTagihan = myTags.length;
     
     displayPending = myTags.filter(t => !['SP2D Terbit','Ditolak'].includes(t.status)).length;
@@ -7977,7 +7998,7 @@ function updateDashboard(){
   // Program table / Sub Kegiatan table – pakai getReal per SK
   const dp=document.getElementById('d-prog-wrap');
   if (jab === 'PPTK' && myPeg) {
-    const mySks = SK.filter(s => s.pptkId === myPeg.id);
+    const mySks = SK.filter(s => s.pptkId === myPeg.id || s.pptkId === myPeg.nama);
     if (!mySks.length) {
       dp.innerHTML = '<div class="empty-state"><p>Anda belum ditugaskan ke Sub Kegiatan apa pun.</p></div>';
     } else {
@@ -8017,7 +8038,7 @@ function updateDashboard(){
   const dt=document.getElementById('d-tag-wrap');
   let recentTag=TAGIHAN.filter(t=>t.jenis!=='GU');
   if(myPeg) {
-    recentTag = recentTag.filter(t => t.pptkId === myPeg.id);
+    recentTag = recentTag.filter(t => t.pptkId === myPeg.id || t.pptkNama === myPeg.nama || t.pptkId === myPeg.nama);
   }
 
   const cardTitleEl = dt.parentElement?.querySelector('.card-title');
@@ -8498,7 +8519,7 @@ function renderTrenChart(){
 
   let totalPagu=SK.reduce((s,sk)=>s+sk.pagu,0);
   if (myPeg) {
-    totalPagu = SK.filter(s => s.pptkId === myPeg.id).reduce((s,sk)=>s+sk.pagu,0);
+    totalPagu = SK.filter(s => s.pptkId === myPeg.id || s.pptkId === myPeg.nama).reduce((s,sk)=>s+sk.pagu,0);
   }
 
   if(!totalPagu){document.getElementById('tren-chart').innerHTML='<text x="50%" y="40" text-anchor="middle" fill="#ccc" font-size="12" font-family="Arial">Belum ada data pagu</text>';return;}
@@ -8514,7 +8535,7 @@ function renderTrenChart(){
     if(t.jenis==='GU') return;
     
     // PPTK scoping
-    if (myPeg && t.pptkId !== myPeg.id) return;
+    if (myPeg && t.pptkId !== myPeg.id && t.pptkNama !== myPeg.nama && t.pptkId !== myPeg.nama) return;
 
     if (REAL_MODEL === 'estimasi') {
       if (t.status !== 'Ditolak' && t.status !== 'Draft') {
@@ -9410,7 +9431,7 @@ function renderPanjarNpd() {
   
   let list = PANJAR_NPD;
   if (USER.jab === 'PPTK') {
-    list = PANJAR_NPD.filter(n => n.pptkId === myPeg?.id);
+    list = PANJAR_NPD.filter(n => n.pptkId === myPeg?.id || n.pptkNama === myPeg?.nama || n.pptkId === myPeg?.nama);
   }
   
   // Sort by date descending safely
@@ -9501,7 +9522,7 @@ function bukaFormNpd(id = null) {
   
   let listSk = SK;
   if (USER.jab === 'PPTK' && myPeg) {
-    listSk = SK.filter(s => s.pptkId === myPeg.id);
+    listSk = SK.filter(s => s.pptkId === myPeg.id || s.pptkId === myPeg.nama);
   }
   listSk.forEach(s => {
     selSk.innerHTML += `<option value="${s.id}">${s.kode} – ${s.nama}</option>`;
@@ -9910,7 +9931,7 @@ function renderPanjarSpj() {
   let list = PANJAR_NPD.filter(n => n.status === 'Dicairkan' || n.status === 'SPJ Diajukan' || n.status === 'Selesai');
   
   if (USER.jab === 'PPTK') {
-    list = list.filter(n => n.pptkId === myPeg?.id);
+    list = list.filter(n => n.pptkId === myPeg?.id || n.pptkNama === myPeg?.nama || n.pptkId === myPeg?.nama);
   }
   
   if (!list.length) {
@@ -10325,7 +10346,7 @@ function popPanjarBookSubActivities() {
   const myPeg = getCurrentPegawai();
   let listSk = SK;
   if (USER.jab === 'PPTK' && myPeg) {
-    listSk = SK.filter(s => s.pptkId === myPeg.id);
+    listSk = SK.filter(s => s.pptkId === myPeg.id || s.pptkId === myPeg.nama);
   }
   
   listSk.forEach(s => {
