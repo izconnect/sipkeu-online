@@ -4990,6 +4990,10 @@ function buildNpdPrint(n) {
   const lb = logoBox();
   const kpa = getPejabat('KPA');
   const pa = getPejabat('PA');
+  const bp = getPejabat('BP');
+  const bpp = getPejabat('BPP');
+  const bend = (bpp && bpp.nama && bpp.nama !== '.......................') ? bpp : bp;
+  const bendLabel = (bpp && bpp.nama && bpp.nama !== '.......................') ? 'BENDAHARA PENGELUARAN PEMBANTU' : 'BENDAHARA PENGELUARAN';
   const pptkPeg = PEG.find(p => p.nama === n.pptkNama || p.id === n.pptkId) || { nama: n.pptkNama || '.......................', nip: '' };
   
   const rows = (n.items || []).map((it, i) => `
@@ -5065,18 +5069,26 @@ function buildNpdPrint(n) {
       </table>
       
       <div style="display:flex;justify-content:space-between;margin-top:35px;font-size:10pt">
-        <div style="width:280px;text-align:center">
+        <div style="width:230px;text-align:center">
           <div>Mengetahui/Menyetujui,</div>
           <div style="font-weight:bold;margin-top:5px;text-transform:uppercase">${kpa.nip ? 'KUASA PENGGUNA ANGGARAN' : 'PENGGUNA ANGGARAN'}</div>
-          <div style="height:65px"></div>
+          <div style="height:55px"></div>
           <div style="font-weight:bold;text-decoration:underline">${kpa.nip ? kpa.nama : pa.nama}</div>
           <div>NIP. ${kpa.nip ? kpa.nip : pa.nip}</div>
         </div>
         
-        <div style="width:280px;text-align:center">
+        <div style="width:230px;text-align:center">
+          <div>Telah Diverifikasi,</div>
+          <div style="font-weight:bold;margin-top:5px;text-transform:uppercase">${bendLabel}</div>
+          <div style="height:55px"></div>
+          <div style="font-weight:bold;text-decoration:underline">${bend.nama}</div>
+          <div>NIP. ${bend.nip || ''}</div>
+        </div>
+        
+        <div style="width:230px;text-align:center">
           <div>${CFG.kota || '–'}, ${fmtTgl(n.tglNpd)}</div>
           <div style="font-weight:bold;margin-top:5px">PPTK</div>
-          <div style="height:65px"></div>
+          <div style="height:55px"></div>
           <div style="font-weight:bold;text-decoration:underline">${pptkPeg.nama}</div>
           <div>NIP. ${pptkPeg.nip || ''}</div>
         </div>
