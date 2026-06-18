@@ -3910,7 +3910,7 @@ function renderSPJGU(){
   }).join('');
 
   // Kuitansi GU belum di-SPJ
-  const unspj=TAGIHAN_GU.filter(g=>!g.spjId);
+  const unspj=TAGIHAN_GU.filter(g=>!g.spjId || g.spjId === 'PANJAR-LOCKED');
   const el2=document.getElementById('gu-unspj-list');
   if(!unspj.length){el2.innerHTML='<div class="empty-state" style="padding:20px"><div style="font-size:24px;margin-bottom:6px">✅</div><p>Semua kuitansi GU sudah di-SPJ kan</p></div>';}
   else el2.innerHTML='<div class="tbl-wrap"><table><thead><tr><th>No.</th><th>Tanggal</th><th>Penerima</th><th>Sub Kegiatan</th><th>Uraian</th><th style="text-align:right">Nilai</th><th>No. Bukti</th><th></th></tr></thead><tbody>'+
@@ -3926,7 +3926,7 @@ function renderSPJGU(){
   </tr>`).join('')+'</tbody></table></div>';
 }
 function bukaModalSPJGU(){
-  const unspj=TAGIHAN_GU.filter(g=>!g.spjId);
+  const unspj=TAGIHAN_GU.filter(g=>!g.spjId || g.spjId === 'PANJAR-LOCKED');
   if(!unspj.length){toast('Tidak ada kuitansi GU yang bisa di-SPJ kan','warn');return;}
   document.getElementById('spj-no').value='SPJ-GU/'+CFG.ta+'/'+String(noUrutSPJ).padStart(3,'0');
   document.getElementById('spj-tgl').value=new Date().toISOString().split('T')[0];
@@ -3943,12 +3943,12 @@ function bukaModalSPJGU(){
   bukaModal('modal-spjgu');
 }
 function calcSPJTotal(){
-  let total=0;TAGIHAN_GU.filter(g=>!g.spjId).forEach(g=>{const chk=document.getElementById('spjchk-'+g.id);if(chk?.checked)total+=g.jumlah;});document.getElementById('spj-total').textContent='Rp '+fmtRp(total);
+  let total=0;TAGIHAN_GU.filter(g=>!g.spjId || g.spjId === 'PANJAR-LOCKED').forEach(g=>{const chk=document.getElementById('spjchk-'+g.id);if(chk?.checked)total+=g.jumlah;});document.getElementById('spj-total').textContent='Rp '+fmtRp(total);
 }
 function buatSPJGU(){
   const no=document.getElementById('spj-no').value.trim();const tgl=document.getElementById('spj-tgl').value;const ket=document.getElementById('spj-ket').value.trim();
   if(!no||!tgl){toast('Isi Nomor dan Tanggal SPJ','err');return;}
-  const selected=TAGIHAN_GU.filter(g=>!g.spjId&&document.getElementById('spjchk-'+g.id)?.checked);
+  const selected=TAGIHAN_GU.filter(g=>(!g.spjId || g.spjId === 'PANJAR-LOCKED')&&document.getElementById('spjchk-'+g.id)?.checked);
   if(!selected.length){toast('Pilih minimal 1 kuitansi GU','err');return;}
   const spjId=uid();const total=selected.reduce((s,g)=>s+g.jumlah,0);
   selected.forEach(g=>g.spjId=spjId);
@@ -4057,7 +4057,7 @@ function hapusSPJGU(id){
   const now=new Date().toISOString();
   TAGIHAN_GU.forEach(g=>{
     if(g.spjId===id){
-      g.spjId=null;
+      g.spjId=g.npdId ? 'PANJAR-LOCKED' : null;
       const tag = TAGIHAN.find(t=>t.id===g.id);
       if(tag){
         tag.status = 'GU – Belum SPJ';
