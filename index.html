@@ -4994,7 +4994,21 @@ function buildNpdPrint(n) {
   const bpp = getPejabat('BPP');
   const bend = (bpp && bpp.nama && bpp.nama !== '.......................') ? bpp : bp;
   const bendLabel = (bpp && bpp.nama && bpp.nama !== '.......................') ? 'BENDAHARA PENGELUARAN PEMBANTU' : 'BENDAHARA PENGELUARAN';
-  const pptkPeg = PEG.find(p => p.nama === n.pptkNama || p.id === n.pptkId) || { nama: n.pptkNama || '.......................', nip: '' };
+  
+  const isKpa = (kpa && kpa.nama && kpa.nama !== '.......................');
+  const boss = isKpa ? kpa : pa;
+  const bossLabel = isKpa ? 'KUASA PENGGUNA ANGGARAN' : 'PENGGUNA ANGGARAN';
+
+  let pptkPeg = PEG.find(p => p.nama === n.pptkNama || p.id === n.pptkId);
+  if (!pptkPeg) {
+    const skObj = SK.find(s => s.id === n.skId);
+    if (skObj) {
+      pptkPeg = PEG.find(p => p.id === skObj.pptkId);
+    }
+  }
+  if (!pptkPeg) {
+    pptkPeg = { nama: n.pptkNama || '.......................', nip: '' };
+  }
   
   const rows = (n.items || []).map((it, i) => `
     <tr>
@@ -5071,10 +5085,10 @@ function buildNpdPrint(n) {
       <div style="display:flex;justify-content:space-between;margin-top:35px;font-size:10pt">
         <div style="width:230px;text-align:center">
           <div>Mengetahui/Menyetujui,</div>
-          <div style="font-weight:bold;margin-top:5px;text-transform:uppercase">${kpa.nip ? 'KUASA PENGGUNA ANGGARAN' : 'PENGGUNA ANGGARAN'}</div>
+          <div style="font-weight:bold;margin-top:5px;text-transform:uppercase">${bossLabel}</div>
           <div style="height:55px"></div>
-          <div style="font-weight:bold;text-decoration:underline">${kpa.nip ? kpa.nama : pa.nama}</div>
-          <div>NIP. ${kpa.nip ? kpa.nip : pa.nip}</div>
+          <div style="font-weight:bold;text-decoration:underline">${boss.nama}</div>
+          <div>NIP. ${boss.nip || ''}</div>
         </div>
         
         <div style="width:230px;text-align:center">
@@ -5104,7 +5118,21 @@ function buildSpjPanjarPrint(n) {
   const bp = getPejabat('BP');
   const bpp = getPejabat('BPP');
   const bend = n.disburseDetails ? (PEG.find(p => p.nama.includes(n.pptkNama)) || bpp || bp) : (bpp || bp);
-  const pptkPeg = PEG.find(p => p.nama === n.pptkNama || p.id === n.pptkId) || { nama: n.pptkNama || '.......................', nip: '' };
+  
+  const isKpa = (kpa && kpa.nama && kpa.nama !== '.......................');
+  const boss = isKpa ? kpa : pa;
+  const bossLabel = isKpa ? 'KUASA PENGGUNA ANGGARAN' : 'PENGGUNA ANGGARAN';
+
+  let pptkPeg = PEG.find(p => p.nama === n.pptkNama || p.id === n.pptkId);
+  if (!pptkPeg) {
+    const skObj = SK.find(s => s.id === n.skId);
+    if (skObj) {
+      pptkPeg = PEG.find(p => p.id === skObj.pptkId);
+    }
+  }
+  if (!pptkPeg) {
+    pptkPeg = { nama: n.pptkNama || '.......................', nip: '' };
+  }
   
   const spjTot = n.spjDetails ? n.spjDetails.totalBelanja : 0;
   const diff = n.totalNpd - spjTot;
@@ -5196,10 +5224,10 @@ function buildSpjPanjarPrint(n) {
       <div style="display:flex;justify-content:space-between;margin-top:25px;font-size:9.5pt">
         <div style="width:230px;text-align:center">
           <div>Mengetahui,</div>
-          <div style="font-weight:bold;margin-top:5px;text-transform:uppercase">${kpa.nip ? 'KUASA PENGGUNA ANGGARAN' : 'PENGGUNA ANGGARAN'}</div>
+          <div style="font-weight:bold;margin-top:5px;text-transform:uppercase">${bossLabel}</div>
           <div style="height:55px"></div>
-          <div style="font-weight:bold;text-decoration:underline">${kpa.nip ? kpa.nama : pa.nama}</div>
-          <div>NIP. ${kpa.nip ? kpa.nip : pa.nip}</div>
+          <div style="font-weight:bold;text-decoration:underline">${boss.nama}</div>
+          <div>NIP. ${boss.nip || ''}</div>
         </div>
         
         <div style="width:230px;text-align:center">
@@ -9664,6 +9692,8 @@ function saveNpd(isSubmit) {
     npdObj.uraian = uraian;
     npdObj.items = items;
     npdObj.totalNpd = totalNpd;
+    npdObj.pptkId = pptkId;
+    npdObj.pptkNama = pptkNama;
     const oldStatus = npdObj.status;
     npdObj.status = isSubmit ? 'Diajukan' : 'Draft';
     if (isSubmit && !npdObj.noNpd) {
