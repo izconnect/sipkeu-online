@@ -3705,28 +3705,33 @@ function renderNpdRekeningBelanja(n, linkedGUs) {
   const listEl = document.getElementById('list-gu');
   if (!listEl) return;
   
-  if (!n.items || !n.items.length) {
-    listEl.innerHTML = '<div class="empty-state" style="padding:14px"><p>NPD tidak memiliki rekening belanja</p></div>';
+  const skId = n.skId;
+  const list = BEL.filter(b => b.skId === skId).sort((a, b) => a.kode.localeCompare(b.kode));
+  if (!list.length) {
+    listEl.innerHTML = '<div class="empty-state" style="padding:14px"><p>Sub Kegiatan tidak memiliki rekening belanja</p></div>';
     return;
   }
   
   let h = '';
-  n.items.forEach((item, i) => {
-    const spentOnItem = linkedGUs.filter(g => g.bel?.kode === item.kode).reduce((s, g) => s + g.jumlah, 0);
-    const sisaItem = item.jumlah - spentOnItem;
-    const sisaColor = sisaItem <= 0 ? 'var(--red)' : 'var(--green)';
+  list.forEach((b, i) => {
+    const sisa = getSisaBel(skId, b.kode, editTagihanId);
+    const sisaColor = sisa <= 0 ? 'var(--red)' : 'var(--green)';
+    
+    // Check if this rekening is in the NPD plan
+    const npdItem = n.items ? n.items.find(it => it.kode === b.kode) : null;
+    const npdPlanText = npdItem ? `<span style="background:var(--teal);color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-left:8px">Rencana NPD: Rp ${fmtRp(npdItem.jumlah)}</span>` : '';
     
     h += `
       <div class="bel-row" id="gsr-${i}" onclick="selGU(${i})">
         <input type="radio" name="bel-gu" value="${i}" id="gr-${i}">
         <div style="flex:1">
-          <div class="bel-kode">${item.kode}</div>
-          <div class="bel-nama">${item.nama}</div>
+          <div class="bel-kode">${b.kode} ${npdPlanText}</div>
+          <div class="bel-nama">${b.nama}</div>
           <div style="font-size:10px;color:${sisaColor};margin-top:2px;">
-            Sisa Panjar Rekening: <strong>Rp ${fmtRp(sisaItem)}</strong> (dari Panjar NPD Rp ${fmtRp(item.jumlah)})
+            Sisa Anggaran: <strong>Rp ${fmtShort(sisa)}</strong>
           </div>
         </div>
-        <div class="bel-pagu">Pagu NPD: Rp ${fmtShort(item.jumlah)}</div>
+        <div class="bel-pagu">Rp ${fmtShort(b.pagu)}</div>
       </div>
     `;
   });
@@ -3762,15 +3767,8 @@ function getFormDataGU(){
   document.querySelectorAll('input[name="bel-gu"]').forEach((r, i) => { if (r.checked) idx = i; });
   
   if (idx >= 0) {
-    if (npdId) {
-      const n = PANJAR_NPD.find(x => x.id === npdId);
-      if (n && n.items && n.items[idx]) {
-        b = n.items[idx];
-      }
-    } else {
-      const list=BEL.filter(b=>b.skId===skId).sort((a,b)=>a.kode.localeCompare(b.kode));
-      b = list[idx];
-    }
+    const list=BEL.filter(x=>x.skId===skId).sort((a,b)=>a.kode.localeCompare(b.kode));
+    b = list[idx];
   }
   
   return {npdId,bendId,bend,tgl,penerima,progId,kegId,skId,sk,keg,prog,jml,terb:document.getElementById('fgu-terb').value,urai,nota,nobukti,bel:b};
@@ -3786,25 +3784,6 @@ function simpanGU(){
     if(d.jml > sisa){
       toast('Anggaran tidak mencukupi untuk rekening ' + d.bel.kode + '! Sisa anggaran: Rp ' + fmtRp(sisa), 'err', 5000);
       return;
-    }
-  }
-  
-  // Uang Panjar budget validation
-  if (d.npdId && d.bel) {
-    const n = PANJAR_NPD.find(x => x.id === d.npdId);
-    if (n) {
-      const item = n.items.find(it => it.kode === d.bel.kode);
-      if (!item) {
-        toast('Rekening belanja tidak terdaftar di NPD yang dipilih!', 'err');
-        return;
-      }
-      const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id && g.id !== editTagihanId);
-      const spentOnItem = linkedGUs.filter(g => g.bel?.kode === item.kode).reduce((s, g) => s + g.jumlah, 0);
-      const sisaItem = item.jumlah - spentOnItem;
-      if (d.jml > sisaItem) {
-        toast(`Nominal kuitansi melebihi sisa Uang Panjar pada rekening ${item.kode}! Sisa panjar: Rp ${fmtRp(sisaItem)}`, 'err', 5000);
-        return;
-      }
     }
   }
 
