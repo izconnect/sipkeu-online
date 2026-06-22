@@ -3667,6 +3667,16 @@ function populateGuNpdDropdown(selectedNpdId = '') {
   }
 }
 
+function buatKuitansiGUForPanjar(npdId) {
+  pg('kuitansi-gu');
+  initKuiGU();
+  const selNpd = document.getElementById('fgu-npdId');
+  if (selNpd) {
+    selNpd.value = npdId;
+    onGuNpdSelect();
+  }
+}
+
 function onGuNpdSelect() {
   const npdId = document.getElementById('fgu-npdId').value;
   const infoBox = document.getElementById('fgu-npd-info-box');
@@ -3859,7 +3869,17 @@ function simpanGU(){
     TAGIHAN.unshift({id:TAGIHAN_GU[TAGIHAN_GU.length-1].id,no,jenis:'GU',tgl:d.tgl,pptkNama:d.bend?.nama||'–',skId:d.skId,skNama:d.sk?.nama||'–',urai:d.urai,jumlah:d.jml,status:'GU – Belum SPJ',history:[{status:'Dibuat',ts:new Date().toISOString(),oleh:d.bend?.jab||'BP',catatan:''}],data:{...d,items:[{kode:d.bel.kode,nama:d.bel.nama,jumlah:d.jml,penerima:d.penerima}],jspp:'GU'}});
     toast('Kuitansi GU '+no+' tersimpan','ok');
   }
-  resetFormGU();scheduleSave();pg('spj-gu');renderSPJGU();
+  const hasNpd = d.npdId ? true : false;
+  resetFormGU();
+  scheduleSave();
+  if (hasNpd) {
+    pg('panjar');
+    switchPanjarTab('spj');
+    bukaFormSpj(d.npdId);
+  } else {
+    pg('spj-gu');
+    renderSPJGU();
+  }
 }
 function resetFormGU(){
   editTagihanId=null;
@@ -4155,6 +4175,13 @@ function buildKuiSPJGU(s){
 function previewSPJGU(id){
   const s=SPJGU.find(x=>x.id===id);if(!s)return;
   document.getElementById('modal-cetak-body').innerHTML=buildKuiSPJGU(s);bukaModal('modal-cetak');
+  checkAutoSigner(s.ket||s.no||'','SPJGU');
+  renderAllBarcodes();
+}
+
+function previewSPTB(id){
+  const s=SPJGU.find(x=>x.id===id);if(!s)return;
+  document.getElementById('modal-cetak-body').innerHTML=buildSPTB(s);bukaModal('modal-cetak');
   checkAutoSigner(s.ket||s.no||'','SPJGU');
   renderAllBarcodes();
 }
@@ -4898,7 +4925,8 @@ function editTagihan(id){
       onGuNpdSelect();
       const n = PANJAR_NPD.find(x => x.id === gu.npdId);
       if (n && gu.bel) {
-        const idx = n.items.findIndex(it => it.kode === gu.bel.kode);
+        const list = BEL.filter(b => b.skId === n.skId).sort((a,b) => a.kode.localeCompare(b.kode));
+        const idx = list.findIndex(b => b.kode === gu.bel.kode);
         if (idx >= 0) selGU(idx);
       }
     } else {
@@ -9954,7 +9982,7 @@ function renderPanjarSpj() {
     }
     
     if (n.status === 'Dicairkan' && (USER.jab === 'PPTK' || isAdmin)) {
-      actBtn = `<button class="btn btn-xs btn-primary" onclick="bukaFormSpj('${n.id}')">✏️ Buat SPJ</button>`;
+      actBtn = `<div style="display:flex;gap:4px"><button class="btn btn-xs btn-success" onclick="buatKuitansiGUForPanjar('${n.id}')">➕ Buat Kuitansi GU</button><button class="btn btn-xs btn-primary" onclick="bukaFormSpj('${n.id}')">✏️ Buat SPJ</button></div>`;
     } else {
       actBtn = `<button class="btn btn-xs btn-secondary" onclick="viewSpjDetail('${n.id}')">👁️ Lihat SPJ</button>`;
     }
@@ -10004,9 +10032,18 @@ function bukaFormSpj(id) {
   const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id);
   const tbody = document.getElementById('tbody-spj-receipts');
   
-  // Sembunyikan tombol manual add row karena kita memuat GU
-  const addBtn = document.querySelector('[onclick="addSpjRow()"]');
-  if (addBtn) addBtn.style.display = 'none';
+  // Ubah tombol menjadi Tambah Kuitansi GU Baru
+  const addBtn = document.getElementById('btn-panjar-add-gu') || document.querySelector('[onclick="addSpjRow()"]');
+  if (addBtn) {
+    addBtn.id = 'btn-panjar-add-gu';
+    addBtn.textContent = '➕ Tambah Kuitansi GU Baru';
+    addBtn.className = 'btn btn-success btn-xs';
+    addBtn.style.display = 'inline-block';
+    addBtn.onclick = function() {
+      tutupModal('modal-panjar-spj');
+      buatKuitansiGUForPanjar(n.id);
+    };
+  }
   
   if (linkedGUs.length === 0) {
     tbody.innerHTML = `
@@ -10403,7 +10440,7 @@ function getPanjarJurnals(skId) {
         bankDebit: 0,
         bankKredit: 0,
         panjarDebit: 0,
-        panjarKredit: n.spjDetails.totalBelanja,
+        panjarKredit: 0,
         bkuDebit: 0,
         bkuKredit: n.spjDetails.totalBelanja,
         items: n.spjDetails.items
@@ -10433,7 +10470,7 @@ function getPanjarJurnals(skId) {
           desc: `Transfer Pembayaran Kekurangan Uang Panjar - ${n.uraian}`,
           bankDebit: 0,
           bankKredit: n.settleDetails.jumlahSettle,
-          panjarDebit: n.settleDetails.jumlahSettle,
+          panjarDebit: 0,
           panjarKredit: 0,
           bkuDebit: 0,
           bkuKredit: 0,
@@ -10680,6 +10717,7 @@ function printPanjarBook() {
   bukaModal('modal-cetak');
 }
 
+// Modified on 22 June 2026
 // Trigger loading JsBarcode immediately on startup
 loadJsBarcode();
 
