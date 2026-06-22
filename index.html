@@ -10025,12 +10025,15 @@ function disburseNpd() {
   const n = PANJAR_NPD.find(x => x.id === id);
   if (!n) return;
   
+  const currentBnd = getCurrentPegawai();
   n.disburseDetails = {
     tglDisburse,
     noBuktiDisburse,
     bankAsal,
     bankTujuan,
-    jumlahCair: n.totalNpd
+    jumlahCair: n.totalNpd,
+    bendId: currentBnd ? currentBnd.id : '',
+    bendNama: currentBnd ? currentBnd.nama : ''
   };
   n.status = 'Dicairkan';
   
