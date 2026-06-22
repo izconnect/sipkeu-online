@@ -2194,6 +2194,32 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
         </table>
       </div>
     </div>
+
+    <div class="card" style="margin-top: 15px;">
+      <div class="card-hdr">
+        <div class="card-title">💵 Daftar Kuitansi GU (Pertanggungjawaban Uang Panjar)</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No. Kuitansi</th>
+              <th>Tanggal</th>
+              <th>No. NPD (Link Panjar)</th>
+              <th>Penerima</th>
+              <th>Rekening Belanja</th>
+              <th>Uraian Belanja</th>
+              <th style="text-align:right">Nilai (Rp)</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-panjar-kuitansi-list">
+            <!-- Dinamis via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- Tab 5: Verifikasi & Settle -->
@@ -5008,6 +5034,7 @@ function hapusTagihan(id){
   scheduleSave();
   updateDashboard();
   renderTagihan();
+  if (typeof refreshPanjarUI === 'function') refreshPanjarUI();
   toast('Tagihan ' + t.no + ' berhasil dihapus','ok');
 }
 
@@ -9964,47 +9991,100 @@ function renderPanjarSpj() {
   
   if (!list.length) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:#aaa">Belum ada uang panjar aktif yang dicairkan</td></tr>`;
-    return;
+  } else {
+    tbody.innerHTML = list.map(n => {
+      let actBtn = '';
+      const spjTot = n.spjDetails ? n.spjDetails.totalBelanja : 0;
+      const diff = n.totalNpd - spjTot;
+      
+      let diffStr = '';
+      if (n.status === 'Dicairkan') {
+        diffStr = '–';
+      } else {
+        if (diff > 0) diffStr = `<span style="color:green;font-weight:700">Surplus Rp ${fmtRp(diff)}</span>`;
+        else if (diff < 0) diffStr = `<span style="color:red;font-weight:700">Defisit Rp ${fmtRp(Math.abs(diff))}</span>`;
+        else diffStr = `<span style="color:blue">Pas</span>`;
+      }
+      
+      if (n.status === 'Dicairkan' && (USER.jab === 'PPTK' || isAdmin)) {
+        actBtn = `<div style="display:flex;gap:4px"><button class="btn btn-xs btn-success" onclick="buatKuitansiGUForPanjar('${n.id}')">➕ Buat Kuitansi GU</button><button class="btn btn-xs btn-primary" onclick="bukaFormSpj('${n.id}')">✏️ Buat SPJ</button></div>`;
+      } else {
+        actBtn = `<button class="btn btn-xs btn-secondary" onclick="viewSpjDetail('${n.id}')">👁️ Lihat SPJ</button>`;
+      }
+      
+      let badgeClass = 'bg-info';
+      if (n.status === 'SPJ Diajukan') badgeClass = 'bg-warning';
+      if (n.status === 'Selesai') badgeClass = 'bg-success';
+      
+      const spjStatus = `<span class="badge ${badgeClass}">${n.status === 'Dicairkan' ? 'Belum SPJ' : n.status}</span>`;
+      
+      return `
+        <tr>
+          <td style="font-family:monospace;font-size:11px">${n.noNpd}</td>
+          <td style="font-size:11px"><strong>${n.skKode}</strong><br>${n.skNama}</td>
+          <td style="text-align:right;font-weight:700">Rp ${fmtRp(n.totalNpd)}</td>
+          <td style="text-align:right">Rp ${fmtRp(spjTot)}</td>
+          <td style="text-align:right">${diffStr}</td>
+          <td>${spjStatus}</td>
+          <td>${actBtn}</td>
+        </tr>
+      `;
+    }).join('');
   }
   
-  tbody.innerHTML = list.map(n => {
-    let actBtn = '';
-    const spjTot = n.spjDetails ? n.spjDetails.totalBelanja : 0;
-    const diff = n.totalNpd - spjTot;
-    
-    let diffStr = '';
-    if (n.status === 'Dicairkan') {
-      diffStr = '–';
-    } else {
-      if (diff > 0) diffStr = `<span style="color:green;font-weight:700">Surplus Rp ${fmtRp(diff)}</span>`;
-      else if (diff < 0) diffStr = `<span style="color:red;font-weight:700">Defisit Rp ${fmtRp(Math.abs(diff))}</span>`;
-      else diffStr = `<span style="color:blue">Pas</span>`;
+  // Render Kuitansi GU linked to Panjar
+  const tbodyKui = document.getElementById('tbody-panjar-kuitansi-list');
+  if (tbodyKui) {
+    let kuitansis = TAGIHAN_GU.filter(g => g.npdId);
+    if (USER.jab === 'PPTK' && myPeg) {
+      const myNpdIds = PANJAR_NPD.filter(n => n.pptkId === myPeg.id || n.pptkNama === myPeg.nama || n.pptkId === myPeg.nama).map(n => n.id);
+      kuitansis = kuitansis.filter(g => myNpdIds.includes(g.npdId));
     }
     
-    if (n.status === 'Dicairkan' && (USER.jab === 'PPTK' || isAdmin)) {
-      actBtn = `<div style="display:flex;gap:4px"><button class="btn btn-xs btn-success" onclick="buatKuitansiGUForPanjar('${n.id}')">➕ Buat Kuitansi GU</button><button class="btn btn-xs btn-primary" onclick="bukaFormSpj('${n.id}')">✏️ Buat SPJ</button></div>`;
+    if (!kuitansis.length) {
+      tbodyKui.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:#aaa">Belum ada Kuitansi GU yang dibuat dari Uang Panjar</td></tr>`;
     } else {
-      actBtn = `<button class="btn btn-xs btn-secondary" onclick="viewSpjDetail('${n.id}')">👁️ Lihat SPJ</button>`;
+      tbodyKui.innerHTML = kuitansis.map(g => {
+        const npd = PANJAR_NPD.find(n => n.id === g.npdId);
+        const npdNo = npd ? npd.noNpd : '–';
+        
+        let statusBadge = '';
+        if (g.spjId === 'PANJAR-LOCKED') {
+          statusBadge = '<span class="badge bg-gu">Belum SPJ (Panjar Aktif)</span>';
+        } else if (g.spjId === 'PANJAR-SUBMITTED') {
+          statusBadge = '<span class="badge bg-warning">Diajukan dalam SPJ</span>';
+        } else if (!g.spjId) {
+          statusBadge = '<span class="badge bg-success">Selesai (Settle)</span>';
+        } else {
+          statusBadge = `<span class="badge bg-info">Sudah SPJ GU (${g.spjId})</span>`;
+        }
+        
+        const canEdit = g.spjId === 'PANJAR-LOCKED';
+        const editBtn = canEdit ? `<button class="btn btn-xs" onclick="editTagihan('${g.id}')" style="background:var(--orange);color:#fff" title="Edit">✏️</button>` : '';
+        const delBtn = canEdit ? `<button class="btn btn-xs btn-danger" onclick="hapusTagihan('${g.id}')" title="Hapus">✕</button>` : '';
+        
+        return `
+          <tr>
+            <td style="font-family:monospace;font-size:11px">${g.no}</td>
+            <td style="white-space:nowrap">${fmtTgl(g.tgl)}</td>
+            <td style="font-family:monospace;font-size:11px">${npdNo}</td>
+            <td>${g.data?.penerima || '–'}</td>
+            <td style="font-size:11px" title="${g.bel?.nama || ''}"><strong>${g.bel?.kode || '–'}</strong></td>
+            <td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.urai}</td>
+            <td style="text-align:right;font-weight:700">Rp ${fmtRp(g.jumlah)}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-xs btn-info" onclick="prevGU('${g.id}')" title="Preview" style="color:#fff;border:none">👁</button>
+                ${editBtn}
+                ${delBtn}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
-    
-    let badgeClass = 'bg-info';
-    if (n.status === 'SPJ Diajukan') badgeClass = 'bg-warning';
-    if (n.status === 'Selesai') badgeClass = 'bg-success';
-    
-    const spjStatus = `<span class="badge ${badgeClass}">${n.status === 'Dicairkan' ? 'Belum SPJ' : n.status}</span>`;
-    
-    return `
-      <tr>
-        <td style="font-family:monospace;font-size:11px">${n.noNpd}</td>
-        <td style="font-size:11px"><strong>${n.skKode}</strong><br>${n.skNama}</td>
-        <td style="text-align:right;font-weight:700">Rp ${fmtRp(n.totalNpd)}</td>
-        <td style="text-align:right">Rp ${fmtRp(spjTot)}</td>
-        <td style="text-align:right">${diffStr}</td>
-        <td>${spjStatus}</td>
-        <td>${actBtn}</td>
-      </tr>
-    `;
-  }).join('');
+  }
 }
 
 function addPanjarHistory(n, status, catatan = '') {
