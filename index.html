@@ -3663,7 +3663,16 @@ function initKuiGU(){
   sel.innerHTML='<option value="">-- Pilih Bendahara --</option>';
   PEG.filter(p=>p.jab==='BP'||p.jab==='BPP').forEach(p=>sel.innerHTML+=`<option value="${p.id}">${p.jab} – ${p.nama}</option>`);
   // If current user is BP/BPP, auto-select
-  if(USER?.jab==='BP'||USER?.jab==='BPP'){const myPeg=getCurrentPegawai();if(myPeg)sel.value=myPeg.id;}
+  if(USER?.jab==='BP'||USER?.jab==='BPP'){
+    const myPeg=getCurrentPegawai();
+    if(myPeg)sel.value=myPeg.id;
+  } else {
+    // Auto-select the first available Bendahara if current user is PPTK or Admin
+    const firstOpt = Array.from(sel.options).find(opt => opt.value !== "");
+    if (firstOpt) {
+      sel.value = firstOpt.value;
+    }
+  }
   // Prog dropdown
   const fProg=document.getElementById('fgu-prog');fProg.innerHTML='<option value="">-- Pilih Program --</option>';PROG.sort((a,b)=>a.urut-b.urut).forEach(p=>fProg.innerHTML+=`<option value="${p.id}">${p.kode} – ${p.nama}</option>`);
   document.getElementById('fgu-no-lbl').textContent='No: KU-GU/'+CFG.ta+'/'+(String(noUrutGU).padStart(4,'0'));
@@ -3753,6 +3762,20 @@ function onGuNpdSelect() {
   }
   
   renderNpdRekeningBelanja(n, linkedGUs);
+  
+  // Auto-select Bendahara who disbursed the Uang Panjar, or default to the first one available
+  const selBend = document.getElementById('fgu-bend');
+  if (selBend) {
+    if (n.disburseDetails && n.disburseDetails.bendId) {
+      selBend.value = n.disburseDetails.bendId;
+    }
+    if (!selBend.value) {
+      const firstOpt = Array.from(selBend.options).find(opt => opt.value !== "");
+      if (firstOpt) {
+        selBend.value = firstOpt.value;
+      }
+    }
+  }
 }
 
 function renderNpdRekeningBelanja(n, linkedGUs) {
@@ -3838,6 +3861,20 @@ function simpanGU(){
     if(d.jml > sisa){
       toast('Anggaran tidak mencukupi untuk rekening ' + d.bel.kode + '! Sisa anggaran: Rp ' + fmtRp(sisa), 'err', 5000);
       return;
+    }
+  }
+
+  // NPD / Uang Panjar budget validation
+  if (d.npdId) {
+    const n = PANJAR_NPD.find(x => x.id === d.npdId);
+    if (n) {
+      const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id && g.id !== editTagihanId);
+      const totalSpent = linkedGUs.reduce((s, g) => s + g.jumlah, 0);
+      const sisaPanjar = n.totalNpd - totalSpent;
+      if (d.jml > sisaPanjar) {
+        toast('Jumlah belanja melebihi sisa uang panjar! Sisa: Rp ' + fmtRp(sisaPanjar), 'err', 5000);
+        return;
+      }
     }
   }
 
