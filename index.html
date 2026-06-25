@@ -666,18 +666,18 @@ tr:hover td{background:#f8fafc}
 .ku-page,.rin-page{width:100%;font-family:Arial,sans-serif;font-size:calc(10.5pt * var(--ku-font-scale, 1));color:#000}
 .ku-page{max-height:6.1in;box-sizing:border-box;overflow:hidden}
 .rin-page{margin-top:16px}
-.ku-kop,.rin-kop{display:flex;align-items:center;gap:10px;border-bottom:2px solid #000;padding-bottom:7px;margin-bottom:7px}
-.ku-kop-logo{width:55px;height:55px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:7px;color:#888;flex-shrink:0;background:#f9f9f9;overflow:hidden}
+.ku-kop,.rin-kop{display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #000;padding-bottom:4px;margin-bottom:4px}
+.ku-kop-logo{width:46px;height:46px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:6.5px;color:#888;flex-shrink:0;background:#f9f9f9;overflow:hidden}
 .ku-kop-logo img{width:100%;height:100%;object-fit:contain}
 .ku-kop-text{text-align:center;flex:1}
-.k-inst{font-size:calc(12.5pt * var(--ku-font-scale, 1));font-weight:700}.k-unit{font-size:calc(10.5pt * var(--ku-font-scale, 1));font-weight:700}
-.ku-kop-right{font-size:calc(12.5pt * var(--ku-font-scale, 1));font-weight:700;color:#000;border:2px solid #000;padding:4px 12px;border-radius:4px;white-space:nowrap}
-.ku-tag{text-align:right;font-size:calc(10.5pt * var(--ku-font-scale, 1));margin-bottom:5px}
-.ku-body{border:1px solid #000;margin-bottom:7px}
+.k-inst{font-size:calc(11.5pt * var(--ku-font-scale, 1));font-weight:700;line-height:1.2}.k-unit{font-size:calc(9.5pt * var(--ku-font-scale, 1));font-weight:700;line-height:1.2}
+.ku-kop-right{font-size:calc(11pt * var(--ku-font-scale, 1));font-weight:700;color:#000;border:1.5px solid #000;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.ku-tag{text-align:right;font-size:calc(9.5pt * var(--ku-font-scale, 1));margin-bottom:4px}
+.ku-body{border:1px solid #000;margin-bottom:5px}
 .ku-row{display:flex;border-bottom:1px solid #aaa}.ku-row:last-child{border-bottom:none}
-.ku-rl{width:125px;padding:5px 7px;font-weight:600;border-right:1px solid #aaa;flex-shrink:0;font-size:calc(10pt * var(--ku-font-scale, 1))}
-.ku-rv{flex:1;padding:5px 7px;font-size:calc(10pt * var(--ku-font-scale, 1));min-height:24px}
-.ku-ttd{display:grid;grid-template-columns:1fr 1fr;gap:var(--ku-ttd-gap, 8px);margin-top:10px;font-size:calc(10pt * var(--ku-font-scale, 1))}
+.ku-rl{width:125px;padding:3.5px 6px;font-weight:600;border-right:1px solid #aaa;flex-shrink:0;font-size:calc(9.5pt * var(--ku-font-scale, 1))}
+.ku-rv{flex:1;padding:3.5px 6px;font-size:calc(9.5pt * var(--ku-font-scale, 1));min-height:18px}
+.ku-ttd{display:grid;grid-template-columns:1fr 1fr;gap:var(--ku-ttd-gap, 8px);margin-top:6px;font-size:calc(9.5pt * var(--ku-font-scale, 1))}
 .ku-ttd-box{text-align:center}.ku-ttd-spc{height:var(--ku-ttd-spc-height, 44px)}
 .ku-ttd-name{font-weight:700;text-decoration:underline}.ku-ttd-nip{font-size:calc(9pt * var(--ku-font-scale, 1))}
 .ku-verf{border:1px solid #000;margin-top:var(--ku-verf-margin, 7px);font-size:calc(8.5pt * var(--ku-font-scale, 1) * var(--ku-verf-font-scale, 1))}
@@ -2005,6 +2005,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
       </div>
       <div></div>
     </div>
+    <div id="fgu-npd-comparison-box" style="display:none; border-radius:6px; padding:9px 12px; font-size:11.5px; border:1px solid #aaa; margin-bottom:12px; line-height:1.4"></div>
     <div class="form-grid g3" style="margin-bottom:9px">
       <div class="fg"><label>Program <span class="req">*</span></label><select id="fgu-prog" onchange="guLoadKeg()"></select></div>
       <div class="fg"><label>Kegiatan <span class="req">*</span></label><select id="fgu-keg" onchange="guLoadSk()"></select></div>
@@ -2013,7 +2014,7 @@ body.hide-rincian-cetak .kui-rincian-section{display:none!important}
     <div class="sec-hdr">Rekening Belanja</div>
     <div id="list-gu" class="bel-pick"><div class="empty-state" style="padding:14px"><p>Pilih Sub Kegiatan dahulu</p></div></div>
     <div class="form-grid g2" style="margin-bottom:9px">
-      <div class="fg"><label>Jumlah (Rp) <span class="req">*</span></label><input type="number" id="fgu-jml" oninput="calcTerbGU()"></div>
+      <div class="fg"><label>Jumlah (Rp) <span class="req">*</span></label><input type="number" id="fgu-jml" oninput="calcTerbGU(); updateGuNpdComparison()"></div>
       <div class="fg"><label>Terbilang</label><input id="fgu-terb" readonly style="background:#f5f5f5;font-style:italic"></div>
     </div>
     <div class="fg" style="margin-bottom:11px"><label>Uraian Pembayaran <span class="req">*</span></label><textarea id="fgu-urai" rows="2" placeholder="Pembayaran ... sesuai nota/bon terlampir"></textarea></div>
@@ -3776,6 +3777,57 @@ function onGuNpdSelect() {
       }
     }
   }
+  updateGuNpdComparison();
+}
+
+function updateGuNpdComparison() {
+  const npdId = document.getElementById('fgu-npdId').value;
+  const compBox = document.getElementById('fgu-npd-comparison-box');
+  if (!compBox) return;
+  
+  if (!npdId) {
+    compBox.style.display = 'none';
+    return;
+  }
+  
+  const n = PANJAR_NPD.find(x => x.id === npdId);
+  if (!n) {
+    compBox.style.display = 'none';
+    return;
+  }
+  
+  const curJmlVal = parseFloat(document.getElementById('fgu-jml').value) || 0;
+  
+  const linkedGUs = TAGIHAN_GU.filter(g => g.npdId === n.id && g.id !== editTagihanId);
+  const totalSpent = linkedGUs.reduce((s, g) => s + g.jumlah, 0);
+  const sisaPanjar = n.totalNpd - totalSpent;
+  
+  const netSisa = sisaPanjar - curJmlVal;
+  
+  compBox.style.display = 'block';
+  compBox.style.lineHeight = '1.5';
+  
+  if (curJmlVal === 0) {
+    compBox.style.background = '#f5f5f5';
+    compBox.style.border = '1px solid #ccc';
+    compBox.style.color = '#333';
+    compBox.innerHTML = `ℹ️ <strong>Sisa Uang Panjar: Rp ${fmtRp(sisaPanjar)}</strong>. Silakan masukkan jumlah belanja kuitansi untuk perbandingan.`;
+  } else if (netSisa > 0) {
+    compBox.style.background = '#e8f5e9';
+    compBox.style.border = '1px solid #a5d6a7';
+    compBox.style.color = '#1b5e20';
+    compBox.innerHTML = `💡 <strong>Surplus Panjar (Sisa): Rp ${fmtRp(netSisa)}</strong><br>Jumlah kuitansi lebih kecil dari uang panjar. Sisa uang panjar sebesar <strong>Rp ${fmtRp(netSisa)}</strong> harus dikembalikan ke Bendahara saat settlement.`;
+  } else if (netSisa < 0) {
+    compBox.style.background = '#ffebee';
+    compBox.style.border = '1px solid #ffcdd2';
+    compBox.style.color = '#c62828';
+    compBox.innerHTML = `⚠️ <strong>Defisit Panjar (Talangan): Rp ${fmtRp(Math.abs(netSisa))}</strong><br>Jumlah belanja melebihi sisa uang panjar sebesar <strong>Rp ${fmtRp(Math.abs(netSisa))}</strong>. Selisih ini akan dianggap sebagai belanja talangan yang akan ditransfer/diganti oleh Bendahara saat settlement.`;
+  } else {
+    compBox.style.background = '#e3f2fd';
+    compBox.style.border = '1px solid #bbdefb';
+    compBox.style.color = '#0d47a1';
+    compBox.innerHTML = `🎯 <strong>Uang panjar habis tepat sasaran</strong>. Jumlah belanja kuitansi sama persis dengan sisa uang panjar (Rp ${fmtRp(sisaPanjar)}).`;
+  }
 }
 
 function renderNpdRekeningBelanja(n, linkedGUs) {
@@ -3872,8 +3924,11 @@ function simpanGU(){
       const totalSpent = linkedGUs.reduce((s, g) => s + g.jumlah, 0);
       const sisaPanjar = n.totalNpd - totalSpent;
       if (d.jml > sisaPanjar) {
-        toast('Jumlah belanja melebihi sisa uang panjar! Sisa: Rp ' + fmtRp(sisaPanjar), 'err', 5000);
-        return;
+        const ok = confirm(`Jumlah kuitansi (Rp ${fmtRp(d.jml)}) lebih besar dari sisa uang panjar (Rp ${fmtRp(sisaPanjar)}).\n\nApakah Anda yakin ingin menyimpannya sebagai Belanja Talangan (Defisit Panjar sebesar Rp ${fmtRp(d.jml - sisaPanjar)})?`);
+        if (!ok) return;
+      } else if (d.jml < sisaPanjar) {
+        const ok = confirm(`Jumlah kuitansi (Rp ${fmtRp(d.jml)}) lebih kecil dari sisa uang panjar (Rp ${fmtRp(sisaPanjar)}).\n\nApakah Anda yakin ingin menyimpannya dengan surplus/sisa saldo panjar sebesar Rp ${fmtRp(sisaPanjar - d.jml)} yang harus dikembalikan ke Bendahara?`);
+        if (!ok) return;
       }
     }
   }
@@ -3952,6 +4007,8 @@ function resetFormGU(){
   ['fgu-penerima','fgu-jml','fgu-terb','fgu-urai','fgu-nota','fgu-nobukti'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const infoBox = document.getElementById('fgu-npd-info-box');
   if (infoBox) infoBox.style.display = 'none';
+  const compBox = document.getElementById('fgu-npd-comparison-box');
+  if (compBox) compBox.style.display = 'none';
   clearBelGU();curSkIdGU='';
 }
 
@@ -4272,7 +4329,7 @@ function logoBox(){
   if(CFG.logo&&(CFG.logo.startsWith('data:')||CFG.logo.startsWith('http'))){
     return`<div class="ku-kop-logo"><img src="${CFG.logo}" style="width:100%;height:100%;object-fit:contain" onerror="this.parentElement.innerHTML='LOGO'"></div>`;
   }
-  return`<div class="ku-kop-logo" style="font-size:8px;color:#aaa;text-align:center;line-height:1.4">LOGO<br>SKPD</div>`;
+  return`<div class="ku-kop-logo" style="font-size:7.5px;color:#aaa;text-align:center;line-height:1.3">LOGO<br>SKPD</div>`;
 }
 
 function buildKuiLS(d){
@@ -5031,6 +5088,7 @@ function editTagihan(id){
     document.getElementById('fgu-urai').value = gu.urai || '';
     document.getElementById('fgu-nota').value = gu.nota || '';
     document.getElementById('fgu-nobukti').value = gu.nobukti || '';
+    updateGuNpdComparison();
   } else {
     pg('kuitansi-ls');
     const titleLbl = document.getElementById('f-title-lbl');
@@ -9445,12 +9503,12 @@ function renderAllBarcodes() {
         try {
           JsBarcode(el, val, {
             format: "CODE128",
-            width: 1.2,
-            height: 25,
+            width: 1.1,
+            height: 18,
             displayValue: true,
-            fontSize: 9,
+            fontSize: 8.5,
             margin: 0,
-            textMargin: 2
+            textMargin: 1
           });
         } catch (e) {
           console.error("Gagal membuat barcode untuk:", val, e);
